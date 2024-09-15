@@ -1,0 +1,70 @@
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background-color: #f4f4f4;
+    color: #333;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+h1 {
+    font-size: 2em;
+}
+
+#population-section, #role-assignment, #storage, #info {
+    margin-bottom: 20px;
+}
+
+#role-assignment input {
+    width: 50px;
+    text-align: center;
+}
+
+.storage-bar {
+    display: inline-block;
+    height: 20px;
+    background-color: #4caf50;
+    width: 100px;
+    border: 1px solid #333;
+}
+
+#food-container, #production-container {
+    cursor: pointer;
+    margin: 10px 0;
+}
+
+.button {
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.button.disabled {
+    cursor: default;
+    background-color: lightgrey;
+}
+
+.button {
+    background-color: #04AA6D;
+    border: none;
+    color: white;
+    padding: 2px 4px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    border-radius: 4px;
+  }
+
+  #farmer-remove, #farmer-add {
+    width: 1em
+  }
+
+  #projects .project-items li.hidden {
+    display: none;
+  }

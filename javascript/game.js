@@ -24,27 +24,27 @@ const food = playerObject.food;
 const population = playerObject.population;
 const production = playerObject.production;
 const gold = playerObject.gold;
+const projects = playerObject.projects;
 
 // So that they're accessible from the console, for debugging, and dirty cheaters ;)
-document.player = player;
-document.playerObject = playerObject;
+window.player = player;
+window.playerObject = playerObject;
 
 function initializeDisplay() {
+    console.log("Initializing display");
+
     // Add all projects
     const projectList = document.querySelector("#projects .project-items");
-    //for (let [key, value] of Object.entries(Projects)) {
-    Projects.getKeys().forEach(function(key, index) {
-        const project = Projects[key];
-        
+    for (let [projectId, project] of Object.entries(projects.definedProjects)) {
         const li = document.createElement("li");
-        li.setAttribute("data-project-id", key);
+        li.setAttribute("data-project-id", projectId);
         li.classList.add("disabled"); // all projects are disabled until enabled (user has resources to buy and maintain it)
         li.classList.add("hidden"); // all projects are hidden until shown (pre-reqs are met)
         li.classList.add("button")
         li.innerHTML = project.displayName;
 
         projectList.appendChild(li);
-    })
+    };
 }
 
 function setupClicks() {
@@ -85,7 +85,7 @@ function setupClicks() {
 
 }
 
-function updateFood(player) {
+function updateFood() {
     const currentFood = food.foodInStorage;
     const requiredFood = food.requiredFood;
     const foodPerFarmers = food.foodPerFarmer;
@@ -143,19 +143,20 @@ function updateDisplay() {
     // Update Projects (show/hide, enable/disable)
     document.querySelectorAll("#projects .project-items li[data-project-id]").forEach((projectElement) => {
         const projectId = projectElement.getAttribute("data-project-id");
-        const project = Projects[projectId];
+        const project = projects.definedProjects[projectId];
 
         // update hidden / unlocked
-        if (project.isUnlocked(playerObject)) {
+        
+        if (projects.definedProjects[projectId].isUnlocked) {
             projectElement.classList.remove("hidden");
-        } else if (project.isOwned(playerObject)) {
+        } else if (projects.definedProjects[projectId].isOwned) {
             projectElement.classList.remove("hidden");
         } else {
             projectElement.classList.add("hidden");
         }
 
         // update disabled / can affod
-        if (project.canAfford(playerObject)) {
+        if (projects.definedProjects[projectId].canAfford) {
             projectElement.classList.remove("disabled");
         } else {
             projectElement.classList.add("disabled");

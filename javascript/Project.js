@@ -42,16 +42,16 @@ export default class Project {
      * - fullfills any other requirements
      */
     get isUnlocked() {
-        if (this.playerObject.data.gold.maxGoldStorage < this.getCost("gold")) {
+        if (this.playerObject.gold.maxGoldStorage < this.getCost("gold")) {
             return false;
         }
-        if (this.playerObject.data.production.maxProductionStorage < this.getCost("production")) {
+        if (this.playerObject.production.maxProductionStorage < this.getCost("production")) {
             return false;
         }
-        if (this.playerObject.data.gold.goldPerTurn < this.getUpkeep("gold")) {
+        if (this.playerObject.gold.goldPerTurn < this.getUpkeep("gold")) {
             return false;
         }
-        if (this.playerObject.data.production.productionPerTurn < this.getUpkeep("production")) {
+        if (this.playerObject.production.productionPerTurn < this.getUpkeep("production")) {
             return false;
         }
 
@@ -59,20 +59,23 @@ export default class Project {
     }
 
     get canAfford() {
-        if (this.playerObject.data.gold.goldInStorage < this.getCost("gold")) {
+        if (this.playerObject.gold.goldInStorage < this.getCost("gold")) {
             return false;
         }
-        if (this.playerObject.data.production.productionInStorage < this.getCost("production")) {
+        if (this.playerObject.production.productionInStorage < this.getCost("production")) {
             return false;
         }
-        if (this.playerObject.data.gold.goldPerTurn < this.getUpkeep("gold")) {
+        if (this.playerObject.gold.goldPerTurn < this.getUpkeep("gold")) {
             return false;
         }
-        if (this.playerObject.data.production.productionPerTurn < this.getUpkeep("production")) {
+        if (this.playerObject.production.productionPerTurn < this.getUpkeep("production")) {
             return false;
         }
 
         return true;
     }
 
+    get isOwned() {
+        return this.playerObject.projects.isOwned(this.id);
+    }
 }

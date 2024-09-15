@@ -30,6 +30,10 @@ export default class Projects {
         return this.data.builtProjects;
     }
 
+    isOwned(key) {
+        this.data.builtProjects.includes(key);
+    }
+
     addOwned(key) {
         if (!isOwned(playerObject, key)) {
             this.data.builtProjects.add(key);

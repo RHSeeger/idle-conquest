@@ -38,9 +38,8 @@ function initializeDisplay() {
     for (let [projectId, project] of Object.entries(projects.definedProjects)) {
         const li = document.createElement("li");
         li.setAttribute("data-project-id", projectId);
-        li.classList.add("disabled"); // all projects are disabled until enabled (user has resources to buy and maintain it)
-        li.classList.add("hidden"); // all projects are hidden until shown (pre-reqs are met)
         li.classList.add("button")
+        li.setAttribute("project-state", "locked")
         li.innerHTML = project.displayName;
 
         projectList.appendChild(li);
@@ -146,20 +145,14 @@ function updateDisplay() {
         const project = projects.definedProjects[projectId];
 
         // update hidden / unlocked
-        
-        if (projects.definedProjects[projectId].isUnlocked) {
-            projectElement.classList.remove("hidden");
-        } else if (projects.definedProjects[projectId].isOwned) {
-            projectElement.classList.remove("hidden");
+        if (projects.definedProjects[projectId].isOwned) {
+            projectElement.setAttribute("project-state", "owned")
+        } else if (projects.definedProjects[projectId].canAfford) {
+            projectElement.setAttribute("project-state", "canAfford")
+        } else if (projects.definedProjects[projectId].isUnlocked) {
+            projectElement.setAttribute("project-state", "unlockedButCannotAfford")
         } else {
-            projectElement.classList.add("hidden");
-        }
-
-        // update disabled / can affod
-        if (projects.definedProjects[projectId].canAfford) {
-            projectElement.classList.remove("disabled");
-        } else {
-            projectElement.classList.add("disabled");
+            projectElement.setAttribute("project-state", "locked")
         }
     });
 }

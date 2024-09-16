@@ -82,6 +82,18 @@ function setupClicks() {
         updateDisplay();
     }, false);
 
+    // Project buttons
+    document.querySelectorAll("#projects .project-items li[data-project-id]").forEach((projectElement) => {
+        const projectId = projectElement.getAttribute("data-project-id");
+        const project = projects.definedProjects[projectId];
+
+        projectElement.addEventListener("click", function (e) {
+            console.log("Purchasing project", projectId);
+            if (project.isUnlocked && project.canAfford && !project.isOwned) {
+                projects.purchase(project);
+            }
+        });
+    });
 }
 
 function updateFood() {
@@ -155,6 +167,20 @@ function updateDisplay() {
             projectElement.setAttribute("project-state", "locked")
         }
     });
+
+    // Debugging
+    var seen = [];
+    const replacer = function (key, val) {
+        if (val != null && typeof val == "object") {
+            if (seen.indexOf(val) >= 0) {
+                return;
+            }
+            seen.push(val);
+        }
+        return val;
+    }
+    document.querySelector("#playerData .player .data").innerText = JSON.stringify(window.player, replacer, 2);
+    document.querySelector("#playerData .player-object .data").innerText = JSON.stringify(window.playerObject, replacer, 2);
 }
 
 function updatePopulation(player) {

@@ -30,13 +30,23 @@ export default class Projects {
         return this.data.builtProjects;
     }
 
+    purchase(project) {
+        if (project.isOwned || !project.isUnlocked || !project.canAfford) {
+            return;
+        }
+
+        this.player.gold.goldInStorage -= project.getCost("gold");
+        this.player.production.productionInStorage -= project.getCost("production");
+        this.addOwned(project.id);
+    }
+
     isOwned(key) {
-        this.data.builtProjects.includes(key);
+        return this.data.builtProjects.includes(key);
     }
 
     addOwned(key) {
-        if (!isOwned(playerObject, key)) {
-            this.data.builtProjects.add(key);
+        if (!this.isOwned(playerObject, key)) {
+            this.data.builtProjects.push(key);
         }
     }
 

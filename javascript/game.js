@@ -135,6 +135,9 @@ function updateDisplay() {
     document.getElementById('food-required').textContent = food.requiredFood;
     document.getElementById('food-generated').textContent = population.numberOfFarmers * food.foodPerFarmer;
     document.getElementById('work-generated').textContent = population.numberOfWorkers * production.productionPerWorker;
+    document.getElementById('population-increase').textContent = population.populationPerTurn;
+    document.getElementById('gold-earned-per-turn').textContent = gold.goldEarnedPerTurn;
+    document.getElementById('gold-spent-per-turn').textContent = gold.goldSpentPerTurn;
 
     // Disable buttons that can't be used right now
     if (population.numberOfFarmers >= population.populationUnitCount) {
@@ -183,14 +186,13 @@ function updateDisplay() {
     document.querySelector("#playerData .player-object .data").innerText = JSON.stringify(window.playerObject, replacer, 2);
 }
 
-function updatePopulation(player) {
-    const populationUnitCount = population.populationUnitCount;
-    const addedPopulation = 20; // TODO: Calculate this
+function updatePopulation() {
+    const addedPopulation = population.populationPerTurn;
     const newPopulation = population.populationCount + addedPopulation;
     population.populationCount = newPopulation;
 }
 
-function updateProduction(player) {
+function updateProduction() {
     const prodPerWorker = production.productionPerWorker;
     const currentProduction = production.productionInStorage;
     const currentWorkers = population.numberOfWorkers;
@@ -199,31 +201,30 @@ function updateProduction(player) {
     production.productionInStorage = newProctionInStorage;
 }
 
-function updateGold(player) {
-    const goldPerPopulation = gold.goldPerPopulation;
+function updateGold() {
+    /* const goldPerPopulation = gold.goldPerPopulation;
     const currentGold = gold.goldInStorage;
-    const currentPopulation = population.populationUnitCount;
-    gold.goldInStorage = currentGold + Math.trunc(currentPopulation * goldPerPopulation);
+    const currentPopulation = population.populationUnitCount; */
+    gold.goldInStorage = gold.goldInStorage + gold.goldEarnedPerTurn - gold.goldSpentPerTurn;
 }
 
 /**
  * Update the values to be between the min and max allowed values
  */
-function restrictValues(player) {
+function restrictValues() {
     food.foodInStorage = Math.min(Math.max(food.foodInStorage, 0), food.maxFoodStorage);
     production.productionInStorage = Math.min(Math.max(production.productionInStorage, 0), production.maxProductionStorage);
-    player.goldInStorage = Math.min(Math.max(gold.goldInStorage, 0), gold.maxGoldStorage);
+    gold.goldInStorage = Math.min(Math.max(gold.goldInStorage, 0), gold.maxGoldStorage);
 }
 
 // Main game loop
 function gameLoop() {
-    updateFood(player);
-    updateProduction(player);
-    updateGold(player);
+    updateFood();
+    updateProduction();
+    updateGold();
+    updatePopulation();
 
-    updatePopulation(player);
-
-    restrictValues(player);
+    restrictValues();
 
     updateDisplay();
 

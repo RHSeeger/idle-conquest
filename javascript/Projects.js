@@ -80,6 +80,9 @@ export default class Projects {
                 playerObject: playerObject
             }),
             new Project({
+                // +20 population per turn
+                // +2 maximum population
+                // +2 food per turn (total, not per unit)
                 id: "GRANARY",
                 displayName: "Granary",
                 cost: { production: 40 },
@@ -182,7 +185,7 @@ export default class Projects {
                 id: "LIBRARY",
                 displayName: "Library",
                 cost: { production: 60 },
-                upkeep: { gold: 1 },
+                upkeep: { gold: 5 }, // should be 1, but set high for testing
                 description: "",
                 dependencies: ['BUILDERS_HALL'],
                 playerObject: playerObject

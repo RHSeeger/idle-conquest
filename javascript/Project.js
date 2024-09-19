@@ -65,7 +65,7 @@ export default class Project {
         if (this.playerObject.production.productionInStorage < this.getCost("production")) {
             return false;
         }
-        if (this.playerObject.gold.goldPerTurn < this.getUpkeep("gold")) {
+        if ((this.playerObject.gold.goldEarnedPerTurn - this.playerObject.gold.goldSpentPerTurn) < this.getUpkeep("gold")) {
             return false;
         }
         if (this.playerObject.production.productionPerTurn < this.getUpkeep("production")) {

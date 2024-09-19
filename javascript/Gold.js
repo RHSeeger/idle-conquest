@@ -45,7 +45,19 @@ export default class Gold {
         return BASE_GOLD_PER_POPULATION;
     }
 
-    get goldPerTurn() {
+    get goldEarnedPerTurn() {
         return Math.trunc(this.player.population.populationUnitCount * this.goldPerPopulation);
+    }
+
+    get goldSpentPerTurn() {
+        const spentOnProjects = this.player.projects.builtProjects.map((projectId) => {
+            return this.player.projects.definedProjects[projectId]
+        }).map((project) => {
+            return project.getUpkeep('gold')
+        }).reduce((total, current) => {
+            return total + current;
+        }, 0);
+
+        return spentOnProjects;
     }
 }

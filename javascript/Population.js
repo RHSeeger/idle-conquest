@@ -13,13 +13,13 @@ const INITIAL_FARMER_UNITS = 1;
 const INITIAL_MILITARY_UNITS = 0;
 
 export default class Population {
-    
+
     constructor(player) {
         this.player = player;
     }
 
     get data() {
-        
+
         if (!("data" in this.player)) {
             this.player.data = {}
         }
@@ -46,12 +46,19 @@ export default class Population {
     get populationCount() {
         return this.data.count;
     }
+
     set populationCount(value) {
         this.data.count = value;
     }
 
     get populationUnitCount() {
         return Math.trunc(this.data.count / 1000);
+    }
+
+    get maxPopulationUnitCount() {
+        return this.player.food.maxFoodStorage
+            // Granary adds 2
+            + (this.player.projects.isOwned('GRANARY') ? 2 : 0);
     }
 
     // Famer units
@@ -62,7 +69,7 @@ export default class Population {
     set numberOfFarmers(amount) {
         this.data.numFarmers = amount;
     }
-    
+
     // Military units
 
     get numberOfMilitary() {
@@ -77,5 +84,19 @@ export default class Population {
     get numberOfWorkers() {
         return this.populationUnitCount - (this.numberOfFarmers + this.numberOfMilitary);
     }
-    
+
+    // Calculates the number of population gained per turn
+    get populationPerTurn() {
+        // Base amount is: (<food in storage> - <current population unit size>) * 5
+        //     So if the population unit size is currently 5
+        //     And the amount of food in storage is 10
+        //     Then the base is 25 ((10 - 5) * 5)
+        const base = (this.player.food.foodInStorage - this.populationUnitCount) * 5;
+        const total = base
+            // granary add 20
+            + (this.player.projects.isOwned('GRANARY') ? 20 : 0);
+        const maximum = this.maxPopulationUnitCount - this.populationUnitCount;
+        return Math.min(total, maximum);
+    }
+
 }

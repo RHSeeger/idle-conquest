@@ -46,7 +46,12 @@ export default class Gold {
     }
 
     get goldEarnedPerTurn() {
-        return Math.trunc(this.player.population.populationUnitCount * this.goldPerPopulation);
+        const goldFromPopulation = (this.player.population.populationUnitCount * this.goldPerPopulation)
+            * (this.player.projects.isOwned('MARKETPLACE') ? 1.5 : 1.0);
+        const goldFromMinerals = 0
+            * (this.player.projects.isOwned('MARKETPLACE') ? 1.5 : 1.0);
+
+        return Math.trunc(goldFromPopulation + goldFromMinerals);
     }
 
     get goldSpentPerTurn() {

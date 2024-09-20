@@ -36,8 +36,8 @@ export default class Project {
 
     /**
      * Returns true if the player has unlocked the project
-     * - has a max production higher than the production cost (if any)
      * - has a max gold higher than the gold cost (if any)
+     * - has a max production higher than the production cost (if any)
      * - has other projects this one depends on (if any)
      * - fullfills any other requirements
      */
@@ -48,16 +48,23 @@ export default class Project {
         if (this.playerObject.production.maxProductionStorage < this.getCost("production")) {
             return false;
         }
-        if (this.playerObject.gold.goldPerTurn < this.getUpkeep("gold")) {
-            return false;
+        // Check to make sure all dependencies are owned
+        for (const projectId of this.dependencies) {
+            if (!this.playerObject.projects.isOwned(projectId)) {
+                return false;
+            }
         }
-        if (this.playerObject.production.productionPerTurn < this.getUpkeep("production")) {
-            return false;
-        }
-
+        
         return true;
     }
 
+    /**
+     * Returns true if the player can currently afford this project
+     * - Gold in storage is >= the gold cost of this project (if any)
+     * - Production in storage is >= the production cost of this project (if any)
+     * - Gold earned per turn is >= gold upkeep of this project (if any)
+     * - Production earned per turn is >= production upkeep of this project (if any)
+     */
     get canAfford() {
         if (this.playerObject.gold.goldInStorage < this.getCost("gold")) {
             return false;

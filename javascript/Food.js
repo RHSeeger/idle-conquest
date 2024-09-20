@@ -41,6 +41,16 @@ export default class Food {
         return BASE_FOOD_GENERATION_PER_FARMER;
     }
     
+    get foodProducedPerTurn() {
+        const numberOfFarmers = this.player.population.numberOfFarmers;
+        const foodFarmed = numberOfFarmers * this.foodPerFarmer;
+
+        const totalFoodProduced = foodFarmed
+            + (this.player.projects.isOwned('GRANARY') ? 2 : 0);
+            
+        return totalFoodProduced;
+    }
+
     get requiredFood() {
         const foodPerPopulation = this.foodRequiredPerPopulation;
         const population = this.player.population.populationUnitCount;
@@ -51,7 +61,6 @@ export default class Food {
     get foodRequiredPerPopulation() {
         return BASE_FOOD_REQUIRED_PER_POPULATION;
     }
-    
     
     get maxFoodStorage() {
         return BASE_FOOD_STORAGE;

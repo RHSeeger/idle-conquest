@@ -45,7 +45,7 @@ export default class Projects {
     }
 
     addOwned(key) {
-        if (!this.isOwned(playerObject, key)) {
+        if (!this.isOwned(key)) {
             this.data.builtProjects.push(key);
         }
     }
@@ -66,7 +66,7 @@ export default class Projects {
                 displayName: "Builder's Hall",
                 cost: { production: 60 },
                 upkeep: { gold: 1 },
-                description: "N/A",
+                description: "The Builder's Hall provides no direct benefit of it's own, but is required for the construction of many other projects; such as a Granary",
                 dependencies: [],
                 playerObject: playerObject
             }),
@@ -75,7 +75,7 @@ export default class Projects {
                 displayName: "Smithy",
                 cost: { production: 40 },
                 upkeep: { gold: 1 },
-                description: "",
+                description: "The Smithy provides no direct benefit of it's own, but is required for the construction of many other projects; such as a Marketplace",
                 dependencies: [],
                 playerObject: playerObject
             }),
@@ -88,7 +88,7 @@ export default class Projects {
                 cost: { production: 40 },
                 upkeep: { gold: 1 },
                 description: "An important building for beginning town, adds both population growth and food output.",
-                dependencies: ['BUILDERS_HALL'],
+                dependencies: [ 'BUILDERS_HALL' ],
                 playerObject: playerObject
             }),
             new Project({
@@ -105,8 +105,8 @@ export default class Projects {
                 displayName: "Marketplace",
                 cost: { production: 100 },
                 upkeep: { gold: 1 },
-                description: "",
-                dependencies: [],
+                description: "Increases the amount of gold gained from taxes and minerals/mining by 50%",
+                dependencies: [ 'SMITHY' ],
                 playerObject: playerObject
             }),
             new Project({
@@ -115,7 +115,7 @@ export default class Projects {
                 cost: { production: 100 },
                 upkeep: { gold: 2 },
                 description: "",
-                dependencies: ['GRANARY', 'SMITHY', 'MARKETPLACE'],
+                dependencies: [ 'GRANARY', 'SMITHY', 'MARKETPLACE'],
                 playerObject: playerObject
             }),
             new Project({

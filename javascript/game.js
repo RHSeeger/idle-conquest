@@ -99,23 +99,20 @@ function setupClicks() {
 function updateFood() {
     const currentFood = food.foodInStorage;
     const requiredFood = food.requiredFood;
-    const foodPerFarmers = food.foodPerFarmer;
 
-    var currentFarmers = population.numberOfFarmers;
-    var producedFood = currentFarmers * foodPerFarmers;
-
-    if ((currentFood + producedFood) < requiredFood) {
+    while ((currentFood + food.foodProducedPerTurn) < requiredFood) {
         console.log("Adjusting number of farmers because not enough food will be made");
-        // Not enough food, some population needs to be switched to farmers
-        const numberOfFarmersNeeded = Math.ceil(requiredFood / foodPerFarmers);
-        population.numberOfFarmers = numberOfFarmersNeeded;
 
-        currentFarmers = population.numberOfFarmers;
-        producedFood = currentFarmers * foodPerFarmers;
+        // Not enough food, some population needs to be switched to farmers
+        if (population.numberOfFarmers >= population.populationUnitCount) {
+            // Can't add any more farmers (this shouldn't be possible)
+            throw new Error("Unable to add more farmers; no population available");
+        }
+        population.numberOfFarmers = population.numberOfFarmers + 1
     }
 
     // And then set the stored food to the new amount, after production and consumption
-    food.foodInStorage = currentFood + producedFood - requiredFood;
+    food.foodInStorage = currentFood + food.foodProducedPerTurn - requiredFood;
 }
 
 // Update display with current game state
@@ -133,7 +130,7 @@ function updateDisplay() {
     document.getElementById('production-max-value').textContent = production.maxProductionStorage;
 
     document.getElementById('food-required').textContent = food.requiredFood;
-    document.getElementById('food-generated').textContent = population.numberOfFarmers * food.foodPerFarmer;
+    document.getElementById('food-generated').textContent = food.foodProducedPerTurn;
     document.getElementById('work-generated').textContent = population.numberOfWorkers * production.productionPerWorker;
     document.getElementById('population-increase').textContent = population.populationPerTurn;
     document.getElementById('gold-earned-per-turn').textContent = gold.goldEarnedPerTurn;
@@ -147,7 +144,7 @@ function updateDisplay() {
     }
 
     const requiredFood = food.requiredFood;
-    const producedFood = population.numberOfFarmers * food.foodPerFarmer;
+    const producedFood = food.foodProducedPerTurn;
     if (population.numberOfFarmers <= 0 || (food.foodInStorage === 0 && producedFood <= requiredFood)) {
         document.querySelector("#farmer-remove").classList.add("disabled");
     } else {
@@ -160,11 +157,11 @@ function updateDisplay() {
         const project = projects.definedProjects[projectId];
 
         // update hidden / unlocked
-        if (projects.definedProjects[projectId].isOwned) {
+        if (project.isOwned) {
             projectElement.setAttribute("project-state", "owned")
-        } else if (projects.definedProjects[projectId].canAfford) {
+        } else if (project.canAfford && project.isUnlocked) {
             projectElement.setAttribute("project-state", "canAfford")
-        } else if (projects.definedProjects[projectId].isUnlocked) {
+        } else if (project.isUnlocked) {
             projectElement.setAttribute("project-state", "unlockedButCannotAfford")
         } else {
             projectElement.setAttribute("project-state", "locked")

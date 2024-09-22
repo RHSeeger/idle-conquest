@@ -22,11 +22,16 @@ module.exports = {
             }
         ]
     },
+    resolve: {
+        extensions: ['.tsx', '.ts', '.js'],
+    },
     plugins: [
         new HtmlWebpackPlugin({
             template: './src/index.html'
         }),
         new MiniCssExtractPlugin()
     ],
-    watch: true
+    watch: true,
+    mode: 'development',
+    devtool: 'inline-source-map',
 };

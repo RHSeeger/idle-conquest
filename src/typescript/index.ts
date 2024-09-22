@@ -20,23 +20,15 @@ const gold = playerObject.gold;
 const projects = playerObject.projects;
 
 // So that they're accessible from the console, for debugging, and dirty cheaters ;)
-//(window as any).player = player;
-//(window as any).playerObject = playerObject;
-//(<any>window).playerObject = playerObject;
-//window['playerObject'] = playerObject;
-// interface Window { playerObject: any; }
-//window['playerObject'] = playerObject;
-//globalThis.playerObject = playerObject;
-//window.playerObject = playerObject;
-// For the life of me, I cannot figure out how to add a new property to [window] to make it available to the console
-
+(window as any).playerObject = playerObject;
 
 function initializeDisplay() {
     console.log("Initializing display");
 
     // Add all projects
     const projectList = document.querySelector("#projects .project-items");
-    for (let [projectId, project] of Object.entries(projects.definedProjects)) {
+    //projects.definedProjects.forEach((project: Project, projectId: string) => {
+    for (let [projectId, project] of projects.definedProjects) {
         const li = document.createElement("li");
         li.setAttribute("data-project-id", projectId);
         li.classList.add("button")
@@ -87,10 +79,12 @@ function setupClicks() {
     document.querySelectorAll("#projects .project-items li[data-project-id]").forEach((projectElement) => {
         const projectId = projectElement.getAttribute("data-project-id");
         if (projectId === null) {
+            console.log("Project elements missing")
             return;
         }
         const project = projects.definedProjects.get(projectId);
         if (project === undefined) {
+            console.log("Project missing", projectId)
             return;
         }
 
@@ -199,7 +193,7 @@ function updateDisplay() {
     // Debugging
     var seen: Array<any> = [];
     (document.querySelector("#playerData .player-object .data") as HTMLInputElement).innerText = JSON.stringify(
-        playerObject,
+        playerObject.data,
         (_key: any, val: any) => {
             if (val != null && typeof val == "object") {
                 if (seen.indexOf(val) >= 0) {

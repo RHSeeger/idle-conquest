@@ -16,13 +16,12 @@
     "html-webpack-plugin": "^5.6.0",
     "mini-css-extract-plugin": "^2.9.1",
     "style-loader": "^4.0.0",
+    "ts-loader": "^9.5.1",
     "typescript": "^5.6.2",
     "webpack-cli": "^5.1.4"
   },
   "scripts": {
     "test": "echo \"Error: no tests installed\" && exit 1",
-    "buildOLD": "tsc && webpack app/app.js -o app/app.bundle.js --mode=production",
-    "build": "tsc && webpack --config webpack.config.js",
-    "build:dev": "tsc && webpack app/app.js -o app/app.bundle.js --mode=development"
+    "build": "tsc && webpack --config webpack.config.js"
   }
 }

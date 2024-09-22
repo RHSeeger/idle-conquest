@@ -7,7 +7,7 @@ import { Resource } from "./Resource"
 export default class Projects {
     readonly player: Player;
     readonly data: GameState;
-    readonly definedProjects: Map<String, Project>;
+    readonly definedProjects: Map<string, Project>;
     
     constructor(player: Player) {
         this.player = player;
@@ -46,8 +46,8 @@ export default class Projects {
         }
     }
 
-    static createDefinedProjects(playerObject: Player): Map<String, Project> {
-        var definedProjects: Map<String, Project> = new Map();
+    static createDefinedProjects(playerObject: Player): Map<string, Project> {
+        var definedProjects: Map<string, Project> = new Map();
 
         [
             new Project({

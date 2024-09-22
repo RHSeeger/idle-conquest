@@ -1,71 +1,60 @@
 
-import Project from "./Project.js"
+import Project from "./Project"
+import Player from "./Player"
+import GameState from "./GameState"
+import { Resource } from "./Resource"
 
 export default class Projects {
-
-    constructor(player) {
+    readonly player: Player;
+    readonly data: GameState;
+    readonly definedProjects: Map<String, Project>;
+    
+    constructor(player: Player) {
         this.player = player;
-        // The map of all projects defined in the system; [projectId -> project]
-        this.definedProjects = this.createDefinedProjects(player);
+        this.data = player.data;
+        this.definedProjects = Projects.createDefinedProjects(player);
     }
 
-    get data() {
-        if (!("data" in this.player)) {
-            this.player.data = {}
-        }
-        if (!("projects" in this.player.data)) {
-            this.player.data.projects = {}
-        }
-
-        // The projects the player has purchased, stored as a list of project ids
-        // ex. [ BUILDERS_HALL, SMITHY ]
-        if (!("builtProjects" in this.player.data.projects)) {
-            this.player.data.projects.builtProjects = [];
-        }
-
-        return this.player.data.projects;
+    get builtProjects(): Array<string> {
+        return this.data.projectsBuilt;
     }
 
-    get builtProjects() {
-        return this.data.builtProjects;
-    }
-
-    purchase(project) {
+    purchase(project: Project) {
         if (project.isOwned || !project.isUnlocked || !project.canAfford) {
             return;
         }
 
-        this.player.gold.goldInStorage -= project.getCost("gold");
-        this.player.production.productionInStorage -= project.getCost("production");
+        this.player.gold.goldInStorage -= project.getCost(Resource.Gold);
+        this.player.production.productionInStorage -= project.getCost(Resource.Production);
         this.addOwned(project.id);
     }
 
-    isOwned(key) {
-        return this.data.builtProjects.includes(key);
+    isOwned(key: string) {
+        return this.data.projectsBuilt.includes(key);
     }
 
-    addOwned(key) {
+    addOwned(key: string) {
         if (!this.isOwned(key)) {
-            this.data.builtProjects.push(key);
+            this.data.projectsBuilt.push(key);
         }
     }
 
-    removeOwned(key) {
-        const index = this.data.purchaseProjects.indexOf(key);
+    removeOwned(key: string) {
+        const index = this.data.projectsBuilt.indexOf(key);
         if (index > -1) { // only splice array when item is found
-            this.data.builtProjects = this.data.builtProjects.splice(index, 1); // 2nd parameter means remove one item only
+            this.data.projectsBuilt = this.data.projectsBuilt.splice(index, 1); // 2nd parameter means remove one item only
         }
     }
 
-    createDefinedProjects(playerObject) {
-        var definedProjects = [];
+    static createDefinedProjects(playerObject: Player): Map<String, Project> {
+        var definedProjects: Map<String, Project> = new Map();
 
         [
             new Project({
                 id: "BUILDERS_HALL",
                 displayName: "Builder's Hall",
-                cost: { production: 60 },
-                upkeep: { gold: 1 },
+                cost: new Map<Resource, number>([[Resource.Production, 60]]),
+                upkeep: new Map<Resource, number>([[Resource.Gold, 1]]),
                 description: "The Builder's Hall provides no direct benefit of it's own, but is required for the construction of many other projects; such as a Granary",
                 dependencies: [],
                 playerObject: playerObject
@@ -73,8 +62,8 @@ export default class Projects {
             new Project({
                 id: "SMITHY",
                 displayName: "Smithy",
-                cost: { production: 40 },
-                upkeep: { gold: 1 },
+                cost: new Map<Resource, number>([[Resource.Production, 40]]),
+                upkeep: new Map<Resource, number>([[Resource.Gold, 1]]),
                 description: "The Smithy provides no direct benefit of it's own, but is required for the construction of many other projects; such as a Marketplace",
                 dependencies: [],
                 playerObject: playerObject
@@ -85,8 +74,8 @@ export default class Projects {
                 // +2 food per turn (total, not per unit)
                 id: "GRANARY",
                 displayName: "Granary",
-                cost: { production: 40 },
-                upkeep: { gold: 1 },
+                cost: new Map<Resource, number>([[Resource.Production, 40]]),
+                upkeep: new Map<Resource, number>([[Resource.Gold, 1]]),
                 description: "An important building for beginning town, adds both population growth and food output.",
                 dependencies: [ 'BUILDERS_HALL' ],
                 playerObject: playerObject
@@ -94,8 +83,8 @@ export default class Projects {
             new Project({
                 id: "BARRACKS",
                 displayName: "Barracks",
-                cost: { production: 30 },
-                upkeep: [],
+                cost: new Map<Resource, number>([[Resource.Production, 30]]),
+                upkeep: new Map<Resource, number>(),
                 description: "A simple building used to train and house basic units. When combined with other buildings, allows the the training of more advanced units.",
                 dependencies: [],
                 playerObject: playerObject
@@ -103,8 +92,8 @@ export default class Projects {
             new Project({
                 id: "MARKETPLACE",
                 displayName: "Marketplace",
-                cost: { production: 100 },
-                upkeep: { gold: 1 },
+                cost: new Map<Resource, number>([[Resource.Production, 100]]),
+                upkeep: new Map<Resource, number>([[Resource.Gold, 1]]),
                 description: "Increases the amount of gold gained from taxes and minerals/mining by 50%",
                 dependencies: [ 'SMITHY' ],
                 playerObject: playerObject
@@ -112,15 +101,17 @@ export default class Projects {
             new Project({
                 id: "FARMERS_MARKET",
                 displayName: "Farmer's Market",
-                cost: { production: 100 },
-                upkeep: { gold: 2 },
+                cost: new Map<Resource, number>([[Resource.Production, 61000]]),
+                upkeep: new Map<Resource, number>([[Resource.Gold, 2]]),
                 description: "",
                 dependencies: [ 'GRANARY', 'SMITHY', 'MARKETPLACE'],
                 playerObject: playerObject
-            }),
+            }),/*
             new Project({
                 id: "SAWMILL",
                 displayName: "Sawmill",
+                cost: new Map<Resource, number>([[Resource.Production, 60]]),
+                upkeep: new Map<Resource, number>([[Resource.Gold, 1]]),
                 cost: { production: 100 },
                 upkeep: { gold: 2 },
                 description: "",
@@ -130,6 +121,8 @@ export default class Projects {
             new Project({
                 id: "FORESTERS_GUILD",
                 displayName: "Forester's Guild",
+                cost: new Map<Resource, number>([[Resource.Production, 60]]),
+                upkeep: new Map<Resource, number>([[Resource.Gold, 1]]),
                 cost: { production: 200 },
                 upkeep: { gold: 2 },
                 description: "",
@@ -139,6 +132,8 @@ export default class Projects {
             new Project({
                 id: "SHRINE",
                 displayName: "Shrine",
+                cost: new Map<Resource, number>([[Resource.Production, 60]]),
+                upkeep: new Map<Resource, number>([[Resource.Gold, 1]]),
                 cost: { production: 100 },
                 upkeep: { gold: 1 },
                 description: "",
@@ -148,6 +143,8 @@ export default class Projects {
             new Project({
                 id: "TEMPLE",
                 displayName: "Temple",
+                cost: new Map<Resource, number>([[Resource.Production, 60]]),
+                upkeep: new Map<Resource, number>([[Resource.Gold, 1]]),
                 cost: { production: 200 },
                 upkeep: { gold: 2 },
                 description: "",
@@ -157,6 +154,8 @@ export default class Projects {
             new Project({
                 id: "STABLES",
                 displayName: "Stables",
+                cost: new Map<Resource, number>([[Resource.Production, 60]]),
+                upkeep: new Map<Resource, number>([[Resource.Gold, 1]]),
                 cost: { production: 80 },
                 upkeep: { gold: 2 },
                 description: "",
@@ -166,6 +165,8 @@ export default class Projects {
             new Project({
                 id: "ANIMISTS_GUILD",
                 displayName: "Animist's Guild",
+                cost: new Map<Resource, number>([[Resource.Production, 60]]),
+                upkeep: new Map<Resource, number>([[Resource.Gold, 1]]),
                 cost: { production: 200 },
                 upkeep: { gold: 5 },
                 description: "",
@@ -175,6 +176,8 @@ export default class Projects {
             new Project({
                 id: "MINERS_GUILD",
                 displayNamea: "Miner's Guild",
+                cost: new Map<Resource, number>([[Resource.Production, 60]]),
+                upkeep: new Map<Resource, number>([[Resource.Gold, 1]]),
                 cost: { production: 300 },
                 upkeep: { gold: 3 },
                 description: "",
@@ -184,6 +187,8 @@ export default class Projects {
             new Project({
                 id: "LIBRARY",
                 displayName: "Library",
+                cost: new Map<Resource, number>([[Resource.Production, 60]]),
+                upkeep: new Map<Resource, number>([[Resource.Gold, 1]]),
                 cost: { production: 60 },
                 upkeep: { gold: 5 }, // should be 1, but set high for testing
                 description: "",
@@ -193,6 +198,8 @@ export default class Projects {
             new Project({
                 id: "SAGES_GUILD",
                 displayName: "Sage's Guild",
+                cost: new Map<Resource, number>([[Resource.Production, 60]]),
+                upkeep: new Map<Resource, number>([[Resource.Gold, 1]]),
                 cost: { production: 120 },
                 upkeep: { gold: 2 },
                 description: "",
@@ -202,6 +209,8 @@ export default class Projects {
             new Project({
                 id: "UNIVERSITY",
                 displayName: "University",
+                cost: new Map<Resource, number>([[Resource.Production, 60]]),
+                upkeep: new Map<Resource, number>([[Resource.Gold, 1]]),
                 cost: { production: 300 },
                 upkeep: { gold: 3 },
                 description: "",
@@ -211,6 +220,8 @@ export default class Projects {
             new Project({
                 id: "BANK",
                 displayName: "Bank",
+                cost: new Map<Resource, number>([[Resource.Production, 60]]),
+                upkeep: new Map<Resource, number>([[Resource.Gold, 1]]),
                 cost: { production: 250 },
                 upkeep: { gold: 3 },
                 description: "",
@@ -220,6 +231,8 @@ export default class Projects {
             new Project({
                 id: "SHIPWRIGHTS_GUILD",
                 displayName: "Shipwright's Guild",
+                cost: new Map<Resource, number>([[Resource.Production, 60]]),
+                upkeep: new Map<Resource, number>([[Resource.Gold, 1]]),
                 cost: { production: 100 },
                 upkeep: { gold: 1 },
                 description: "",
@@ -229,6 +242,8 @@ export default class Projects {
             new Project({
                 id: "SHIPYARD",
                 displayName: "Shipyard",
+                cost: new Map<Resource, number>([[Resource.Production, 60]]),
+                upkeep: new Map<Resource, number>([[Resource.Gold, 1]]),
                 cost: { production: 200 },
                 upkeep: { gold: 2 },
                 description: "",
@@ -238,6 +253,8 @@ export default class Projects {
             new Project({
                 id: "MERCHANTS_GUILD",
                 displayName: "Merchant's Guild",
+                cost: new Map<Resource, number>([[Resource.Production, 60]]),
+                upkeep: new Map<Resource, number>([[Resource.Gold, 1]]),
                 cost: { production: 600 },
                 upkeep: { gold: 5 },
                 dependencies: ['BANK', 'SHIPYARD'],
@@ -246,6 +263,8 @@ export default class Projects {
             new Project({
                 id: "MECHANICIANS_GUILD",
                 displayName: "Mechanician's Guild",
+                cost: new Map<Resource, number>([[Resource.Production, 60]]),
+                upkeep: new Map<Resource, number>([[Resource.Gold, 1]]),
                 cost: { production: 600 },
                 upkeep: { gold: 5 },
                 description: "",
@@ -255,6 +274,8 @@ export default class Projects {
             new Project({
                 id: "EXPLORERS_GUILD",
                 displayName: "Explorer's Guild",
+                cost: new Map<Resource, number>([[Resource.Production, 60]]),
+                upkeep: new Map<Resource, number>([[Resource.Gold, 1]]),
                 cost: { production: 600 },
                 upkeep: { gold: 3 },
                 description: "Trains and dispatches explorers to find things of interest in the surrounding lands",
@@ -264,14 +285,17 @@ export default class Projects {
             new Project({
                 id: "ADVENTURERS_GUILD",
                 displayName: "Adventurer's Guild",
+                cost: new Map<Resource, number>([[Resource.Production, 60]]),
+                upkeep: new Map<Resource, number>([[Resource.Gold, 1]]),
                 cost: { production: 2000 },
                 upkeep: { gold: 5 },
                 description: "Trains unique adventurers, heroes, to explore and conquer places of interest in the surrounding lands",
                 dependencies: ['EXPLORERS_GUILD'],
                 playerObject: playerObject
             })
+                */
         ].forEach(function (project, _index) {
-            definedProjects[project.id] = project;
+            definedProjects.set(project.id, project);
         })
 
         return definedProjects;

@@ -1,0 +1,28 @@
+{
+  "name": "idle-conquest",
+  "version": "1.0.0",
+  "main": "index.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@babel/plugin-proposal-class-properties": "^7.18.6",
+    "@babel/plugin-proposal-object-rest-spread": "^7.20.7",
+    "@babel/preset-env": "^7.25.4",
+    "@babel/preset-typescript": "^7.24.7",
+    "babel-loader": "^9.2.1",
+    "css-loader": "^7.1.2",
+    "html-webpack-plugin": "^5.6.0",
+    "mini-css-extract-plugin": "^2.9.1",
+    "style-loader": "^4.0.0",
+    "typescript": "^5.6.2",
+    "webpack-cli": "^5.1.4"
+  },
+  "scripts": {
+    "test": "echo \"Error: no tests installed\" && exit 1",
+    "buildOLD": "tsc && webpack app/app.js -o app/app.bundle.js --mode=production",
+    "build": "tsc && webpack --config webpack.config.js",
+    "build:dev": "tsc && webpack app/app.js -o app/app.bundle.js --mode=development"
+  }
+}

@@ -2,38 +2,27 @@
  * Functionality related to gold; storage and producing
  * 
  */
+import GameState from "./GameState";
+import Player from "./Player";
+import { Resource } from "./Resource"
 
 const BASE_GOLD_PER_POPULATION = 1.0;
-const INITIAL_GOLD_IN_STORAGE = 0;
-const BASE_GOLD_STORAGE = 1000.0;
+const BASE_MAX_GOLD_STORAGE = 1000.0;
 
 export default class Gold {
+    readonly player: Player;
+    readonly data: GameState;
 
-    constructor(player) {
+    constructor(player: Player) {
         this.player = player;
+        this.data = player.data;
     }
 
-    get data() {
-        if (!("data" in this.player)) {
-            this.player.data = {}
-        }
-        if (!("gold" in this.player.data)) {
-            this.player.data.gold = {}
-        }
-
-        if (!("goldInStorage" in this.player.data.gold)) {
-            console.log("Initializing gold to " + INITIAL_GOLD_IN_STORAGE);
-            this.player.data.gold.goldInStorage = INITIAL_GOLD_IN_STORAGE;
-        }
-
-        return this.player.data.gold;
+    get maxGoldStorage(): number {
+        return BASE_MAX_GOLD_STORAGE;
     }
 
-    get maxGoldStorage() {
-        return BASE_GOLD_STORAGE;
-    }
-
-    get goldInStorage() {
+    get goldInStorage(): number {
         return this.data.goldInStorage;
     }
 
@@ -41,11 +30,11 @@ export default class Gold {
         this.data.goldInStorage = Math.trunc(amount);
     }
 
-    get goldPerPopulation() {
+    get goldPerPopulation(): number {
         return BASE_GOLD_PER_POPULATION;
     }
 
-    get goldEarnedPerTurn() {
+    get goldEarnedPerTurn(): number {
         const goldFromPopulation = (this.player.population.populationUnitCount * this.goldPerPopulation)
             * (this.player.projects.isOwned('MARKETPLACE') ? 1.5 : 1.0);
         const goldFromMinerals = 0
@@ -54,11 +43,13 @@ export default class Gold {
         return Math.trunc(goldFromPopulation + goldFromMinerals);
     }
 
-    get goldSpentPerTurn() {
+    get goldSpentPerTurn(): number {
         const spentOnProjects = this.player.projects.builtProjects.map((projectId) => {
-            return this.player.projects.definedProjects[projectId]
+            return this.player.projects.definedProjects.get(projectId);
+        }).filter((project) => {
+            return project !== undefined;
         }).map((project) => {
-            return project.getUpkeep('gold')
+            return project.getUpkeep(Resource.Gold);
         }).reduce((total, current) => {
             return total + current;
         }, 0);

@@ -1,25 +1,18 @@
+// The main TypeScript entry point for the web app
 
-import Population from "../src/typescript/Population.js"
-import Player from "../src/typescript/Player.js"
-import Projects from "../src/typescript/Projects.js"
+import "../css/styles.css";
 
-// Initialize game variables
-const initialValues = {
-    // population/roles
-    population: 1.0,
-    farmers: 1,
-    military: 0,
-    // storage
-    foodInStorage: 0,
-    productionInStorage: 0,
-    goldInStorage: 0,
-    purchasedProjects: []
-}
+import Player from "./Player"
+// TODO: Remove these if we don't actually need them
+import Population from "./Population"
+import Projects from "./Projects"
+import Production from "./Production";
+import Gold from "./Gold";
+import Food from "./Food";
 
 // Setup the player to the initial values
-let player = Object.fromEntries(Object.entries(initialValues));
-
 let playerObject = new Player();
+
 const food = playerObject.food;
 const population = playerObject.population;
 const production = playerObject.production;
@@ -27,35 +20,35 @@ const gold = playerObject.gold;
 const projects = playerObject.projects;
 
 // So that they're accessible from the console, for debugging, and dirty cheaters ;)
-window.player = player;
-window.playerObject = playerObject;
+(window as any).playerObject = playerObject;
 
 function initializeDisplay() {
     console.log("Initializing display");
 
     // Add all projects
     const projectList = document.querySelector("#projects .project-items");
-    for (let [projectId, project] of Object.entries(projects.definedProjects)) {
+    //projects.definedProjects.forEach((project: Project, projectId: string) => {
+    for (let [projectId, project] of projects.definedProjects) {
         const li = document.createElement("li");
         li.setAttribute("data-project-id", projectId);
         li.classList.add("button")
         li.setAttribute("project-state", "locked")
         li.innerHTML = project.displayName;
 
-        projectList.appendChild(li);
+        projectList?.appendChild(li);
     };
 }
 
 function setupClicks() {
     // Fill Food button
-    document.querySelector("#resources-section .food").addEventListener("click", function (e) {
+    document.querySelector("#resources-section .food")?.addEventListener("click", function (e) {
         console.log("filling food");
         food.fillFoodStorage();
         updateDisplay();
     }, false);
 
     // Add Farmer (+) button
-    document.querySelector("#farmer-add").addEventListener("click", function (e) {
+    document.querySelector("#farmer-add")?.addEventListener("click", function (e) {
         console.log("adding farmer");
         if (population.numberOfFarmers >= population.populationUnitCount) {
             // We can't assign any more farmers, because the entire population is already farming
@@ -71,7 +64,7 @@ function setupClicks() {
     }, false);
 
     // Remove Farmer (-) button
-    document.querySelector("#farmer-remove").addEventListener("click", function (e) {
+    document.querySelector("#farmer-remove")?.addEventListener("click", function (e) {
         console.log("removing farmer");
         if (population.numberOfFarmers <= 0) {
             // We can't remove any more farmers
@@ -85,7 +78,15 @@ function setupClicks() {
     // Project buttons
     document.querySelectorAll("#projects .project-items li[data-project-id]").forEach((projectElement) => {
         const projectId = projectElement.getAttribute("data-project-id");
-        const project = projects.definedProjects[projectId];
+        if (projectId === null) {
+            console.log("Project elements missing")
+            return;
+        }
+        const project = projects.definedProjects.get(projectId);
+        if (project === undefined) {
+            console.log("Project missing", projectId)
+            return;
+        }
 
         projectElement.addEventListener("click", function (e) {
             console.log("Purchasing project", projectId);
@@ -115,46 +116,67 @@ function updateFood() {
     food.foodInStorage = currentFood + food.foodProducedPerTurn - requiredFood;
 }
 
+/**
+ * Set the textContent of an element in the DOM, identified by it's id
+ * @param id 
+ * @param value 
+ * @returns 
+ */
+function setTextContentById(id: string, value: any) {
+    const element = document.getElementById(id);
+    if (element === null) {
+        console.log("Unable to find element with id:", id);
+        return;
+    }
+    element.textContent = value;
+}
+
 // Update display with current game state
 function updateDisplay() {
-    document.getElementById('total-population-value').textContent = population.populationUnitCount + " (" + population.populationCount + ")";
-    document.getElementById('farmer-population-value').textContent = population.numberOfFarmers;
-    document.getElementById('worker-population-value').textContent = population.numberOfWorkers;
-    document.getElementById('military-population-value').textContent = population.numberOfMilitary;
+    setTextContentById('total-population-value', population.populationUnitCount + " (" + population.populationCount + ")");
+    setTextContentById('farmer-population-value', population.numberOfFarmers);
+    setTextContentById('worker-population-value', population.numberOfWorkers);
+    setTextContentById('military-population-value', population.numberOfMilitary);
 
-    document.getElementById('food-value').textContent = food.foodInStorage;
-    document.getElementById('food-max-value').textContent = food.maxFoodStorage;
-    document.getElementById('gold-value').textContent = gold.goldInStorage;
-    document.getElementById('gold-max-value').textContent = gold.maxGoldStorage;
-    document.getElementById('production-value').textContent = production.productionInStorage;
-    document.getElementById('production-max-value').textContent = production.maxProductionStorage;
+    setTextContentById('food-value', food.foodInStorage);
+    setTextContentById('food-max-value', food.maxFoodStorage);
+    setTextContentById('gold-value', gold.goldInStorage);
+    setTextContentById('gold-max-value', gold.maxGoldStorage);
+    setTextContentById('production-value', production.productionInStorage);
+    setTextContentById('production-max-value', production.maxProductionStorage);
 
-    document.getElementById('food-required').textContent = food.requiredFood;
-    document.getElementById('food-generated').textContent = food.foodProducedPerTurn;
-    document.getElementById('work-generated').textContent = population.numberOfWorkers * production.productionPerWorker;
-    document.getElementById('population-increase').textContent = population.populationPerTurn;
-    document.getElementById('gold-earned-per-turn').textContent = gold.goldEarnedPerTurn;
-    document.getElementById('gold-spent-per-turn').textContent = gold.goldSpentPerTurn;
+    setTextContentById('food-required', food.requiredFood);
+    setTextContentById('food-generated', food.foodProducedPerTurn);
+    setTextContentById('work-generated', population.numberOfWorkers * production.productionPerWorker);
+    setTextContentById('population-increase', population.populationPerTurn);
+    setTextContentById('gold-earned-per-turn', gold.goldEarnedPerTurn);
+    setTextContentById('gold-spent-per-turn', gold.goldSpentPerTurn);
 
     // Disable buttons that can't be used right now
     if (population.numberOfFarmers >= population.populationUnitCount) {
-        document.querySelector("#farmer-add").classList.add("disabled");
+        document.querySelector("#farmer-add")?.classList.add("disabled");
     } else {
-        document.querySelector("#farmer-add").classList.remove("disabled");
+        document.querySelector("#farmer-add")?.classList.remove("disabled");
     }
 
     const requiredFood = food.requiredFood;
     const producedFood = food.foodProducedPerTurn;
     if (population.numberOfFarmers <= 0 || (food.foodInStorage === 0 && producedFood <= requiredFood)) {
-        document.querySelector("#farmer-remove").classList.add("disabled");
+        document.querySelector("#farmer-remove")?.classList.add("disabled");
     } else {
-        document.querySelector("#farmer-remove").classList.remove("disabled");
+        document.querySelector("#farmer-remove")?.classList.remove("disabled");
     }
 
     // Update Projects (show/hide, enable/disable)
     document.querySelectorAll("#projects .project-items li[data-project-id]").forEach((projectElement) => {
         const projectId = projectElement.getAttribute("data-project-id");
-        const project = projects.definedProjects[projectId];
+        if (projectId === null) {
+            return;
+        }
+        const project = projects.definedProjects.get(projectId);
+        if (project === undefined) {
+            return;
+        }
 
         // update hidden / unlocked
         if (project.isOwned) {
@@ -169,18 +191,19 @@ function updateDisplay() {
     });
 
     // Debugging
-    var seen = [];
-    const replacer = function (key, val) {
-        if (val != null && typeof val == "object") {
-            if (seen.indexOf(val) >= 0) {
-                return;
+    var seen: Array<any> = [];
+    (document.querySelector("#playerData .player-object .data") as HTMLInputElement).innerText = JSON.stringify(
+        playerObject.data,
+        (_key: any, val: any) => {
+            if (val != null && typeof val == "object") {
+                if (seen.indexOf(val) >= 0) {
+                    return;
+                }
+                seen.push(val);
             }
-            seen.push(val);
-        }
-        return val;
-    }
-    document.querySelector("#playerData .player .data").innerText = JSON.stringify(window.player, replacer, 2);
-    document.querySelector("#playerData .player-object .data").innerText = JSON.stringify(window.playerObject, replacer, 2);
+            return val;
+        },
+        2);
 }
 
 function updatePopulation() {

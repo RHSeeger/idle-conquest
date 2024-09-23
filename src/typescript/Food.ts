@@ -31,8 +31,11 @@ export default class Food {
     }
     
     get foodProducedPerTurn(): number {
-        const numberOfFarmers = this.player.population.numberOfFarmers;
-        const foodFarmed = numberOfFarmers * this.foodPerFarmer;
+        return this.calculateFoodProducedPerTurn(this.player.population.numberOfFarmers);
+    }
+
+    calculateFoodProducedPerTurn(withNumberOfFarmers: number): number {
+        const foodFarmed = withNumberOfFarmers * this.foodPerFarmer;
 
         const totalFoodProduced = foodFarmed
             + (this.player.projects.isOwned('GRANARY') ? 2 : 0);

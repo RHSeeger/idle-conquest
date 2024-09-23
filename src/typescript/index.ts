@@ -18,6 +18,7 @@ const population = playerObject.population;
 const production = playerObject.production;
 const gold = playerObject.gold;
 const projects = playerObject.projects;
+const military = playerObject.military;
 
 // So that they're accessible from the console, for debugging, and dirty cheaters ;)
 (window as any).playerObject = playerObject;
@@ -50,7 +51,7 @@ function setupClicks() {
     // Add Farmer (+) button
     document.querySelector("#farmer-add")?.addEventListener("click", function (e) {
         console.log("adding farmer");
-        if (population.numberOfFarmers >= population.populationUnitCount) {
+        if (!population.canAddFarmer()) {
             // We can't assign any more farmers, because the entire population is already farming
             return;
         }
@@ -66,7 +67,7 @@ function setupClicks() {
     // Remove Farmer (-) button
     document.querySelector("#farmer-remove")?.addEventListener("click", function (e) {
         console.log("removing farmer");
-        if (population.numberOfFarmers <= 0) {
+        if (!population.canRemoveFarmer) {
             // We can't remove any more farmers
             return;
         }
@@ -75,26 +76,48 @@ function setupClicks() {
         updateDisplay();
     }, false);
 
-    // Project buttons
-    document.querySelectorAll("#projects .project-items li[data-project-id]").forEach((projectElement) => {
-        const projectId = projectElement.getAttribute("data-project-id");
-        if (projectId === null) {
-            console.log("Project elements missing")
-            return;
-        }
-        const project = projects.definedProjects.get(projectId);
-        if (project === undefined) {
-            console.log("Project missing", projectId)
-            return;
-        }
-
-        projectElement.addEventListener("click", function (e) {
-            console.log("Purchasing project", projectId);
-            if (project.isUnlocked && project.canAfford && !project.isOwned) {
-                projects.purchase(project);
+    // SOLDIER NEEDS MORE WORK
+    // Add Soldier (+) button
+    document.querySelector("#soldier-add")?.addEventListener("click", function (e) {
+        console.log("adding soldier");
+        if (population.canAddSoldier()) {
+            population.numberOfMilitary += 1;
+            if ((population.numberOfFarmers + population.numberOfMilitary) > population.populationUnitCount) {
+                population.numberOfFarmers -= 1;
             }
-        });
+            updateDisplay();
+        }
+}, false);
+
+// Remove Soldier (-) button
+document.querySelector("#soldier-remove")?.addEventListener("click", function (e) {
+    console.log("removing soldier");
+    if (population.canRemoveSoldier()) {
+        population.numberOfMilitary -= 1;
+        updateDisplay();
+    }
+}, false);
+
+// Project buttons
+document.querySelectorAll("#projects .project-items li[data-project-id]").forEach((projectElement) => {
+    const projectId = projectElement.getAttribute("data-project-id");
+    if (projectId === null) {
+        console.log("Project elements missing")
+        return;
+    }
+    const project = projects.definedProjects.get(projectId);
+    if (project === undefined) {
+        console.log("Project missing", projectId)
+        return;
+    }
+
+    projectElement.addEventListener("click", function (e) {
+        console.log("Purchasing project", projectId);
+        if (project.isUnlocked && project.canAfford && !project.isOwned) {
+            projects.purchase(project);
+        }
     });
+});
 }
 
 function updateFood() {
@@ -144,6 +167,8 @@ function updateDisplay() {
     setTextContentById('gold-max-value', gold.maxGoldStorage);
     setTextContentById('production-value', production.productionInStorage);
     setTextContentById('production-max-value', production.maxProductionStorage);
+    setTextContentById('military-power-value', military.militaryPowerInStorage);
+    setTextContentById('military-power-max-value', military.militaryPowerMaxStorage);
 
     setTextContentById('food-required', food.requiredFood);
     setTextContentById('food-generated', food.foodProducedPerTurn);
@@ -151,20 +176,41 @@ function updateDisplay() {
     setTextContentById('population-increase', population.populationPerTurn);
     setTextContentById('gold-earned-per-turn', gold.goldEarnedPerTurn);
     setTextContentById('gold-spent-per-turn', gold.goldSpentPerTurn);
+    setTextContentById('military-power-increase', military.militaryPowerEarnedPerTurn);
 
     // Disable buttons that can't be used right now
-    if (population.numberOfFarmers >= population.populationUnitCount) {
-        document.querySelector("#farmer-add")?.classList.add("disabled");
-    } else {
+
+    // Farmer Add
+    if (population.canAddFarmer()) {
         document.querySelector("#farmer-add")?.classList.remove("disabled");
+    } else {
+        document.querySelector("#farmer-add")?.classList.add("disabled");
     }
 
-    const requiredFood = food.requiredFood;
-    const producedFood = food.foodProducedPerTurn;
-    if (population.numberOfFarmers <= 0 || (food.foodInStorage === 0 && producedFood <= requiredFood)) {
-        document.querySelector("#farmer-remove")?.classList.add("disabled");
-    } else {
+    // Farmer Remove
+    if (population.canRemoveFarmer()) {
         document.querySelector("#farmer-remove")?.classList.remove("disabled");
+    } else {
+        document.querySelector("#farmer-remove")?.classList.add("disabled");
+    }
+
+    // Soldier Add / Remove / Hide
+    if (projects.isOwned('BARRACKS')) {
+        document.getElementById("military-population")?.classList.remove("hidden");
+        // TODO: Also unhide military power storage and per turn
+        if (population.canAddSoldier()) {
+            document.querySelector("#soldier-add")?.classList.remove("disabled");
+        } else {
+            document.querySelector("#soldier-add")?.classList.add("disabled");
+        }
+        if (population.canRemoveSoldier()) {
+            document.querySelector("#soldier-remove")?.classList.remove("disabled");
+        } else {
+            document.querySelector("#soldier-remove")?.classList.add("disabled");
+        }
+    } else {
+        document.getElementById("military-population")?.classList.add("hidden");
+        // TODO: Also hide military power storage and per turn
     }
 
     // Update Projects (show/hide, enable/disable)
@@ -222,19 +268,31 @@ function updateProduction() {
 }
 
 function updateGold() {
-    /* const goldPerPopulation = gold.goldPerPopulation;
-    const currentGold = gold.goldInStorage;
-    const currentPopulation = population.populationUnitCount; */
     gold.goldInStorage = gold.goldInStorage + gold.goldEarnedPerTurn - gold.goldSpentPerTurn;
+}
+
+function updateMilitary() {
+    military.militaryPowerInStorage = military.militaryPowerInStorage + military.militaryPowerEarnedPerTurn;
+}
+
+function restrictToRange(value: number, min: number, max: number) {
+    if (value < min) {
+        return min;
+    }
+    if (value > max) {
+        return max;
+    }
+    return value;
 }
 
 /**
  * Update the values to be between the min and max allowed values
  */
 function restrictValues() {
-    food.foodInStorage = Math.min(Math.max(food.foodInStorage, 0), food.maxFoodStorage);
-    production.productionInStorage = Math.min(Math.max(production.productionInStorage, 0), production.maxProductionStorage);
-    gold.goldInStorage = Math.min(Math.max(gold.goldInStorage, 0), gold.maxGoldStorage);
+    food.foodInStorage = restrictToRange(food.foodInStorage, 0, food.maxFoodStorage);
+    production.productionInStorage = restrictToRange(production.productionInStorage, 0, production.maxProductionStorage);
+    gold.goldInStorage = restrictToRange(gold.goldInStorage, 0, gold.maxGoldStorage);
+    military.militaryPowerInStorage = restrictToRange(military.militaryPowerInStorage, 0, military.militaryPowerMaxStorage);
 }
 
 // Main game loop
@@ -243,6 +301,7 @@ function gameLoop() {
     updateProduction();
     updateGold();
     updatePopulation();
+    updateMilitary();
 
     restrictValues();
 

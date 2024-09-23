@@ -75,4 +75,51 @@ export default class Population {
         return Math.min(total, maximum);
     }
 
+    /**
+     * Returns true if it's not possible to remove a farmer
+     * - the number of farmers is already 0, OR
+     * - after removing a farmer, the minimum amount of required food will still be generated
+     */
+    canRemoveFarmer(): boolean {
+        // If there are no farmers, we can't remove any
+        if (this.numberOfFarmers === 0) {
+            return false;
+        }
+
+        // Otherwise, if enough food would be produced with 1 less farmer, one ca be removed
+        const requiredFood = this.player.food.requiredFood;
+        return this.player.food.calculateFoodProducedPerTurn(this.numberOfFarmers - 1) >= requiredFood;
+    }
+
+    /**
+     * Returns true if it's possible to add a farmer
+     * Always true unless the entire population is already assigned to farming
+     */
+    canAddFarmer(): boolean {
+        return this.numberOfFarmers < this.populationUnitCount
+    }
+
+    /**
+     * Returns true if it's possible to add a soldier
+     * If adding a soldier would force the removal of a farmer AND it's not possible to remove a farmer
+     */
+    canAddSoldier(): boolean {
+        if (this.numberOfWorkers > 0) {
+            // adding a soldier would replace a worker
+            return true;
+        }
+        if (this.canRemoveFarmer()) {
+            // adding a soldier would replace a farmer, which is fine
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Returns true if it's possible to remove a soldier
+     * Only false if there are no soldiers currently assigned
+     */
+    canRemoveSoldier(): boolean {
+        return this.numberOfMilitary > 0
+    }
 }

@@ -87,3 +87,7 @@ h1 {
     cursor: default;
     background-color: lightblue;
 }
+
+.hidden {
+    display: none;
+}

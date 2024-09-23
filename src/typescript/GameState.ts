@@ -26,5 +26,8 @@ export default class GameState {
 
     // Projects
     projectsBuilt: Array<string> = [];
+
+    // Military Power
+    militaryPowerInStorage: number = 0;
 }
 

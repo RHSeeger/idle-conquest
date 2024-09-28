@@ -4,11 +4,13 @@
  */
 import GameState from "./GameState";
 import Player from "./Player";
+import Discovery from "./Discovery"
+import { Resource } from "./Resource"
 
 export default class Food {
-    static readonly BASE_FOOD_GENERATION_PER_FARMER : number = 2.0;
-    static readonly BASE_MAX_FOOD_STORAGE : number = 10.0;
-    static readonly BASE_FOOD_REQUIRED_PER_POPULATION : number = 1.0;
+    static readonly BASE_FOOD_GENERATION_PER_FARMER: number = 2.0;
+    static readonly BASE_MAX_FOOD_STORAGE: number = 10.0;
+    static readonly BASE_FOOD_REQUIRED_PER_POPULATION: number = 1.0;
 
     readonly player: Player;
     readonly data: GameState;
@@ -29,7 +31,7 @@ export default class Food {
     get foodPerFarmer(): number {
         return Food.BASE_FOOD_GENERATION_PER_FARMER;
     }
-    
+
     get foodProducedPerTurn(): number {
         return this.calculateFoodProducedPerTurn(this.player.population.numberOfFarmers);
     }
@@ -38,10 +40,27 @@ export default class Food {
         const foodFarmed = withNumberOfFarmers * this.foodPerFarmer;
 
         const totalFoodProduced = foodFarmed
-            + (this.player.projects.isOwned('GRANARY') ? 2 : 0);
-            
+            + (this.player.projects.isOwned('GRANARY') ? 2 : 0)
+            + this.calculateFoodFromDiscoveries();
+
         return totalFoodProduced;
     }
+
+    calculateFoodFromDiscoveries() {
+        return this.player.discoveries.getOwnedNodes().map((discovery: Discovery) => {
+            // Map to the actual amount of gold produced
+            if (discovery.resource.has(Resource.Food)) {
+                return discovery.resource.get(Resource.Food);
+            }
+        }).filter((food: number | undefined): food is number => {
+            // Filter out the ones that don't produce gold (should be unnecessary)
+            return !!food;
+        }).reduce((sum, current) => {
+            // Sum the total
+            return sum + current;
+        }, 0);
+    }
+
 
     get requiredFood(): number {
         const foodPerPopulation = this.foodRequiredPerPopulation;
@@ -53,7 +72,7 @@ export default class Food {
     get foodRequiredPerPopulation(): number {
         return Food.BASE_FOOD_REQUIRED_PER_POPULATION;
     }
-    
+
     get maxFoodStorage(): number {
         return Food.BASE_MAX_FOOD_STORAGE;
     }
@@ -62,5 +81,5 @@ export default class Food {
     fillFoodStorage(): void {
         this.data.foodInStorage = this.maxFoodStorage;
     }
-    
+
 }

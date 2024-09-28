@@ -19,6 +19,7 @@ const production = playerObject.production;
 const gold = playerObject.gold;
 const projects = playerObject.projects;
 const military = playerObject.military;
+const discoveries = playerObject.discoveries;
 
 // So that they're accessible from the console, for debugging, and dirty cheaters ;)
 (window as any).playerObject = playerObject;
@@ -28,7 +29,6 @@ function initializeDisplay() {
 
     // Add all projects
     const projectList = document.querySelector("#projects .project-items");
-    //projects.definedProjects.forEach((project: Project, projectId: string) => {
     for (let [projectId, project] of projects.definedProjects) {
         const li = document.createElement("li");
         li.setAttribute("data-project-id", projectId);
@@ -37,6 +37,25 @@ function initializeDisplay() {
         li.innerHTML = project.displayName;
 
         projectList?.appendChild(li);
+    };
+
+    // Add Discovery items
+    const discoveryList = document.querySelector("#discoveries .discovery-items");
+    for (let [discoveryId, discovery] of discoveries.definedDiscoveries) {
+        const li = document.createElement("li");
+        li.setAttribute("data-discovery-id", discoveryId);
+
+        const label = document.createElement("span");
+        label.classList.add("label");
+        label.innerHTML = discovery.displayName;
+        li.appendChild(label);
+
+        const count = document.createElement("span");
+        count.classList.add("count");
+        count.innerHTML = "(0)";
+        li.appendChild(count);
+
+        discoveryList?.appendChild(li);
     };
 }
 
@@ -76,7 +95,6 @@ function setupClicks() {
         updateDisplay();
     }, false);
 
-    // SOLDIER NEEDS MORE WORK
     // Add Soldier (+) button
     document.querySelector("#soldier-add")?.addEventListener("click", function (e) {
         console.log("adding soldier");
@@ -87,37 +105,37 @@ function setupClicks() {
             }
             updateDisplay();
         }
-}, false);
+    }, false);
 
-// Remove Soldier (-) button
-document.querySelector("#soldier-remove")?.addEventListener("click", function (e) {
-    console.log("removing soldier");
-    if (population.canRemoveSoldier()) {
-        population.numberOfMilitary -= 1;
-        updateDisplay();
-    }
-}, false);
-
-// Project buttons
-document.querySelectorAll("#projects .project-items li[data-project-id]").forEach((projectElement) => {
-    const projectId = projectElement.getAttribute("data-project-id");
-    if (projectId === null) {
-        console.log("Project elements missing")
-        return;
-    }
-    const project = projects.definedProjects.get(projectId);
-    if (project === undefined) {
-        console.log("Project missing", projectId)
-        return;
-    }
-
-    projectElement.addEventListener("click", function (e) {
-        console.log("Purchasing project", projectId);
-        if (project.isUnlocked && project.canAfford && !project.isOwned) {
-            projects.purchase(project);
+    // Remove Soldier (-) button
+    document.querySelector("#soldier-remove")?.addEventListener("click", function (e) {
+        console.log("removing soldier");
+        if (population.canRemoveSoldier()) {
+            population.numberOfMilitary -= 1;
+            updateDisplay();
         }
+    }, false);
+
+    // Project buttons
+    document.querySelectorAll("#projects .project-items li[data-project-id]").forEach((projectElement) => {
+        const projectId = projectElement.getAttribute("data-project-id");
+        if (projectId === null) {
+            console.log("Project elements missing")
+            return;
+        }
+        const project = projects.definedProjects.get(projectId);
+        if (project === undefined) {
+            console.log("Project missing", projectId)
+            return;
+        }
+
+        projectElement.addEventListener("click", function (e) {
+            console.log("Purchasing project", projectId);
+            if (project.isUnlocked && project.canAfford && !project.isOwned) {
+                projects.purchase(project);
+            }
+        });
     });
-});
 }
 
 function updateFood() {
@@ -172,7 +190,7 @@ function updateDisplay() {
 
     setTextContentById('food-required', food.requiredFood);
     setTextContentById('food-generated', food.foodProducedPerTurn);
-    setTextContentById('work-generated', population.numberOfWorkers * production.productionPerWorker);
+    setTextContentById('work-generated', production.productionPerTurn);
     setTextContentById('population-increase', population.populationPerTurn);
     setTextContentById('gold-earned-per-turn', gold.goldEarnedPerTurn);
     setTextContentById('gold-spent-per-turn', gold.goldSpentPerTurn);
@@ -236,6 +254,39 @@ function updateDisplay() {
         }
     });
 
+    // Update Discoveries
+    const discoveriesElement = document.getElementById("discoveries");
+    if (projects.isOwned('EXPLORERS_GUILD')) {
+        discoveriesElement?.classList.remove('hidden');
+        discoveriesElement?.querySelectorAll(".discovery-items li[data-discovery-id]").forEach((discoveryElement) => {
+            const discoveryId = discoveryElement.getAttribute("data-discovery-id");
+            if (discoveryId === null) {
+                return;
+            }
+            const discovery = discoveries.definedDiscoveries.get(discoveryId);
+            if (discovery === undefined) {
+                return;
+            }
+    
+            // update hidden / unlocked
+            if (discovery.isOwned) {
+                const numberOwned = discovery.numberOwned;
+                discoveryElement.setAttribute("discovery-state", "owned")
+                const span = discoveryElement.querySelector(".count");
+                if (span !== null) {
+                    span.textContent = "(" + discovery.numberOwned + ")";
+                }
+
+            } else {
+                discoveryElement.setAttribute("discovery-state", "unowned")
+            }
+        });
+
+        
+    } else {
+        discoveriesElement?.classList.add('hidden');
+    }
+
     // Debugging
     var seen: Array<any> = [];
     (document.querySelector("#playerData .player-object .data") as HTMLInputElement).innerText = JSON.stringify(
@@ -253,18 +304,17 @@ function updateDisplay() {
 }
 
 function updatePopulation() {
+    const currentPopulation = population.populationCount;
     const addedPopulation = population.populationPerTurn;
-    const newPopulation = population.populationCount + addedPopulation;
-    population.populationCount = newPopulation;
+
+    population.populationCount = currentPopulation + addedPopulation;
 }
 
 function updateProduction() {
-    const prodPerWorker = production.productionPerWorker;
     const currentProduction = production.productionInStorage;
-    const currentWorkers = population.numberOfWorkers;
+    const productionGenerated = production.productionPerTurn;
 
-    const newProctionInStorage = Math.trunc(currentProduction + (currentWorkers * prodPerWorker));
-    production.productionInStorage = newProctionInStorage;
+    production.productionInStorage = Math.trunc(currentProduction + productionGenerated);
 }
 
 function updateGold() {
@@ -302,6 +352,7 @@ function gameLoop() {
     updateGold();
     updatePopulation();
     updateMilitary();
+    discoveries.travel();
 
     restrictValues();
 
@@ -321,3 +372,6 @@ initializeDisplay();
 setupClicks();
 gameLoop();
 displayLoop();
+
+// TESTING
+projects.addOwned('EXPLORERS_GUILD');

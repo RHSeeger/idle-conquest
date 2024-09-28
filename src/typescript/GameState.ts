@@ -29,5 +29,9 @@ export default class GameState {
 
     // Military Power
     militaryPowerInStorage: number = 0;
+
+    // Discoveries
+    discoveredNodes: Array<string> = [];
+    distanceTraveled: number = 0;
 }
 

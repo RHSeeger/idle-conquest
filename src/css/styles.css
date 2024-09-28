@@ -88,6 +88,19 @@ h1 {
     background-color: lightblue;
 }
 
+#discoveries .discovery-items li span.count {
+    padding-left: 0.5em;
+    /* font-style: italic; */
+}
+
+#discoveries .discovery-items li[discovery-state="owned"] {
+    /* normal formatting */
+}
+
+#discoveries .discovery-items li[discovery-state="unowned"] {
+    display: none;
+}
+
 .hidden {
     display: none;
 }

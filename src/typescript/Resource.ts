@@ -1,5 +1,7 @@
 
 export enum Resource {
     Gold,
-    Production
+    Production,
+    Food,
+    MilitaryPower
 }

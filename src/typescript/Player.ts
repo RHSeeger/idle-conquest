@@ -6,6 +6,7 @@ import Gold from "./Gold"
 import Projects from "./Projects"
 import GameState from "./GameState";
 import Military from "./Military"
+import Discoveries from "./Discoveries"
 
 /**
  * Effectively, the API to interact with the player's information (game state)
@@ -23,6 +24,7 @@ export default class Player {
     readonly gold: Gold;
     readonly projects: Projects;
     readonly military: Military;
+    readonly discoveries: Discoveries;
 
     constructor() {
         // [data] is where the "saveable" user data is stored; the data that
@@ -37,6 +39,7 @@ export default class Player {
         this.gold = new Gold(this);
         this.projects = new Projects(this);
         this.military = new Military(this);
+        this.discoveries = new Discoveries(this);
     }
 
 }

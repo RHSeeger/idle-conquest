@@ -4,6 +4,8 @@
  */
 import GameState from "./GameState";
 import Player from "./Player";
+import Discovery from "./Discovery"
+import { Resource } from "./Resource"
 
 
 export default class Production {
@@ -27,7 +29,9 @@ export default class Production {
     }
 
     get maxProductionStorage(): number {
-        return Production.BASE_PRODUCTION_STORAGE;
+        const discoveriesMultiplier = 1
+            + (this.player.discoveries.numberOwned('WANDERING_MASTER') * 0.1);
+        return Math.trunc(Production.BASE_PRODUCTION_STORAGE * discoveriesMultiplier);
     }
 
     get productionPerWorker(): number {
@@ -35,6 +39,24 @@ export default class Production {
     }
 
     get productionPerTurn(): number {
-        return (this.player.population.populationUnitCount * this.productionPerWorker);
+        const productionFromWorkers = this.player.population.populationUnitCount * this.productionPerWorker;
+        const calculateProductionFromDiscoveries = this.calculateProductionFromDiscoveries();
+        return productionFromWorkers + calculateProductionFromDiscoveries;
     }
+
+    calculateProductionFromDiscoveries(): number {
+        return this.player.discoveries.getOwnedNodes().map((discovery: Discovery) => {
+            // Map to the actual amount of gold produced
+            if (discovery.resource.has(Resource.Production)) {
+                return discovery.resource.get(Resource.Production);
+            }
+        }).filter((production: number | undefined): production is number => {
+            // Filter out the ones that don't produce gold (should be unnecessary)
+            return !!production;
+        }).reduce((sum, current) => {
+            // Sum the total
+            return sum + current;
+        }, 0);
+    }
+
 }

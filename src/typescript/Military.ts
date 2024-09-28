@@ -26,10 +26,13 @@ export default class Military {
     }
 
     get militaryPowerEarnedPerTurn(): number {
-        return this.player.population.numberOfMilitary * Military.BASE_MILITARY_POWER_PER_SOLDIER;
+        return Math.trunc(this.player.population.numberOfMilitary * Military.BASE_MILITARY_POWER_PER_SOLDIER);
     }
 
     get militaryPowerMaxStorage(): number {
-        return Military.BASE_MILITARY_POWER_STORAGE;
+        const discoveriesMultiplier = 1
+            + (this.player.discoveries.numberOwned('MYTHRIL_MINE') * 0.1)
+            + (this.player.discoveries.numberOwned('ADAMANTUM_MINE') * 0.2);
+        return Math.trunc(Military.BASE_MILITARY_POWER_STORAGE * discoveriesMultiplier);
     }
 }

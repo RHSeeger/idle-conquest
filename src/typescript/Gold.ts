@@ -5,11 +5,18 @@
 import GameState from "./GameState";
 import Player from "./Player";
 import { Resource } from "./Resource"
+import Discovery from "./Discovery"
 
-const BASE_GOLD_PER_POPULATION = 1.0;
-const BASE_MAX_GOLD_STORAGE = 1000.0;
 
 export default class Gold {
+    static readonly BASE_GOLD_PER_POPULATION = 1.0;
+    static readonly BASE_MAX_GOLD_STORAGE = 1000.0;
+    static readonly GOLD_PRODUCING_MINERAL_NODES: Array<string> = [
+        'SILVER_MINE', 'GOLD_MINE', 'PLATINUM_MINE'
+    ];
+
+
+
     readonly player: Player;
     readonly data: GameState;
 
@@ -19,7 +26,7 @@ export default class Gold {
     }
 
     get maxGoldStorage(): number {
-        return BASE_MAX_GOLD_STORAGE;
+        return Gold.BASE_MAX_GOLD_STORAGE;
     }
 
     get goldInStorage(): number {
@@ -31,16 +38,17 @@ export default class Gold {
     }
 
     get goldPerPopulation(): number {
-        return BASE_GOLD_PER_POPULATION;
+        return Gold.BASE_GOLD_PER_POPULATION;
     }
 
     get goldEarnedPerTurn(): number {
         const goldFromPopulation = (this.player.population.populationUnitCount * this.goldPerPopulation)
             * (this.player.projects.isOwned('MARKETPLACE') ? 1.5 : 1.0);
-        const goldFromMinerals = 0
+        const goldFromMinerals = this.calculateGoldEarnedFromMineralNodes()
             * (this.player.projects.isOwned('MARKETPLACE') ? 1.5 : 1.0);
+        const goldFromNonMinerals = this.calculateGoldEarnedFromNonMineralNodes();
 
-        return Math.trunc(goldFromPopulation + goldFromMinerals);
+        return Math.trunc(goldFromPopulation + goldFromMinerals + goldFromNonMinerals);
     }
 
     get goldSpentPerTurn(): number {
@@ -55,5 +63,43 @@ export default class Gold {
         }, 0);
 
         return spentOnProjects;
+    }
+
+    // UTILITY
+
+    calculateGoldEarnedFromMineralNodes(): number {
+        return this.player.discoveries.getOwnedNodes().filter((discovery: Discovery) => {
+            // Filter to only nodes that are "mineral" nodes (effected by things that incease gold from mines)
+            return Gold.GOLD_PRODUCING_MINERAL_NODES.includes(discovery.id);
+        }).map((discovery: Discovery) => {
+            // Map to the actual amount of gold produced
+            if (discovery.resource.has(Resource.Gold)) {
+                return discovery.resource.get(Resource.Gold);
+            }
+        }).filter((gold: number | undefined): gold is number => {
+            // Filter out the ones that don't produce gold (should be unnecessary)
+            return !!gold;
+        }).reduce((sum, current) => {
+            // Sum the total
+            return sum + current;
+        }, 0);
+    }
+
+    calculateGoldEarnedFromNonMineralNodes(): number {
+        return this.player.discoveries.getOwnedNodes().filter((discovery: Discovery) => {
+            // Filter to only nodes that aren't "mineral" nodes (effected by things that incease gold from mines)
+            return !Gold.GOLD_PRODUCING_MINERAL_NODES.includes(discovery.id);
+        }).map((discovery: Discovery) => {
+            // Map to the actual amount of gold produced
+            if (discovery.resource.has(Resource.Gold)) {
+                return discovery.resource.get(Resource.Gold);
+            }
+        }).filter((gold: number | undefined): gold is number => {
+            // Filter out the ones that don't produce gold (should be unnecessary)
+            return !!gold;
+        }).reduce((sum, current) => {
+            // Sum the total
+            return sum + current;
+        }, 0);
     }
 }

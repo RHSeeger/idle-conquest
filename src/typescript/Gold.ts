@@ -6,13 +6,14 @@ import GameState from "./GameState";
 import Player from "./Player";
 import { Resource } from "./Resource"
 import Discovery from "./Discovery"
+import { DiscoveryId } from "./DiscoveryId";
 
 
 export default class Gold {
     static readonly BASE_GOLD_PER_POPULATION = 1.0;
     static readonly BASE_MAX_GOLD_STORAGE = 1000.0;
-    static readonly GOLD_PRODUCING_MINERAL_NODES: Array<string> = [
-        'SILVER_MINE', 'GOLD_MINE', 'PLATINUM_MINE'
+    static readonly GOLD_PRODUCING_MINERAL_NODES: Array<DiscoveryId> = [
+        DiscoveryId.SILVER_MINE, DiscoveryId.GOLD_MINE, DiscoveryId.PLATINUM_MINE
     ];
 
 

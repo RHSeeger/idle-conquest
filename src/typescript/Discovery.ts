@@ -12,9 +12,10 @@
 import Player from "./Player";
 import { Resource } from "./Resource"
 import { DiscoveryType } from "./DiscoveryType"
+import { DiscoveryId } from "./DiscoveryId"
 
 export default class Project {
-    readonly id: string;
+    readonly id: DiscoveryId;
     readonly displayName: string;
     readonly type: DiscoveryType;
     readonly resource: Map<Resource, number>;
@@ -24,7 +25,7 @@ export default class Project {
 
     // Defined to take an object, so that we can pass in values by name
     constructor({ id, displayName, type, resource, rarity, description, playerObject }: {
-        id: string;
+        id: DiscoveryId;
         displayName: string;
         type: DiscoveryType;
         resource: Map<Resource, number>;

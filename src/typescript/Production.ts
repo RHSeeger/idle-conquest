@@ -6,6 +6,7 @@ import GameState from "./GameState";
 import Player from "./Player";
 import Discovery from "./Discovery"
 import { Resource } from "./Resource"
+import { DiscoveryId } from "./DiscoveryId";
 
 
 export default class Production {
@@ -30,7 +31,7 @@ export default class Production {
 
     get maxProductionStorage(): number {
         const discoveriesMultiplier = 1
-            + (this.player.discoveries.numberOwned('WANDERING_MASTER') * 0.1);
+            + (this.player.discoveries.numberOwned(DiscoveryId.WANDERING_MASTER) * 0.1);
         return Math.trunc(Production.BASE_PRODUCTION_STORAGE * discoveriesMultiplier);
     }
 

@@ -9,6 +9,7 @@ import Projects from "./Projects"
 import Production from "./Production";
 import Gold from "./Gold";
 import Food from "./Food";
+import { DiscoveryId } from "./DiscoveryId";
 
 // Setup the player to the initial values
 let playerObject = new Player();
@@ -43,7 +44,7 @@ function initializeDisplay() {
     const discoveryList = document.querySelector("#discoveries .discovery-items");
     for (let [discoveryId, discovery] of discoveries.definedDiscoveries) {
         const li = document.createElement("li");
-        li.setAttribute("data-discovery-id", discoveryId);
+        li.setAttribute("data-discovery-id", DiscoveryId[discoveryId]);
 
         const label = document.createElement("span");
         label.classList.add("label");
@@ -259,18 +260,19 @@ function updateDisplay() {
     if (projects.isOwned('EXPLORERS_GUILD')) {
         discoveriesElement?.classList.remove('hidden');
         discoveriesElement?.querySelectorAll(".discovery-items li[data-discovery-id]").forEach((discoveryElement) => {
-            const discoveryId = discoveryElement.getAttribute("data-discovery-id");
+            const discoveryId: string | null = discoveryElement.getAttribute("data-discovery-id");
             if (discoveryId === null) {
                 return;
             }
-            const discovery = discoveries.definedDiscoveries.get(discoveryId);
+            
+            const discoveryIdEnum: DiscoveryId = (DiscoveryId.fromString(discoveryId));
+            const discovery = discoveries.definedDiscoveries.get(discoveryIdEnum);
             if (discovery === undefined) {
                 return;
             }
     
             // update hidden / unlocked
             if (discovery.isOwned) {
-                const numberOwned = discovery.numberOwned;
                 discoveryElement.setAttribute("discovery-state", "owned")
                 const span = discoveryElement.querySelector(".count");
                 if (span !== null) {

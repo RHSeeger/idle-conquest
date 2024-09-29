@@ -4,6 +4,7 @@
 
 import GameState from "./GameState";
 import Player from "./Player";
+import { DiscoveryId } from "./DiscoveryId";
 
 export default class Military {
     static readonly BASE_MILITARY_POWER_STORAGE: number = 100;
@@ -31,8 +32,8 @@ export default class Military {
 
     get militaryPowerMaxStorage(): number {
         const discoveriesMultiplier = 1
-            + (this.player.discoveries.numberOwned('MYTHRIL_MINE') * 0.1)
-            + (this.player.discoveries.numberOwned('ADAMANTUM_MINE') * 0.2);
+            + (this.player.discoveries.numberOwned(DiscoveryId.MYTHRIL_MINE) * 0.1)
+            + (this.player.discoveries.numberOwned(DiscoveryId.ADAMANTUM_MINE) * 0.2);
         return Math.trunc(Military.BASE_MILITARY_POWER_STORAGE * discoveriesMultiplier);
     }
 }

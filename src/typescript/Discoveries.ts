@@ -7,6 +7,7 @@ import GameState from "./GameState"
 import Discovery from "./Discovery"
 import { Resource } from "./Resource"
 import { DiscoveryType } from "./DiscoveryType"
+import { DiscoveryId } from "./DiscoveryId"
 
 export default class Discoveries {
     static readonly BASE_TRAVEL_PER_TURN: number = 1.0;
@@ -15,7 +16,8 @@ export default class Discoveries {
 
     readonly player: Player;
     readonly data: GameState;
-    readonly definedDiscoveries: Map<string, Discovery>;
+    readonly definedDiscoveries: Map<DiscoveryId, Discovery>;
+    discoveryIds: Array<DiscoveryId> = [ DiscoveryId.WANDERING_MASTER ];
 
     constructor(player: Player) {
         this.player = player;
@@ -23,26 +25,27 @@ export default class Discoveries {
         this.definedDiscoveries = Discoveries.createDefinedDiscoveries(player);
     }
 
-    isOwned(discoveryId: string) {
-        return this.data.discoveredNodes.includes(discoveryId);
+    isOwned(discoveryId: DiscoveryId) {
+        return this.data.discoveredNodes.includes(DiscoveryId[discoveryId]);
     }
 
-    numberOwned(discoveryId: string) {
+    numberOwned(discoveryId: DiscoveryId) {
         return this.data.discoveredNodes.filter((id) => {
-            return discoveryId === id;
+            return DiscoveryId[discoveryId] === id;
         }).length;
     }
 
     getOwnedNodes(): Array<Discovery> {
         return this.data.discoveredNodes.map((key) => {
-            return this.definedDiscoveries.get(key);
+            const discoveryId: DiscoveryId = DiscoveryId.fromString(key);
+            return this.definedDiscoveries.get(discoveryId);
         }).filter((discovery: Discovery | undefined): discovery is Discovery => {
             return !!discovery;
         });
     }
 
-    addOwned(key: string) {
-        this.data.discoveredNodes.push(key);
+    addOwned(key: DiscoveryId) {
+        this.data.discoveredNodes.push(DiscoveryId[key]);
         // TODO: sort?
     }
 
@@ -134,12 +137,12 @@ export default class Discoveries {
         throw new Error("This should not be possible");
     }
 
-    static createDefinedDiscoveries(playerObject: Player): Map<string, Discovery> {
-        var definedDiscoveries: Map<string, Discovery> = new Map();
+    static createDefinedDiscoveries(playerObject: Player): Map<DiscoveryId, Discovery> {
+        var definedDiscoveries: Map<DiscoveryId, Discovery> = new Map();
 
         [
             new Discovery({
-                id: "SILVER_MINE",
+                id: DiscoveryId.SILVER_MINE,
                 displayName: "Silver Mine",
                 type: DiscoveryType.Node,
                 resource: new Map<Resource, number>([[Resource.Gold, 1]]),
@@ -148,7 +151,7 @@ export default class Discoveries {
                 playerObject: playerObject
             }),
             new Discovery({
-                id: "GOLD_MINE",
+                id: DiscoveryId.GOLD_MINE,
                 displayName: "Gold Mine",
                 type: DiscoveryType.Node,
                 resource: new Map<Resource, number>([[Resource.Gold, 2]]),
@@ -157,7 +160,7 @@ export default class Discoveries {
                 playerObject: playerObject
             }),
             new Discovery({
-                id: "PLATINUM_MINE",
+                id: DiscoveryId.PLATINUM_MINE,
                 displayName: "Platinum Mine",
                 type: DiscoveryType.Node,
                 resource: new Map<Resource, number>([[Resource.Gold, 4]]),
@@ -166,7 +169,7 @@ export default class Discoveries {
                 playerObject: playerObject
             }),
             new Discovery({
-                id: "TREASURE_STASH_GOLD",
+                id: DiscoveryId.TREASURE_STASH_GOLD,
                 displayName: "Treasure Stash of Gold",
                 type: DiscoveryType.Instant,
                 resource: new Map<Resource, number>([[Resource.Gold, 100]]),
@@ -175,7 +178,7 @@ export default class Discoveries {
                 playerObject: playerObject
             }),
             new Discovery({
-                id: "MYTHRIL_MINE",
+                id: DiscoveryId.MYTHRIL_MINE,
                 displayName: "Mithril Mine",
                 type: DiscoveryType.Node,
                 resource: new Map<Resource, number>(), // increases max Military Power by 10%
@@ -184,7 +187,7 @@ export default class Discoveries {
                 playerObject: playerObject
             }),
             new Discovery({
-                id: "ADAMANTUM_MINE",
+                id: DiscoveryId.ADAMANTUM_MINE,
                 displayName: "Adamantum Mine",
                 type: DiscoveryType.Node,
                 resource: new Map<Resource, number>(), // increases max Military Power by 20%
@@ -193,7 +196,7 @@ export default class Discoveries {
                 playerObject: playerObject
             }),
             new Discovery({
-                id: "BOUNTIFUL_FOREST",
+                id: DiscoveryId.BOUNTIFUL_FOREST,
                 displayName: "Bountiful Forest",
                 type: DiscoveryType.Node,
                 resource: new Map<Resource, number>([[Resource.Food, 1]]),
@@ -202,7 +205,7 @@ export default class Discoveries {
                 playerObject: playerObject
             }),
             new Discovery({
-                id: "OLD_MILL",
+                id: DiscoveryId.OLD_MILL,
                 displayName: "Old Mill",
                 type: DiscoveryType.Node,
                 resource: new Map<Resource, number>([[Resource.Production, 1]]),
@@ -211,7 +214,7 @@ export default class Discoveries {
                 playerObject: playerObject
             }),
             new Discovery({
-                id: "WANDERING_MASTER",
+                id: DiscoveryId.WANDERING_MASTER,
                 displayName: "Wandering Master",
                 type: DiscoveryType.Node,
                 resource: new Map<Resource, number>([[Resource.Production, 1]]),

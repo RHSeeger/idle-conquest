@@ -17,7 +17,7 @@ export default class Discoveries {
     readonly player: Player;
     readonly data: GameState;
     readonly definedDiscoveries: Map<DiscoveryId, Discovery>;
-    discoveryIds: Array<DiscoveryId> = [ DiscoveryId.WANDERING_MASTER ];
+    discoveryIds: Array<DiscoveryId> = [DiscoveryId.WANDERING_MASTER];
 
     constructor(player: Player) {
         this.player = player;
@@ -135,6 +135,24 @@ export default class Discoveries {
         }
 
         throw new Error("This should not be possible");
+    }
+
+    /**
+ * Given a string "key" (the string value of a ProjectId), returns the Project with that ProjectId
+ * If the string is empty or no such project exists, throws an error
+ */
+    lookupOrError(key: string | null | undefined): Discovery {
+        if (key === null || key === undefined) {
+            throw new Error("key cannot be empty");
+        }
+
+        const discoveryId: DiscoveryId = (DiscoveryId.fromString(key));
+        const discovery = this.definedDiscoveries.get(discoveryId);
+        if (discovery === undefined) {
+            throw new Error("Unknown project: " + discoveryId);
+        }
+
+        return discovery;
     }
 
     static createDefinedDiscoveries(playerObject: Player): Map<DiscoveryId, Discovery> {

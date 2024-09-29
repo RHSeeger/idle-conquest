@@ -1,6 +1,9 @@
 /**
  * A enum for the ids of Discoveries
  * Prevents the issue where using a string means there can be a typo
+ * 
+ * String values are included to avoid the unfortunate way numeric enums interact with Object
+ * See also: https://blog.logrocket.com/iterate-over-enums-typescript/
  */
 export enum DiscoveryId {
     // Nodes - gold
@@ -36,6 +39,6 @@ export namespace DiscoveryId {
         if (enumValue === undefined) {
             throw new Error("Unknown DiscoveryId: " + value);
         }
-        return enumValue as DiscoveryId; // Assert that the result is of type MyEnum
+        return enumValue as DiscoveryId; // Assert that the result is of type DiscoveryId
     }
 }

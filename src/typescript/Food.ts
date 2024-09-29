@@ -6,6 +6,7 @@ import GameState from "./GameState";
 import Player from "./Player";
 import Discovery from "./Discovery"
 import { Resource } from "./Resource"
+import { ProjectId } from "./ProjectId"
 
 export default class Food {
     static readonly BASE_FOOD_GENERATION_PER_FARMER: number = 2.0;
@@ -40,7 +41,7 @@ export default class Food {
         const foodFarmed = withNumberOfFarmers * this.foodPerFarmer;
 
         const totalFoodProduced = foodFarmed
-            + (this.player.projects.isOwned('GRANARY') ? 2 : 0)
+            + (this.player.projects.isOwned(ProjectId.GRANARY) ? 2 : 0)
             + this.calculateFoodFromDiscoveries();
 
         return totalFoodProduced;

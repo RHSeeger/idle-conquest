@@ -9,6 +9,7 @@
  */
 import GameState from "./GameState";
 import Player from "./Player";
+import { ProjectId } from "./ProjectId";
 
 export default class Population {
     readonly player: Player;
@@ -35,7 +36,7 @@ export default class Population {
     get maxPopulationUnitCount(): number {
         return this.player.food.maxFoodStorage
             // Granary adds 2
-            + (this.player.projects.isOwned('GRANARY') ? 2 : 0);
+            + (this.player.projects.isOwned(ProjectId.GRANARY) ? 2 : 0);
     }
 
     // Famer units
@@ -70,7 +71,7 @@ export default class Population {
         const base = (this.player.food.foodInStorage - this.populationUnitCount) * 5;
         const total = base
             // granary add 20
-            + (this.player.projects.isOwned('GRANARY') ? 20 : 0);
+            + (this.player.projects.isOwned(ProjectId.GRANARY) ? 20 : 0);
         const maximum = this.maxPopulationUnitCount - this.populationUnitCount;
         return Math.min(total, maximum);
     }

@@ -7,6 +7,7 @@ import Player from "./Player";
 import { Resource } from "./Resource"
 import Discovery from "./Discovery"
 import { DiscoveryId } from "./DiscoveryId";
+import { ProjectId } from "./ProjectId";
 
 
 export default class Gold {
@@ -44,9 +45,9 @@ export default class Gold {
 
     get goldEarnedPerTurn(): number {
         const goldFromPopulation = (this.player.population.populationUnitCount * this.goldPerPopulation)
-            * (this.player.projects.isOwned('MARKETPLACE') ? 1.5 : 1.0);
+            * (this.player.projects.isOwned(ProjectId.MARKETPLACE) ? 1.5 : 1.0);
         const goldFromMinerals = this.calculateGoldEarnedFromMineralNodes()
-            * (this.player.projects.isOwned('MARKETPLACE') ? 1.5 : 1.0);
+            * (this.player.projects.isOwned(ProjectId.MARKETPLACE) ? 1.5 : 1.0);
         const goldFromNonMinerals = this.calculateGoldEarnedFromNonMineralNodes();
 
         return Math.trunc(goldFromPopulation + goldFromMinerals + goldFromNonMinerals);
@@ -54,9 +55,7 @@ export default class Gold {
 
     get goldSpentPerTurn(): number {
         const spentOnProjects = this.player.projects.builtProjects.map((projectId) => {
-            return this.player.projects.definedProjects.get(projectId);
-        }).filter((project) => {
-            return project !== undefined;
+            return this.player.projects.lookupOrError(projectId);
         }).map((project) => {
             return project.getUpkeep(Resource.Gold);
         }).reduce((total, current) => {

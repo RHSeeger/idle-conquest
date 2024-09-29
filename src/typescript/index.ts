@@ -10,6 +10,7 @@ import Production from "./Production";
 import Gold from "./Gold";
 import Food from "./Food";
 import { DiscoveryId } from "./DiscoveryId";
+import { ProjectId } from "./ProjectId";
 
 // Setup the player to the initial values
 let playerObject = new Player();
@@ -32,7 +33,7 @@ function initializeDisplay() {
     const projectList = document.querySelector("#projects .project-items");
     for (let [projectId, project] of projects.definedProjects) {
         const li = document.createElement("li");
-        li.setAttribute("data-project-id", projectId);
+        li.setAttribute("data-project-id", ProjectId[projectId]);
         li.classList.add("button")
         li.setAttribute("project-state", "locked")
         li.innerHTML = project.displayName;
@@ -119,19 +120,10 @@ function setupClicks() {
 
     // Project buttons
     document.querySelectorAll("#projects .project-items li[data-project-id]").forEach((projectElement) => {
-        const projectId = projectElement.getAttribute("data-project-id");
-        if (projectId === null) {
-            console.log("Project elements missing")
-            return;
-        }
-        const project = projects.definedProjects.get(projectId);
-        if (project === undefined) {
-            console.log("Project missing", projectId)
-            return;
-        }
+        const project = projects.lookupOrError(projectElement.getAttribute("data-project-id"));
 
         projectElement.addEventListener("click", function (e) {
-            console.log("Purchasing project", projectId);
+            console.log("Purchasing project", project.id);
             if (project.isUnlocked && project.canAfford && !project.isOwned) {
                 projects.purchase(project);
             }
@@ -214,7 +206,7 @@ function updateDisplay() {
     }
 
     // Soldier Add / Remove / Hide
-    if (projects.isOwned('BARRACKS')) {
+    if (projects.isOwned(ProjectId.BARRACKS)) {
         document.getElementById("military-population")?.classList.remove("hidden");
         // TODO: Also unhide military power storage and per turn
         if (population.canAddSoldier()) {
@@ -234,14 +226,7 @@ function updateDisplay() {
 
     // Update Projects (show/hide, enable/disable)
     document.querySelectorAll("#projects .project-items li[data-project-id]").forEach((projectElement) => {
-        const projectId = projectElement.getAttribute("data-project-id");
-        if (projectId === null) {
-            return;
-        }
-        const project = projects.definedProjects.get(projectId);
-        if (project === undefined) {
-            return;
-        }
+        const project = projects.lookupOrError(projectElement.getAttribute("data-project-id"));
 
         // update hidden / unlocked
         if (project.isOwned) {
@@ -257,20 +242,11 @@ function updateDisplay() {
 
     // Update Discoveries
     const discoveriesElement = document.getElementById("discoveries");
-    if (projects.isOwned('EXPLORERS_GUILD')) {
+    if (projects.isOwned(ProjectId.EXPLORERS_GUILD)) {
         discoveriesElement?.classList.remove('hidden');
         discoveriesElement?.querySelectorAll(".discovery-items li[data-discovery-id]").forEach((discoveryElement) => {
-            const discoveryId: string | null = discoveryElement.getAttribute("data-discovery-id");
-            if (discoveryId === null) {
-                return;
-            }
-            
-            const discoveryIdEnum: DiscoveryId = (DiscoveryId.fromString(discoveryId));
-            const discovery = discoveries.definedDiscoveries.get(discoveryIdEnum);
-            if (discovery === undefined) {
-                return;
-            }
-    
+            const discovery = discoveries.lookupOrError(discoveryElement.getAttribute("data-discovery-id"));
+
             // update hidden / unlocked
             if (discovery.isOwned) {
                 discoveryElement.setAttribute("discovery-state", "owned")
@@ -284,7 +260,7 @@ function updateDisplay() {
             }
         });
 
-        
+
     } else {
         discoveriesElement?.classList.add('hidden');
     }
@@ -376,4 +352,4 @@ gameLoop();
 displayLoop();
 
 // TESTING
-projects.addOwned('EXPLORERS_GUILD');
+projects.addOwned(ProjectId.EXPLORERS_GUILD);

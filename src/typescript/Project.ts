@@ -3,24 +3,25 @@
  */
 import Player from "./Player";
 import { Resource } from "./Resource"
+import { ProjectId } from "./ProjectId"
 
 export default class Project {
-    readonly id: string;
+    readonly id: ProjectId;
     readonly displayName: string;
     readonly cost: Map<Resource, number>;
     readonly upkeep: Map<Resource, number>;
     readonly description: string;
-    readonly dependencies: Array<string>;
+    readonly dependencies: Array<ProjectId>;
     readonly playerObject: Player;
 
     // Defined to take an object, so that we can pass in values by name
     constructor({ id, displayName, cost, upkeep, description, dependencies, playerObject }: {
-        id: string;
+        id: ProjectId;
         displayName: string;
         cost: Map<Resource, number>;
         upkeep: Map<Resource, number>;
         description: string;
-        dependencies: Array<string>;
+        dependencies: Array<ProjectId>;
         playerObject: Player;
     }) {
         this.id = id;
@@ -32,16 +33,6 @@ export default class Project {
         this.playerObject = playerObject;
     }
 
-    /*     constructor(id: string, displayName: string, cost: Map<string, number>, upkeep: Map<string, number>, description: string, dependencies: Array<string>, playerObject: Player) {
-            this.id = id;
-            this.displayName = displayName;
-            this.cost = cost;
-            this.upkeep = upkeep;
-            this.description = description;
-            this.dependencies = dependencies;
-            this.playerObject = playerObject;
-        }
-     */
     getCost(type: Resource): number {
         return this.cost.get(type) ?? 0;
     }

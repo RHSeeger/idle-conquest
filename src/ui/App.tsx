@@ -6,7 +6,7 @@ import { getStats } from "../engine/collect";
 import { Decimal } from "../engine/decimal";
 import { realmEconomy } from "../engine/economy";
 import { fmt, fmtInt, fmtTime } from "../engine/format";
-import { ArmyPanel } from "./ArmyPanel";
+import { ArmyPanel, armyActivity } from "./ArmyPanel";
 import { BuildingsPanel } from "./BuildingsPanel";
 import { BreakdownView, CURRENCY_ICON, Tip } from "./components";
 import { game, useTicker } from "./game";
@@ -23,6 +23,9 @@ import { StatsPanel } from "./StatsPanel";
 import { GoalBar } from "./Goal";
 import { isWizard, manaRate } from "../engine/magic";
 import { RealmPanel } from "./RealmPanel";
+import { PlanesPanel } from "./PlanesPanel";
+import { planeshiftProgress } from "../engine/ascension";
+import { essenceOnPlaneshift, isMyrrorOpen } from "../engine/planes";
 
 type TabId =
     | "realm"
@@ -33,6 +36,7 @@ type TabId =
     | "magic"
     | "prestige"
     | "ascension"
+    | "planes"
     | "stats"
     | "options";
 
@@ -64,13 +68,33 @@ const TABS: TabDef[] = [
     {
         id: "ascension",
         label: "Ascension",
+        // not in the very first run: it has enough to take in already
         visible: () => {
             const s = game();
-            return s.ascension.ascensions > 0 || s.prestige.realmsSeen.length > 0 || s.run.buildings.includes("wizardsGuild");
+            return (
+                s.ascension.ascensions > 0 ||
+                s.run.buildings.includes("wizardsGuild") ||
+                (s.prestige.realmsSeen.length > 0 && s.prestige.refounds > 0)
+            );
         },
         render: () => <AscensionPanel />,
     },
-    { id: "stats", label: "Statistics", visible: () => true, render: () => <StatsPanel /> },
+    {
+        id: "planes",
+        label: "Planes",
+        visible: () => {
+            const s = game();
+            const gate = planeshiftProgress(s);
+            return s.planes.planeshifts > 0 || gate.towerCleared || gate.riteKnown;
+        },
+        render: () => <PlanesPanel />,
+    },
+    {
+        id: "stats",
+        label: "Statistics",
+        visible: () => game().records.totalRefounds > 0 || game().ascension.ascensions > 0,
+        render: () => <StatsPanel />,
+    },
     { id: "options", label: "Options", visible: () => true, render: () => <OptionsPanel /> },
 ];
 
@@ -152,17 +176,26 @@ function ResourceBar() {
                     <span class="resource-rate">+{fmtInt(fameOnRefound(state))} on refound</span>
                 </div>
             )}
-            {state.ascension.insightTotal.gt(0) && (
+            {(state.ascension.insightTotal.gt(0) || state.planes.planeshifts > 0) && (
                 <div class="resource insight">
                     <span class="resource-name">◈ Insight</span>
                     <span class="resource-amount">{fmtInt(state.ascension.insight)}</span>
                     <span class="resource-rate">{state.ascension.ascensions} ascensions</span>
                 </div>
             )}
+            {state.planes.planeshifts > 0 && (
+                <div class="resource essence">
+                    <span class="resource-name">❖ Essence</span>
+                    <span class="resource-amount">{fmtInt(state.planes.essence)}</span>
+                    <span class="resource-rate">
+                        {isMyrrorOpen(state) ? `+${fmtInt(essenceOnPlaneshift(state))} on Planeshift` : ""}
+                    </span>
+                </div>
+            )}
             <div class="resource siege">
-                <span class="resource-name">⚔ Siege</span>
+                <span class="resource-name">⚔ Army</span>
                 <span class="resource-amount">{fmt(siege)}/s</span>
-                <span class="resource-rate">frontier {run.frontier.index}</span>
+                <span class="resource-rate">{armyActivity(state)}</span>
             </div>
         </div>
     );

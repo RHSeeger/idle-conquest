@@ -44,7 +44,7 @@ const list: BuildingDef[] = [
     {
         id: "buildersHall",
         name: "Builders' Hall",
-        cost: { production: 60 },
+        cost: { production: 70 },
         requires: [],
         effects: [{ stat: "cost.building", op: "mult", value: 0.9 }],
         text: "Buildings cost 10% less",
@@ -52,7 +52,7 @@ const list: BuildingDef[] = [
     {
         id: "smithy",
         name: "Smithy",
-        cost: { production: 120 },
+        cost: { production: 150 },
         requires: [],
         effects: [{ stat: "army.power", op: "mult", value: 1.1 }],
         text: "×1.1 army power. Train Swordsmen",
@@ -60,7 +60,7 @@ const list: BuildingDef[] = [
     {
         id: "granary",
         name: "Granary",
-        cost: { production: 200 },
+        cost: { production: 280 },
         requires: ["buildersHall"],
         effects: [
             { stat: "food.flat", op: "add", value: 2 },
@@ -72,7 +72,7 @@ const list: BuildingDef[] = [
     {
         id: "sawmill",
         name: "Sawmill",
-        cost: { production: 400 },
+        cost: { production: 650 },
         requires: [],
         effects: [{ stat: "prod.mult", op: "add", value: 0.25 }],
         text: "+25% production. Train Bowmen",
@@ -80,7 +80,7 @@ const list: BuildingDef[] = [
     {
         id: "library",
         name: "Library",
-        cost: { production: 600 },
+        cost: { production: 1000 },
         requires: ["buildersHall"],
         effects: [{ stat: "knowledge.perPop", op: "add", value: 0.1 }],
         text: "+0.1 knowledge per citizen. Opens Lore",
@@ -88,7 +88,7 @@ const list: BuildingDef[] = [
     {
         id: "marketplace",
         name: "Marketplace",
-        cost: { production: 1000 },
+        cost: { production: 2000 },
         requires: ["smithy"],
         effects: [{ stat: "gold.mult", op: "add", value: 0.5 }],
         text: "+50% gold",
@@ -96,7 +96,7 @@ const list: BuildingDef[] = [
     {
         id: "stables",
         name: "Stables",
-        cost: { production: 1500 },
+        cost: { production: 3300 },
         requires: ["smithy"],
         effects: [],
         text: "Train Cavalry",
@@ -104,7 +104,7 @@ const list: BuildingDef[] = [
     {
         id: "explorersGuild",
         name: "Explorers' Guild",
-        cost: { production: 1200 },
+        cost: { production: 3000 },
         requires: ["stables"],
         effects: [],
         text: "Send expeditions to find resource sites and monster lairs",
@@ -112,7 +112,7 @@ const list: BuildingDef[] = [
     {
         id: "adventurersGuild",
         name: "Adventurers' Guild",
-        cost: { production: 40000, gold: 10000 },
+        cost: { production: 500000, gold: 150000 },
         requires: ["explorersGuild"],
         effects: [],
         text: "Heroes offer their services for gold. They grow stronger with every conquest and lair",
@@ -120,7 +120,7 @@ const list: BuildingDef[] = [
     {
         id: "shrine",
         name: "Shrine",
-        cost: { production: 2500, gold: 1000 },
+        cost: { production: 7500, gold: 3000 },
         requires: ["buildersHall"],
         effects: [
             { stat: "pop.max", op: "add", value: 1 },
@@ -131,7 +131,7 @@ const list: BuildingDef[] = [
     {
         id: "farmersMarket",
         name: "Farmers' Market",
-        cost: { production: 5000, gold: 2500 },
+        cost: { production: 17500, gold: 8500 },
         requires: ["granary", "marketplace"],
         effects: [
             { stat: "food.flat", op: "add", value: 3 },
@@ -142,7 +142,7 @@ const list: BuildingDef[] = [
     {
         id: "fightersGuild",
         name: "Fighters' Guild",
-        cost: { production: 8000 },
+        cost: { production: 31000 },
         requires: ["barracks", "stables"],
         effects: [{ stat: "army.power", op: "mult", value: 1.25 }],
         text: "×1.25 army power. Train Pikemen",
@@ -150,7 +150,7 @@ const list: BuildingDef[] = [
     {
         id: "forestersGuild",
         name: "Foresters' Guild",
-        cost: { production: 15000 },
+        cost: { production: 65000 },
         requires: ["sawmill"],
         effects: [
             { stat: "prod.mult", op: "add", value: 0.25 },
@@ -161,7 +161,7 @@ const list: BuildingDef[] = [
     {
         id: "sagesGuild",
         name: "Sages' Guild",
-        cost: { production: 25000, gold: 10000 },
+        cost: { production: 120000, gold: 50000 },
         requires: ["library"],
         effects: [{ stat: "knowledge.perPop", op: "add", value: 0.2 }],
         text: "+0.2 knowledge per citizen",
@@ -169,7 +169,7 @@ const list: BuildingDef[] = [
     {
         id: "temple",
         name: "Temple",
-        cost: { production: 40000, gold: 20000 },
+        cost: { production: 220000, gold: 110000 },
         requires: ["shrine"],
         effects: [
             { stat: "pop.max", op: "add", value: 2 },
@@ -181,7 +181,7 @@ const list: BuildingDef[] = [
     {
         id: "minersGuild",
         name: "Miners' Guild",
-        cost: { production: 80000 },
+        cost: { production: 200000 },
         requires: ["buildersHall"],
         effects: [{ stat: "prod.mult", op: "add", value: 0.5 }],
         text: "+50% production",
@@ -189,7 +189,7 @@ const list: BuildingDef[] = [
     {
         id: "bank",
         name: "Bank",
-        cost: { production: 100000, gold: 100000 },
+        cost: { production: 250000, gold: 250000 },
         requires: ["marketplace"],
         effects: [{ stat: "gold.mult", op: "add", value: 0.5 }],
         text: "+50% gold",
@@ -197,7 +197,7 @@ const list: BuildingDef[] = [
     {
         id: "animistsGuild",
         name: "Animists' Guild",
-        cost: { production: 200000, gold: 80000 },
+        cost: { production: 500000, gold: 200000 },
         requires: ["temple", "stables"],
         effects: [{ stat: "food.perFarmer", op: "add", value: 1 }],
         text: "Farmers harvest +1 food",
@@ -205,7 +205,7 @@ const list: BuildingDef[] = [
     {
         id: "armorersGuild",
         name: "Armorers' Guild",
-        cost: { production: 400000 },
+        cost: { production: 1e6 },
         requires: ["fightersGuild"],
         effects: [{ stat: "army.power", op: "mult", value: 1.5 }],
         text: "×1.5 army power. High Men: train Paladins",
@@ -213,7 +213,7 @@ const list: BuildingDef[] = [
     {
         id: "university",
         name: "University",
-        cost: { production: 600000, gold: 300000 },
+        cost: { production: 1.5e6, gold: 750000 },
         requires: ["sagesGuild"],
         races: SCHOLAR_RACES,
         effects: [{ stat: "knowledge.perPop", op: "add", value: 0.3 }],
@@ -222,7 +222,7 @@ const list: BuildingDef[] = [
     {
         id: "cathedral",
         name: "Cathedral",
-        cost: { production: 1.5e6, gold: 8e5 },
+        cost: { production: 3.75e6, gold: 2e6 },
         requires: ["temple"],
         effects: [
             { stat: "pop.max", op: "add", value: 3 },
@@ -233,7 +233,7 @@ const list: BuildingDef[] = [
     {
         id: "mechaniciansGuild",
         name: "Mechanicians' Guild",
-        cost: { production: 3e6 },
+        cost: { production: 7.5e6 },
         requires: ["minersGuild", "university"],
         effects: [{ stat: "prod.mult", op: "add", value: 0.5 }],
         text: "+50% production. Train Catapults",
@@ -241,7 +241,7 @@ const list: BuildingDef[] = [
     {
         id: "merchantsGuild",
         name: "Merchants' Guild",
-        cost: { production: 3e6, gold: 5e6 },
+        cost: { production: 7.5e6, gold: 1.25e7 },
         requires: ["bank"],
         effects: [{ stat: "gold.mult", op: "add", value: 1 }],
         text: "+100% gold",
@@ -249,7 +249,7 @@ const list: BuildingDef[] = [
     {
         id: "warCollege",
         name: "War College",
-        cost: { production: 1e7, gold: 5e6 },
+        cost: { production: 2.5e7, gold: 1.25e7 },
         requires: ["armorersGuild", "university"],
         effects: [{ stat: "army.power", op: "mult", value: 2 }],
         text: "×2 army power",
@@ -257,7 +257,7 @@ const list: BuildingDef[] = [
     {
         id: "wizardsGuild",
         name: "Wizards' Guild",
-        cost: { production: 2e7, gold: 1e7 },
+        cost: { production: 5e7, gold: 2.5e7 },
         requires: ["university"],
         races: SCHOLAR_RACES,
         effects: [

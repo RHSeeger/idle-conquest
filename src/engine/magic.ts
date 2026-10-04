@@ -21,8 +21,9 @@ import { D, Decimal, ZERO } from "./decimal";
 import { Stats } from "./effects";
 import { bump, GameState, log } from "./state";
 
+/** Ascended at least once, or Planeshifted (you stay a wizard across Planeshifts) */
 export function isWizard(state: GameState): boolean {
-    return state.ascension.ascensions >= 1;
+    return state.ascension.ascensions >= 1 || state.planes.planeshifts >= 1;
 }
 
 // --- Wizard profile ---

@@ -4,11 +4,11 @@
  */
 import { cityName } from "../content/frontier";
 import { Realm } from "../content/magic";
-import { RaceId } from "../content/races";
+import { MyrranRaceId, RaceId } from "../content/races";
 import { TraitId } from "../content/traits";
 import { D, Decimal } from "./decimal";
 
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
 
 export interface City {
     id: number;
@@ -85,12 +85,16 @@ export interface RunState {
     enchantments: string[];
     cooldowns: Record<string, number>;
 
-    /** Σ population of cities conquered this run (feeds Fame) */
+    /** Σ population of cities conquered by force this run (feeds Fame) */
     conqueredPop: number;
+    /** Σ population of cities that surrendered to Renown this run (feeds Fame as tribute) */
+    surrenderedPop: number;
     /** Distinct non-starting races conquered this run */
     racesConquered: RaceId[];
     /** Highest siege power reached this run */
     peakPower: Decimal;
+    /** Run time of the last Arcanus conquest (auto-Refound's "stalled" check) */
+    lastConquestAt: number;
 }
 
 export interface PrestigeState {
@@ -103,7 +107,9 @@ export interface PrestigeState {
     upgrades: Record<string, number>;
     /** Completed runs as each starting race */
     raceMastery: Partial<Record<RaceId, number>>;
+    /** Furthest frontier ever reached, and furthest during this Ascension (Renown uses the latter) */
     bestFrontier: number;
+    ascensionBestFrontier: number;
     bestPower: Decimal;
     /** Realms of magic whose books you have ever found */
     realmsSeen: Realm[];
@@ -131,6 +137,9 @@ export interface AscensionState {
     /** Retorts picked for this Ascension, and every retort ever unlocked */
     retorts: string[];
     unlockedRetorts: string[];
+    /** The profile being planned for the next Ascension (kept so it survives tab switches and reloads) */
+    planBooks: Partial<Record<Realm, number>>;
+    planRetorts: string[];
     /** Spells researched during this Ascension */
     spellsKnown: string[];
     /** Fame earned from Refounds during this Ascension (feeds Insight) */
@@ -142,11 +151,40 @@ export interface AscensionState {
     wizardsDefeatedThisAscension: string[];
 }
 
+/** Layer 3 (Planeshift) state. Everything here survives Refounds and Ascensions. */
+export interface PlanesState {
+    planeshifts: number;
+    essence: Decimal;
+    essenceTotal: Decimal;
+    upgrades: Record<string, number>;
+    /** Share (0..1) of the army the player wants fighting on Myrror (capped by links) */
+    armyShare: number;
+    /** Myrran wizards ever banished */
+    wizardsDefeated: string[];
+    /** Best Myrror frontier ever reached (Bridgehead, Myrror Renown) */
+    bestMyrror: number;
+    /** The Myrror campaign of the current Planeshift (null before the first) */
+    myrror: MyrrorCampaign | null;
+}
+
+export interface MyrrorCampaign {
+    beachhead: MyrranRaceId;
+    index: number;
+    siege: Decimal;
+    /** Planar links: Towers of Wizardry cleared this Planeshift */
+    links: number;
+    /** Myrran cities held, by race */
+    holdings: Partial<Record<MyrranRaceId, number>>;
+    /** Cities taken by force this Planeshift (feeds Planar Essence) */
+    taken: number;
+    wizardsDefeated: string[];
+}
+
 /** One finished run, for the Statistics tab */
 export interface RunRecord {
     /** Total playtime when the run ended */
     endedAt: number;
-    ended: "refound" | "ascend";
+    ended: "refound" | "ascend" | "planeshift";
     race: RaceId;
     length: number;
     frontier: number;
@@ -179,8 +217,14 @@ export interface Automation {
     lairs: boolean;
     research: boolean;
     cast: boolean;
+    refound: boolean;
+    ascend: boolean;
     /** How auto-recruit picks troops */
     unitMode: "chronicle" | "efficient";
+    /** Auto-Refound once Fame on Refound reaches this multiple of all Fame earned so far */
+    refoundAt: number;
+    /** Auto-Ascend once Insight on Ascending reaches this multiple of all Insight earned so far */
+    ascendAt: number;
 }
 
 export interface GameState {
@@ -190,6 +234,7 @@ export interface GameState {
     run: RunState;
     prestige: PrestigeState;
     ascension: AscensionState;
+    planes: PlanesState;
     records: Records;
     automation: Automation;
     settings: Settings;
@@ -238,8 +283,10 @@ export function newRun(startingRace: RaceId): RunState {
         enchantments: [],
         cooldowns: {},
         conqueredPop: 0,
+        surrenderedPop: 0,
         racesConquered: [],
         peakPower: D(0),
+        lastConquestAt: 0,
     };
 }
 
@@ -256,6 +303,7 @@ export function newGame(now = Date.now()): GameState {
             upgrades: {},
             raceMastery: {},
             bestFrontier: 0,
+            ascensionBestFrontier: 0,
             bestPower: D(0),
             realmsSeen: [],
             chronicle: { buildOrder: [], unitMix: {}, lore: {} },
@@ -268,11 +316,23 @@ export function newGame(now = Date.now()): GameState {
             books: {},
             retorts: [],
             unlockedRetorts: [],
+            planBooks: {},
+            planRetorts: [],
             spellsKnown: [],
             fameEarned: D(0),
             lastFameEarned: D(0),
             wizardsDefeated: [],
             wizardsDefeatedThisAscension: [],
+        },
+        planes: {
+            planeshifts: 0,
+            essence: D(0),
+            essenceTotal: D(0),
+            upgrades: {},
+            armyShare: 0.1,
+            wizardsDefeated: [],
+            bestMyrror: 0,
+            myrror: null,
         },
         records: { totalRefounds: 0, fastestToWall: null, history: [] },
         automation: {
@@ -283,7 +343,11 @@ export function newGame(now = Date.now()): GameState {
             lairs: true,
             research: true,
             cast: true,
+            refound: true,
+            ascend: true,
             unitMode: "chronicle",
+            refoundAt: 1,
+            ascendAt: 1,
         },
         settings: { buyAmount: 1, autosaveSeconds: 15, devSpeed: 1, showDevTools: false },
         meta: { created: now, lastTick: now, playtime: 0 },

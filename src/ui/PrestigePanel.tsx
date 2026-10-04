@@ -8,6 +8,7 @@ import {
     buyFameUpgrade,
     canBuyFameUpgrade,
     canRefound,
+    effectiveRefounds,
     fameOnRefound,
     fameUpgradeCost,
     fameUpgradeLevel,
@@ -17,8 +18,12 @@ import {
     renownFraction,
     renownLimit,
     RENOWN_PER_FAME,
+    TRIBUTE_SECONDS,
+    TRIBUTE_SHARE,
+    tributeShare,
 } from "../engine/prestige";
 import { game } from "./game";
+import { AutoPrestige } from "./AutoToggle";
 
 function RefoundSection() {
     const state = game();
@@ -32,10 +37,13 @@ function RefoundSection() {
     const plan = regionPlan(raceForPlan, raceRegions(state));
 
     const doRefound = () => {
-        if (confirm(`Refound your civilization as ${RACES[raceForPlan].plural}? This run's progress will be reset for +${fmtInt(fame)} Fame.`)) {
+        const gain = fame.gt(0) ? `for +${fmtInt(fame)} Fame` : "for no Fame (you have not conquered anything by force yet)";
+        if (confirm(`Refound your civilization as ${RACES[raceForPlan].plural}? This run's progress will be reset ${gain}.`)) {
             refound(state, raceForPlan);
         }
     };
+    const run = state.run;
+    const tribute = tributeShare(state);
 
     return (
         <section>
@@ -45,15 +53,34 @@ function RefoundSection() {
                 the <b>Annals</b>, and you may start as any race in them. Each starting race meets different
                 neighbours.
             </p>
-            {!ok && <p class="bad">{refoundRequirementText()}</p>}
+            {!ok && <p class="bad">Requirement: {refoundRequirementText()}</p>}
             <div class="row">
                 <span>
                     Fame on Refound: <b class="fame">{fmtInt(fame)}</b>
                 </span>
-                <span class="hint">
-                    · conquered population {state.run.conqueredPop} · races this run {state.run.racesConquered.length}
-                </span>
             </div>
+            <ul class="fame-sources hint">
+                <li>
+                    Population taken by force: <b>{fmtInt(run.conqueredPop * 1000)}</b>
+                </li>
+                {run.surrenderedPop > 0 && (
+                    <li>
+                        Population that surrendered to your Renown: {fmtInt(run.surrenderedPop * 1000)}, paying{" "}
+                        <b>{Math.round(tribute * 100)}%</b> as tribute
+                        {tribute < TRIBUTE_SHARE && ` (rising to ${TRIBUTE_SHARE * 100}% after ${TRIBUTE_SECONDS / 60} minutes of the run)`}
+                    </li>
+                )}
+                <li>
+                    Races conquered this run: <b>{run.racesConquered.length}</b> (+{run.racesConquered.length * 25}% Fame)
+                </li>
+                <li>Fame = (counted population ÷ 8,000)^0.9 × the race bonus × Fame multipliers.</li>
+            </ul>
+            {ok && fame.lte(0) && (
+                <p class="bad">
+                    This run would give no Fame yet: take cities by force first. You can still Refound, for example to
+                    start over as a different race.
+                </p>
+            )}
             <div class="race-choice">
                 {options.map((r) => (
                     <button key={r} class={"toggle" + (raceForPlan === r ? " on" : "")} onClick={() => setChoice(r)}>
@@ -67,9 +94,10 @@ function RefoundSection() {
                 Starting as {RACES[raceForPlan].plural}: {RACES[raceForPlan].cityEffectText.toLowerCase()}; realm bonus{" "}
                 {RACES[raceForPlan].realmEffectText.toLowerCase()}. Frontier: {plan.map((r) => r.name).join(" → ")}
             </p>
-            <button class="prestige-button" disabled={!ok || fame.lte(0)} onClick={doRefound}>
+            <button class="prestige-button" disabled={!ok} onClick={doRefound}>
                 Refound as {RACES[raceForPlan].plural} (+{fmtInt(fame)} Fame)
             </button>
+            <AutoPrestige kind="refound" />
         </section>
     );
 }
@@ -131,11 +159,15 @@ function Milestones() {
     return (
         <section>
             <h2>
-                Milestones <span class="count">· {p.refounds} refounds</span>
+                Milestones{" "}
+                <span class="count">
+                    · {p.refounds} refounds
+                    {effectiveRefounds(state) > p.refounds && ` (counted as ${effectiveRefounds(state)} thanks to Ascension milestones)`}
+                </span>
             </h2>
             <ul class="milestones">
                 {MILESTONES.map((m) => (
-                    <li key={m.id} class={p.refounds >= m.refounds ? "done" : ""}>
+                    <li key={m.id} class={effectiveRefounds(state) >= m.refounds ? "done" : ""}>
                         <b>
                             {m.refounds} refound{m.refounds > 1 ? "s" : ""}: {m.name}
                         </b>{" "}
@@ -146,7 +178,9 @@ function Milestones() {
             {renownFraction(state) > 0 && (
                 <p class="hint">
                     Renown: the first {renownLimit(state)} frontier cities surrender at once ({Math.round(renownFraction(state) * 100)}% of
-                    your best frontier, {p.bestFrontier}).
+                    your best frontier {state.ascension.ascensions > 0 ? "this Ascension" : "so far"}, {p.ascensionBestFrontier}).
+                    Surrendered cities pay Fame as tribute: up to {TRIBUTE_SHARE * 100}% of their population, building up
+                    over the first {TRIBUTE_SECONDS / 60} minutes of a run.
                 </p>
             )}
         </section>

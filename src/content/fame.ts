@@ -50,8 +50,9 @@ const list: FameUpgradeDef[] = [
         effects: [
             { stat: "pop.max", op: "add", value: (l) => l },
             { stat: "food.flat", op: "add", value: (l) => l },
+            { stat: "pop.growth", op: "mult", value: (l) => 1 + 0.5 * l },
         ],
-        text: (l) => `+${l} max population and +${l} food per city`,
+        text: (l) => `+${l} max population and +${l} food per city; ×${fmtNum(1 + 0.5 * l)} growth`,
     },
     {
         id: "scholars",
@@ -86,10 +87,14 @@ const list: FameUpgradeDef[] = [
         id: "scouting",
         name: "Far Scouting",
         branch: "warfare",
-        maxLevel: 2,
-        cost: (l) => [20, 80][l] ?? Infinity,
+        // 4 base regions + 3 = all 7 other races of Arcanus in one run
+        maxLevel: 3,
+        cost: (l) => [20, 80, 250][l] ?? Infinity,
         effects: [],
-        text: (l) => (l === 0 ? "No extra regions" : `+${l} race region${l > 1 ? "s" : ""} before the wizard's domain`),
+        text: (l) =>
+            l === 0
+                ? "No extra regions"
+                : `+${l} race region${l > 1 ? "s" : ""} before the wizard's domain` + (l === 3 ? " (every race of Arcanus)" : ""),
     },
 
     // --- Legacy ---
@@ -192,7 +197,7 @@ export const MILESTONES: MilestoneDef[] = [
         id: "renown",
         refounds: 3,
         name: "Renown",
-        text: "Cities closer than half your best-ever frontier surrender without a fight.",
+        text: "Cities closer than half your best frontier (this Ascension) surrender without a fight, and pay Fame as tribute.",
     },
     {
         id: "autoSettle",

@@ -24,8 +24,10 @@ import { getStats } from "./collect";
 import { buildingPrice, lorePrice, unitAffordableWith, unitPrice, wallet } from "./costs";
 import { Decimal, ZERO } from "./decimal";
 import { realmEconomy } from "./economy";
-import { hasMilestone } from "./prestige";
-import { hasAscensionMilestone } from "./ascension";
+import { canRefound, fameOnRefound, hasMilestone, refound } from "./prestige";
+import { ascend, ascensionRaceOptions, canAscend, hasAscensionMilestone, insightOnAscend } from "./ascension";
+import { hasPlaneshiftMilestone } from "./planes";
+import { RaceId } from "../content/races";
 import {
     availableSpells,
     canCastEnchantment,
@@ -37,6 +39,7 @@ import {
     knowsSpell,
     research,
     researchCost,
+    validateBooks,
 } from "./magic";
 import { lairTarget } from "./exploration";
 import { SPELLS } from "../content/spells";
@@ -47,7 +50,21 @@ export const SAVE_FOR_BUILDING_SECONDS = 90;
 /** Automation acts at most this often (seconds of game time) */
 const AUTOMATION_INTERVAL = 1;
 
-export type AutomationKind = "buildings" | "units" | "lore" | "settlers" | "lairs" | "research" | "cast";
+export type AutomationKind =
+    | "buildings"
+    | "units"
+    | "lore"
+    | "settlers"
+    | "lairs"
+    | "research"
+    | "cast"
+    | "refound"
+    | "ascend";
+
+/** Auto-Refound/Ascend also fire when no Arcanus city has fallen for this long (seconds) */
+export const AUTO_PRESTIGE_STALL_SECONDS = 600;
+/** ...and never in the first minute of a run */
+const AUTO_PRESTIGE_MIN_RUN = 60;
 
 /** Auto-raid only attacks lairs it can clear within this many seconds */
 export const AUTO_RAID_SECONDS = 120;
@@ -65,7 +82,49 @@ export function isAutomationUnlocked(state: GameState, kind: AutomationKind): bo
         case "research":
         case "cast":
             return hasAscensionMilestone(state, "grimoire");
+        case "refound":
+            return hasPlaneshiftMilestone(state, "planewalker");
+        case "ascend":
+            return hasPlaneshiftMilestone(state, "autoAscend");
     }
+}
+
+/** The race with the least Mastery among `options` (so automation collects Mastery evenly) */
+function leastMastered(state: GameState, options: RaceId[]): RaceId {
+    const m = state.prestige.raceMastery;
+    return [...options].sort((a, b) => (m[a] ?? 0) - (m[b] ?? 0))[0] ?? state.run.startingRace;
+}
+
+function runStalled(state: GameState): boolean {
+    return state.run.time - state.run.lastConquestAt > AUTO_PRESTIGE_STALL_SECONDS;
+}
+
+/**
+ * Auto-Ascend: once the gate is met and Insight on Ascending reaches
+ * `ascendAt` × all Insight earned so far (or the run has stalled).
+ * Uses the planned wizard profile (Ascension tab).
+ */
+export function autoAscend(state: GameState): boolean {
+    if (state.run.time < AUTO_PRESTIGE_MIN_RUN || !canAscend(state)) return false;
+    const a = state.ascension;
+    if (validateBooks(state, a.planBooks, a.planRetorts) !== null) return false;
+    const target = a.insightTotal.times(state.automation.ascendAt).max(1);
+    if (insightOnAscend(state).lt(target) && !runStalled(state)) return false;
+    return ascend(state, a.planBooks, leastMastered(state, ascensionRaceOptions(state)), a.planRetorts);
+}
+
+/**
+ * Auto-Refound: once Fame on Refound reaches `refoundAt` × all Fame earned so
+ * far (or the run has stalled), as the least-mastered race in the Annals.
+ */
+export function autoRefound(state: GameState): boolean {
+    if (state.run.time < AUTO_PRESTIGE_MIN_RUN || !canRefound(state)) return false;
+    const fame = fameOnRefound(state);
+    if (fame.lte(0)) return false;
+    const target = state.prestige.fameTotal.times(state.automation.refoundAt).max(1);
+    if (fame.lt(target) && !runStalled(state)) return false;
+    const options = [...new Set([...state.prestige.annals, ...state.run.racesConquered])];
+    return refound(state, leastMastered(state, options));
 }
 
 function isActive(state: GameState, kind: AutomationKind): boolean {
@@ -102,14 +161,29 @@ export function autoBuild(state: GameState): string | null {
     return null;
 }
 
+/**
+ * Knowledge auto-study leaves alone: enough for the cheapest spell the wizard
+ * can research but doesn't know yet. Spells come first; Lore gets the rest.
+ */
+export function spellReserve(state: GameState): Decimal {
+    if (!isWizard(state)) return ZERO;
+    const stats = getStats(state);
+    const costs = availableSpells(state)
+        .filter((s) => !knowsSpell(state, s.id))
+        .map((s) => researchCost(state, stats, s))
+        .sort((a, b) => a.cmp(b));
+    return costs[0] ?? ZERO;
+}
+
 export function autoLore(state: GameState): void {
     if (!isLoreUnlocked(state)) return;
+    const reserve = spellReserve(state);
     for (let guard = 0; guard < 100; guard++) {
         const stats = getStats(state);
         const cheapest = LORE_ORDER.map((id) => ({ id, price: lorePrice(state, stats, id) })).sort((a, b) =>
             a.price.cmp(b.price),
         )[0];
-        if (!buyLore(state, cheapest.id)) return;
+        if (state.run.knowledge.minus(cheapest.price).lt(reserve) || !buyLore(state, cheapest.id)) return;
     }
 }
 
@@ -222,6 +296,11 @@ function manaReserve(state: GameState): Decimal {
 
 /** Runs every automation the player has unlocked and enabled */
 export function runAutomation(state: GameState, force = false): void {
+    // prestige automation first (never forced: the bot decides those itself)
+    if (!force) {
+        if (isActive(state, "ascend") && autoAscend(state)) return;
+        if (isActive(state, "refound") && autoRefound(state)) return;
+    }
     const on = (kind: AutomationKind) => force || isActive(state, kind);
     const savingFor = on("buildings") ? autoBuild(state) : null;
     if (isWizard(state) && on("research")) autoResearch(state);

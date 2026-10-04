@@ -1,4 +1,7 @@
-import { RACES } from "../content/races";
+import { useState } from "preact/hooks";
+import { RACES, RaceId } from "../content/races";
+import { Decimal, ZERO } from "../engine/decimal";
+import { Overview } from "./Overview";
 import { canFoundSettlers, foundSettlers, isSettlersUnlocked, setTaxShare } from "../engine/actions";
 import { getStats } from "../engine/collect";
 import { settlersPrice } from "../engine/costs";
@@ -23,9 +26,22 @@ export function RealmPanel() {
     const stats = getStats(state);
     const econ = realmEconomy(state, stats);
     const run = state.run;
+    const [showAll, setShowAll] = useState(false);
+    // per-race summary: with dozens of cities a full list is mostly noise
+    const byRace = new Map<RaceId, { cities: number; pop: number; maxPop: number; production: Decimal; gold: Decimal }>();
+    for (const c of econ.cities) {
+        const e = byRace.get(c.city.race) ?? { cities: 0, pop: 0, maxPop: 0, production: ZERO, gold: ZERO };
+        e.cities++;
+        e.pop += c.city.pop;
+        e.maxPop += c.maxPop;
+        e.production = e.production.plus(c.production);
+        e.gold = e.gold.plus(c.gold);
+        byRace.set(c.city.race, e);
+    }
 
     return (
         <div class="panel">
+            <Overview />
             <section>
                 <h2>Citizens</h2>
                 <p class="hint">
@@ -63,8 +79,42 @@ export function RealmPanel() {
 
             <section>
                 <h2>
-                    Cities <span class="count">({run.cities.length})</span>
+                    Cities <span class="count">({run.cities.length})</span>{" "}
+                    <button class="toggle" onClick={() => setShowAll(!showAll)}>
+                        {showAll ? "Group by race" : "Show every city"}
+                    </button>
                 </h2>
+                {!showAll && (
+                    <table class="cities">
+                        <thead>
+                            <tr>
+                                <th>Race</th>
+                                <th class="num">Cities</th>
+                                <th class="num">Pop</th>
+                                <th class="num">⚒/s</th>
+                                <th class="num">◉/s</th>
+                                <th>Realm bonus while held</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {[...byRace.entries()].map(([race, e]) => (
+                                <tr key={race}>
+                                    <td>
+                                        <Tip tip={<div>City: {RACES[race].cityEffectText}</div>}>{RACES[race].plural}</Tip>
+                                    </td>
+                                    <td class="num">{e.cities}</td>
+                                    <td class="num">
+                                        {e.pop.toFixed(0)} / {e.maxPop.toFixed(0)}
+                                    </td>
+                                    <td class="num">{fmt(e.production)}</td>
+                                    <td class="num">{fmt(e.gold)}</td>
+                                    <td class="hint">{RACES[race].realmEffectText}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                )}
+                {showAll && (
                 <table class="cities">
                     <thead>
                         <tr>
@@ -113,6 +163,7 @@ export function RealmPanel() {
                         ))}
                     </tbody>
                 </table>
+                )}
             </section>
         </div>
     );

@@ -15,11 +15,12 @@
 import { REALMS, Realm } from "../content/magic";
 import { RaceId, RACES } from "../content/races";
 import { ASCENSION_MILESTONES, AscensionMilestoneId, INSIGHT_UPGRADES } from "../content/wizards";
+import { getStats } from "./collect";
 import { D, Decimal } from "./decimal";
 import { fmtInt } from "./format";
 import { spellbookCount, spellbookRealmCount } from "./exploration";
 import { knowsSpell, towerCleared, validateBooks } from "./magic";
-import { applyRunStart, fameOnRefound } from "./prestige";
+import { applyRunStart, effectiveAscensions, fameOnRefound } from "./prestige";
 import { bump, GameState, log, newRun, recordRun } from "./state";
 
 export const ASCENSION_BOOKS = 6;
@@ -65,12 +66,22 @@ export function insightOnAscend(state: GameState): Decimal {
     const books = 1 + 0.25 * spellbookCount(state);
     const wizards = 1 + a.wizardsDefeatedThisAscension.length;
     const depth = Decimal.pow(INSIGHT_DEPTH_GROWTH, Math.max(0, state.run.frontier.index - INSIGHT_DEPTH_FROM));
-    return depth.times(base * books * wizards).floor();
+    const raw = depth.times(base * books * wizards);
+    return softcapInsight(raw).times(getStats(state).get("insight.mult")).floor();
+}
+
+/** Insight beyond this is softcapped: the deep-frontier factor otherwise snowballs into the millions */
+export const INSIGHT_SOFTCAP = 1000;
+const INSIGHT_SOFTCAP_POWER = 0.4;
+
+export function softcapInsight(raw: Decimal): Decimal {
+    if (raw.lte(INSIGHT_SOFTCAP)) return raw;
+    return raw.div(INSIGHT_SOFTCAP).pow(INSIGHT_SOFTCAP_POWER).times(INSIGHT_SOFTCAP);
 }
 
 export function hasAscensionMilestone(state: GameState, id: AscensionMilestoneId): boolean {
     const m = ASCENSION_MILESTONES.find((x) => x.id === id);
-    return !!m && state.ascension.ascensions >= m.ascensions;
+    return !!m && effectiveAscensions(state) >= m.ascensions;
 }
 
 export function canAscend(state: GameState): boolean {
@@ -107,6 +118,9 @@ export function ascend(
     a.fameEarned = D(0);
     a.books = Object.fromEntries(REALMS.filter((r) => (books[r] ?? 0) > 0).map((r) => [r, books[r]]));
     a.retorts = [...retorts];
+    // the next Ascension's plan starts as this one
+    a.planBooks = { ...a.books };
+    a.planRetorts = [...a.retorts];
     a.spellsKnown = [];
     a.wizardsDefeatedThisAscension = [];
 
@@ -117,6 +131,7 @@ export function ascend(
     p.upgrades = {};
     p.refounds = 0;
     p.annals = annals;
+    p.ascensionBestFrontier = 0;
 
     log(
         state,

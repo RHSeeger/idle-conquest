@@ -72,7 +72,22 @@ function fillDefaults(loaded: any, defaults: any): any {
 type Migration = (raw: any) => any;
 
 /** migrations[n] upgrades a save from version n to n + 1 */
-const migrations: Record<number, Migration> = {};
+const migrations: Record<number, Migration> = {
+    // v2: Renown counts the best frontier of the current Ascension only. Before
+    // the first Ascension that's the same as the best ever; after it, start
+    // over (the old rule could strand a fresh wizard deep in the frontier).
+    1: (raw) => {
+        if (raw.prestige) {
+            raw.prestige.ascensionBestFrontier = (raw.ascension?.ascensions ?? 0) === 0 ? (raw.prestige.bestFrontier ?? 0) : 0;
+        }
+        // the next Ascension's planned profile starts as the current one
+        if (raw.ascension) {
+            raw.ascension.planBooks = { ...(raw.ascension.books ?? {}) };
+            raw.ascension.planRetorts = [...(raw.ascension.retorts ?? [])];
+        }
+        return raw;
+    },
+};
 
 function migrate(raw: any): any {
     let version: number = raw.version ?? 0;

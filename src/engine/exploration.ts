@@ -14,6 +14,7 @@ import { isWizard } from "./magic";
 import { grantHeroXp } from "./heroes";
 import { XP_PER_LAIR } from "../content/heroes";
 import { bump, GameState, log, Site } from "./state";
+import { addPlanarLink } from "./planes";
 
 export function isExplorationUnlocked(state: GameState): boolean {
     return state.run.buildings.includes("explorersGuild");
@@ -156,6 +157,9 @@ function clearLair(state: GameState, site: Site): void {
         run.spellbooks[loot.book] = (run.spellbooks[loot.book] ?? 0) + 1;
         const p = state.prestige;
         if (!p.realmsSeen.includes(loot.book)) p.realmsSeen.push(loot.book);
+    }
+    if (LAIRS[site.type]?.tower) {
+        addPlanarLink(state);
     }
     bump(state);
     log(

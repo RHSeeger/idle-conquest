@@ -5,13 +5,14 @@
  * Growth modifiers follow the strategy guide's Table 15.5 (each ±10 there is
  * ±0.1 here); Halflings harvest 3 food per farmer (Table 15.6).
  *
- * Only the Arcanus races exist in Layer 1. Myrran races (Beastmen, Dark Elves,
- * Draconians, Dwarves, Klackons, Trolls) arrive with Layer 3.
+ * Only the Arcanus races found realms. The Myrran races (Beastmen, Dark Elves,
+ * Draconians, Dwarves, Klackons, Trolls) arrive with Layer 3 and are only ever
+ * held on Myrror (see content/myrror.ts).
  */
 import { EffectDef } from "../engine/effects";
 import { TraitId } from "./traits";
 
-export type RaceId =
+export type ArcanusRaceId =
     | "highMen"
     | "halfling"
     | "nomad"
@@ -20,6 +21,10 @@ export type RaceId =
     | "orc"
     | "lizardman"
     | "highElf";
+
+export type MyrranRaceId = "beastmen" | "darkElf" | "draconian" | "dwarf" | "klackon" | "troll";
+
+export type RaceId = ArcanusRaceId | MyrranRaceId;
 
 export interface RaceDef {
     id: RaceId;
@@ -187,14 +192,122 @@ export const RACES: Record<RaceId, RaceDef> = {
             end: ["andor", "ithil", "lorien", "aris", "wen", "duil", "mere", "enor", "iel", "oth"],
         },
     },
+
+    // --- Myrror (Layer 3). Their bonuses come from Myrror holdings (content/myrror.ts),
+    // so the per-city and realm effects here are empty: they never found Arcanus cities.
+    beastmen: {
+        id: "beastmen",
+        name: "Beastman",
+        plural: "Beastmen",
+        adjective: "Beastman",
+        plane: "myrror",
+        description: "Bull- and boar-headed scholars of Myrror, better builders and thinkers than they look.",
+        cityEffects: [],
+        cityEffectText: "Myrran: held on Myrror only",
+        realmEffects: [],
+        realmEffectText: "×1.1 knowledge per city held on Myrror",
+        favoredTrait: "shieldWall",
+        nameParts: {
+            start: ["Gor", "Tau", "Mino", "Bul", "Hor", "Rha", "Kor", "Ox", "Bram", "Tusk"],
+            end: ["horn", "hold", "pen", "maze", "stall", "ridge", "ford", "hoof", "crag", "byre"],
+        },
+    },
+    darkElf: {
+        id: "darkElf",
+        name: "Dark Elf",
+        plural: "Dark Elves",
+        adjective: "Dark Elven",
+        plane: "myrror",
+        description: "Proud and cruel, born with magic in their blood. Every Dark Elf city hums with power.",
+        cityEffects: [],
+        cityEffectText: "Myrran: held on Myrror only",
+        realmEffects: [],
+        realmEffectText: "×1.1 mana per city held on Myrror",
+        favoredTrait: "archers",
+        nameParts: {
+            start: ["Ny", "Vel", "Dro", "Mal", "Zyn", "Ilh", "Xar", "Vor", "Shy", "Ul"],
+            end: ["thar", "dreth", "zyr", "loth", "vael", "nyss", "khar", "ruin", "ith", "ster"],
+        },
+    },
+    draconian: {
+        id: "draconian",
+        name: "Draconian",
+        plural: "Draconians",
+        adjective: "Draconian",
+        plane: "myrror",
+        description: "Winged dragon-folk. Every one of their soldiers flies, and they breathe fire.",
+        cityEffects: [],
+        cityEffectText: "Myrran: held on Myrror only",
+        realmEffects: [],
+        realmEffectText: "×1.1 army power per city held on Myrror",
+        favoredTrait: "walls",
+        nameParts: {
+            start: ["Dra", "Pyr", "Sca", "Vyr", "Ign", "Zhar", "Wyv", "Cin", "Ash", "Fla"],
+            end: ["spire", "roost", "aerie", "peak", "flame", "scale", "crest", "wing", "talon", "pyre"],
+        },
+    },
+    dwarf: {
+        id: "dwarf",
+        name: "Dwarf",
+        plural: "Dwarves",
+        adjective: "Dwarven",
+        plane: "myrror",
+        description: "Miners and engineers under the Myrran mountains. Their steam cannons are feared everywhere.",
+        cityEffects: [],
+        cityEffectText: "Myrran: held on Myrror only",
+        realmEffects: [],
+        realmEffectText: "×1.1 production per city held on Myrror",
+        favoredTrait: "walls",
+        nameParts: {
+            start: ["Khaz", "Dur", "Bar", "Thor", "Grim", "Kar", "Bal", "Dwal", "Mor", "Eb"],
+            end: ["dum", "grund", "forge", "delve", "hammer", "deep", "anvil", "rock", "hall", "mine"],
+        },
+    },
+    klackon: {
+        id: "klackon",
+        name: "Klackon",
+        plural: "Klackons",
+        adjective: "Klackon",
+        plane: "myrror",
+        description: "An insect hive that works without rest. Their cities are anthills of industry and trade.",
+        cityEffects: [],
+        cityEffectText: "Myrran: held on Myrror only",
+        realmEffects: [],
+        realmEffectText: "×1.1 gold per city held on Myrror",
+        favoredTrait: "shieldWall",
+        nameParts: {
+            start: ["Klik", "Tch", "Zz", "Kra", "Chi", "Skr", "Xit", "Tik", "Vrr", "Kss"],
+            end: ["hive", "mound", "cell", "brood", "comb", "tunnel", "nest", "chamber", "spire", "swarm"],
+        },
+    },
+    troll: {
+        id: "troll",
+        name: "Troll",
+        plural: "Trolls",
+        adjective: "Troll",
+        plane: "myrror",
+        description: "Huge, slow and almost impossible to kill: their wounds close as you watch.",
+        cityEffects: [],
+        cityEffectText: "Myrran: held on Myrror only",
+        realmEffects: [],
+        realmEffectText: "×1.1 siege power on Myrror per city held there",
+        favoredTrait: "cavalryScreen",
+        nameParts: {
+            start: ["Grug", "Ugg", "Thrum", "Bog", "Mur", "Grok", "Hruu", "Drog", "Lum", "Krug"],
+            end: ["bridge", "cave", "moor", "fen", "barrow", "stone", "bog", "gulch", "den", "rock"],
+        },
+    },
 };
+
+/** The races of Myrror, as a ring (used like ARCANUS_RING for the Myrror frontier) */
+export const MYRROR_RING: MyrranRaceId[] = ["beastmen", "darkElf", "draconian", "dwarf", "klackon", "troll"];
 
 /**
  * The races of Arcanus arranged in a ring. A run's frontier visits the races
  * nearest the starting race first (alternating either side), so the starting
  * race decides which races you can meet in a run.
  */
-export const ARCANUS_RING: RaceId[] = [
+export const ARCANUS_RING: ArcanusRaceId[] = [
     "highMen",
     "halfling",
     "nomad",
@@ -205,9 +318,9 @@ export const ARCANUS_RING: RaceId[] = [
     "highElf",
 ];
 
-/** Races in the order a run starting as `start` meets them (excluding `start`) */
+/** Races in the order a run starting as `start` meets them (excluding `start`), on start's plane */
 export function neighborOrder(start: RaceId): RaceId[] {
-    const ring = ARCANUS_RING;
+    const ring: readonly RaceId[] = RACES[start].plane === "myrror" ? MYRROR_RING : ARCANUS_RING;
     const i = ring.indexOf(start);
     const result: RaceId[] = [];
     for (let distance = 1; result.length < ring.length - 1; distance++) {

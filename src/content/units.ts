@@ -71,6 +71,14 @@ const list: UnitDef[] = [
     { id: "dragonTurtle", name: "Lizardman Dragon Turtle", role: "siege", currency: "production", baseCost: 40000, costGrowth: 1.1, power: 1100, requires: ["fightersGuild"], race: "lizardman" },
     { id: "paladins", name: "High Men Paladins", role: "cavalry", currency: "production", baseCost: 50000, costGrowth: 1.09, power: 1400, requires: ["armorersGuild"], race: "highMen" },
 
+    // Myrran racial units (Layer 3): trainable while you hold a city of that race on Myrror
+    { id: "manticoreRiders", name: "Beastman Manticore Riders", role: "cavalry", currency: "production", baseCost: 2e5, costGrowth: 1.09, power: 6000, requires: ["stables"], race: "beastmen" },
+    { id: "nightblades", name: "Dark Elf Nightblades", role: "melee", currency: "production", baseCost: 2e5, costGrowth: 1.09, power: 6000, requires: ["barracks"], race: "darkElf" },
+    { id: "doomDrakes", name: "Draconian Doom Drakes", role: "cavalry", currency: "production", baseCost: 5e5, costGrowth: 1.09, power: 16000, requires: ["stables"], race: "draconian" },
+    { id: "steamCannons", name: "Dwarven Steam Cannons", role: "siege", currency: "production", baseCost: 5e5, costGrowth: 1.1, power: 16000, requires: ["barracks"], race: "dwarf" },
+    { id: "stagBeetles", name: "Klackon Stag Beetles", role: "melee", currency: "production", baseCost: 3e5, costGrowth: 1.09, power: 9000, requires: ["barracks"], race: "klackon" },
+    { id: "warTrolls", name: "War Trolls", role: "melee", currency: "production", baseCost: 4e5, costGrowth: 1.09, power: 13000, requires: ["barracks"], race: "troll" },
+
     // Summoned creatures (Layer 2)
     summon("guardianSpirit", "Guardian Spirits", "melee", "common"),
     summon("skeletons", "Skeletons", "melee", "common"),

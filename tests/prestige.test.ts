@@ -11,6 +11,7 @@ import {
     hasMilestone,
     refound,
     renownLimit,
+    TRIBUTE_SECONDS,
 } from "../src/engine/prestige";
 import { GameState, newGame } from "../src/engine/state";
 
@@ -71,12 +72,39 @@ describe("Renown", () => {
     it("makes nearby cities surrender instantly once unlocked", () => {
         const state = newGame(0);
         state.prestige.refounds = 3;
-        state.prestige.bestFrontier = 20;
+        state.prestige.ascensionBestFrontier = 20;
         expect(renownLimit(state)).toBe(10);
         tickFrontier(state, getStats(state), 0.1);
         expect(state.run.frontier.index).toBe(10);
-        // surrendered cities don't earn Fame
+        // surrendered cities aren't conquered by force...
         expect(state.run.conqueredPop).toBe(0);
+        expect(state.run.surrenderedPop).toBeGreaterThan(0);
+    });
+
+    it("pays Fame as tribute that builds up over the run", () => {
+        const state = newGame(0);
+        state.prestige.refounds = 3;
+        state.prestige.ascensionBestFrontier = 60; // 30 cities surrender
+        tickFrontier(state, getStats(state), 0.1);
+        expect(canRefound(state)).toBe(true);
+        // ...so refounding the moment Renown is done gives nothing
+        expect(fameOnRefound(state).toNumber()).toBe(0);
+        state.run.time = TRIBUTE_SECONDS / 2;
+        const half = fameOnRefound(state).toNumber();
+        state.run.time = TRIBUTE_SECONDS;
+        const full = fameOnRefound(state).toNumber();
+        expect(half).toBeGreaterThan(0);
+        expect(full).toBeGreaterThan(half);
+        state.run.time = TRIBUTE_SECONDS * 3;
+        expect(fameOnRefound(state).toNumber()).toBe(full);
+    });
+
+    it("only counts the best frontier of the current Ascension", () => {
+        const state = newGame(0);
+        state.prestige.refounds = 3;
+        state.prestige.bestFrontier = 60;
+        state.prestige.ascensionBestFrontier = 0;
+        expect(renownLimit(state)).toBe(0);
     });
 });
 

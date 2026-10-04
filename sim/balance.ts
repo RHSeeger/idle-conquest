@@ -15,7 +15,8 @@ import { RACES, RaceId } from "../src/content/races";
 import { currentPlan, currentTarget, siegePower } from "../src/engine/army";
 import { getStats } from "../src/engine/collect";
 import { fmt, fmtTime } from "../src/engine/format";
-import { realmEconomy } from "../src/engine/economy";
+import { ECONOMY_TUNING, realmEconomy } from "../src/engine/economy";
+import { BUILDING_TUNING } from "../src/engine/costs";
 import { fameOnRefound } from "../src/engine/prestige";
 import { ascensionProgress } from "../src/engine/ascension";
 
@@ -24,6 +25,7 @@ import { GameState, newGame, newRun } from "../src/engine/state";
 import { tick } from "../src/engine/tick";
 import { botAct, botEndRun, botShouldRefound, newTracker } from "../src/dev/bot";
 import { insightOnAscend, planeshiftProgress } from "../src/engine/ascension";
+import { essenceOnPlaneshift } from "../src/engine/planes";
 
 const args = Object.fromEntries(
     process.argv.slice(2).map((a) => {
@@ -36,7 +38,14 @@ const runs = Number(args.runs ?? 1);
 const race = (args.race ?? "highMen") as RaceId;
 const verbose = args.verbose === "true";
 if (args.growth) FRONTIER_TUNING.defenseGrowth = Number(args.growth);
+if (args.lgrowth) FRONTIER_TUNING.lateGrowth = Number(args.lgrowth);
 if (args.base) FRONTIER_TUNING.defenseBase = Number(args.base);
+if (args.popgrowth) ECONOMY_TUNING.growthScale = Number(args.popgrowth);
+if (args.bcost) BUILDING_TUNING.costMult = Number(args.bcost);
+if (args.bstep) BUILDING_TUNING.stepMult = Number(args.bstep);
+if (args.bcap) BUILDING_TUNING.stepCap = Number(args.bcap);
+if (args.oindex) FRONTIER_TUNING.openingIndex = Number(args.oindex);
+if (args.ogrowth) FRONTIER_TUNING.openingGrowth = Number(args.ogrowth);
 
 const DT = 1;
 const BOT_EVERY = 5;
@@ -124,6 +133,15 @@ function snapshot(state: GameState) {
     );
 }
 
+/** Parses short() output ("1h6m", "5m9s", "32s") back to seconds */
+function parseTime(s: string): number {
+    let total = 0;
+    for (const [, n, unit] of s.matchAll(/(\d+)([hms])/g)) {
+        total += Number(n) * (unit === "h" ? 3600 : unit === "m" ? 60 : 1);
+    }
+    return total;
+}
+
 function short(seconds: number): string {
     return fmtTime(seconds).replace(" ", "");
 }
@@ -134,6 +152,15 @@ state.run = newRun(race);
 if (runs <= 1) {
     const r = playRun(state, hours * 3600, false);
     const plan = currentPlan(state);
+    // pacing summary: how many conquests/buildings by each checkpoint
+    const countBy = (items: string[], minutes: number) =>
+        items.filter((s) => parseTime(s.split("@")[1]) <= minutes * 60).length;
+    console.log(
+        "Pacing: " +
+            [5, 10, 20, 30, 60, 90, 120]
+                .map((m) => `${m}m: ${countBy(r.conquests, m)}c/${countBy(r.buildings, m)}b`)
+                .join("  "),
+    );
     console.log("Conquests: " + r.conquests.join(" "));
     console.log("\nBuildings: " + r.buildings.join(" "));
     console.log("\nRegion timeline:");
@@ -144,21 +171,24 @@ if (runs <= 1) {
     console.log(`Sites ${r.sites}, spellbooks ${r.books}, Ascension ready at ${r.ascensionReady === null ? "never" : fmtTime(r.ascensionReady)}`);
 } else {
     console.log(
-        "run | asc | race        | length   | frontier | fame | reg2     wall(40) | gap      | sites books  | spells | wiz | asc ready | L3 ready  | ended",
+        "run | ps | asc | race        | length   | total    | frontier | fame | reg2     wall(40) | gap      | sites books  | spells | wiz | myrror | asc ready | L3 ready  | ended",
     );
     let totalTime = 0;
     for (let i = 1; i <= runs; i++) {
         const asc = state.ascension.ascensions;
+        const ps = state.planes.planeshifts;
         const r = playRun(state, hours * 3600, true);
         totalTime += r.time;
+        const myrror = state.planes.myrror ? `${state.planes.myrror.index}/${state.planes.myrror.links}L` : "-";
         const reg2 = r.regionTimes[2] !== undefined ? fmtTime(r.regionTimes[2]) : "-";
         const wall = r.regionTimes[5] !== undefined ? fmtTime(r.regionTimes[5]) : "-";
         const spells = state.ascension.spellsKnown.length;
         const wiz = state.ascension.wizardsDefeatedThisAscension.length;
         const insight = insightOnAscend(state).toString();
+        const essence = essenceOnPlaneshift(state).toString();
         const ended = i < runs ? botEndRun(state) : "";
         console.log(
-            `${String(i).padStart(3)} | ${String(asc).padStart(3)} | ${RACES[r.race].plural.padEnd(11)} | ${fmtTime(r.time).padEnd(8)} | ${String(r.frontier).padStart(8)} | ${r.fame.padStart(4)} | ${reg2.padEnd(8)} ${wall.padEnd(8)} | ${fmtTime(r.longestGap).padEnd(8)} | ${String(r.sites).padStart(5)} ${r.books.padEnd(6)} | ${String(spells).padStart(6)} | ${String(wiz).padStart(3)} | ${(r.ascensionReady === null ? "-" : fmtTime(r.ascensionReady)).padEnd(9)} | ${(r.planeshiftReady === null ? "-" : fmtTime(r.planeshiftReady)).padEnd(9)} | ${ended}${ended === "ascend" ? ` (+${insight} Insight)` : ""}`,
+            `${String(i).padStart(3)} | ${String(ps).padStart(2)} | ${String(asc).padStart(3)} | ${RACES[r.race].plural.padEnd(11)} | ${fmtTime(r.time).padEnd(8)} | ${fmtTime(totalTime).padEnd(8)} | ${String(r.frontier).padStart(8)} | ${r.fame.padStart(4)} | ${reg2.padEnd(8)} ${wall.padEnd(8)} | ${fmtTime(r.longestGap).padEnd(8)} | ${String(r.sites).padStart(5)} ${r.books.padEnd(6)} | ${String(spells).padStart(6)} | ${String(wiz).padStart(3)} | ${myrror.padEnd(6)} | ${(r.ascensionReady === null ? "-" : fmtTime(r.ascensionReady)).padEnd(9)} | ${(r.planeshiftReady === null ? "-" : fmtTime(r.planeshiftReady)).padEnd(9)} | ${ended}${ended === "ascend" ? ` (+${insight} Insight)` : ended === "planeshift" ? ` (+${essence} Essence)` : ""}`,
         );
     }
     const p = state.prestige;
@@ -169,4 +199,9 @@ if (runs <= 1) {
     console.log(`Fame upgrades: ${JSON.stringify(p.upgrades)}`);
     console.log(`Ascensions ${a.ascensions}, Insight ${a.insight.toString()} (total ${a.insightTotal.toString()}), books ${JSON.stringify(a.books)}`);
     console.log(`Insight upgrades: ${JSON.stringify(a.upgrades)}; wizards defeated: ${a.wizardsDefeated.join(", ") || "none"}`);
+    const pl = state.planes;
+    console.log(
+        `Planeshifts ${pl.planeshifts}, Essence ${pl.essence.toString()} (total ${pl.essenceTotal.toString()}), upgrades ${JSON.stringify(pl.upgrades)}; ` +
+            `Myrror ${pl.myrror ? `${pl.myrror.index} (${pl.myrror.links} links, holdings ${JSON.stringify(pl.myrror.holdings)})` : "closed"}`,
+    );
 }

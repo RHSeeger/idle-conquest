@@ -215,13 +215,64 @@ Exploration in L2 can reveal **Towers of Wizardry**. These are heavy lairs, and 
 
 ## 7. Layer 3: Planeshift (Myrror)
 
-This is the least defined layer, and the user's notes leave it open as well. Proposed core idea: **two planes run at the same time.**
+**Direction approved: two planes at once.** The details below are the first build. Numbers are starting points for tuning.
 
-- **Arcanus becomes the engine.** It is fully automated by now (L1 and L2 are solved), and it runs as a compressed "Arcanus output" that feeds Myrror.
-- **Myrror is the new frontier.** It has the Myrran races (Beastmen, Dark Elves, Draconians, Dwarves, Klackons, Trolls) and their strong units (War Trolls, Doom Drakes, Manticore Riders, Steam Cannons), richer nodes, and Myrror-only resources (Adamantium; Crysx and Quork crystals).
-- **Towers are links.** Each Tower of Wizardry you hold is a channel that moves a share of resources, mana or army between planes. The new decision is **how to split between planes**: Myrror walls need Arcanus support, while Arcanus keeps compounding on its own.
-- **Planar enchantments** apply to one plane or both (and Planar Seal is a rival-wizard boss).
-- **Currency: Planar Essence.** Parallel choice: where your Fortress sits (choosing Myrror gives the Myrran retort for free), and which Myrran race you start with.
+**Gate (built in Layer 2):** clear a Tower of Wizardry in the current run, and know the Rite of the Tower (Arcane).
+
+**Planeshift (the layered reset):**
+- **Resets:** everything in Layers 0–2. That means the run, Fame and its upgrades, refounds, Insight and its upgrades, the Ascension count and spells known. It also resets the Myrror campaign.
+- **Keeps:** unlocked retorts, race Mastery, the Chronicle, realms seen, wizards ever banished, and Planar Essence with its upgrades.
+- **You stay a Wizard.** Planeshift milestones hand back the Layer 1–2 automation at once, so Arcanus is quick and thought-free again.
+- **Gives:** **Planar Essence**.
+
+**Two planes:**
+- **Arcanus is the engine.** It's the familiar loop of runs, Refounds and Ascensions. Planeshift milestones add **auto-Refound** and **auto-Ascend**, so after a couple of Planeshifts it runs itself.
+- **Myrror is a second frontier campaign that persists across Refounds and Ascensions.** It resets only on Planeshift. Arcanus loops come and go underneath it, and each one pushes Myrror further.
+- **Towers of Wizardry are the links.** Each Tower cleared during the current Planeshift adds one link, up to 6 (MoM has 6 towers). The Tower you came through counts as the first.
+  - Each link lets **10%** of your army fight on Myrror. Essence upgrades raise this.
+- **The new decision is the army split.** One slider sets the share of the army sent to Myrror. Arcanus fights with the rest.
+  - Sending more pushes Myrror faster, but slows Arcanus runs, and with them Fame and Insight.
+  - Lairs, instants and the Arcanus frontier all use the Arcanus share.
+- **Myrror's frontier** is built like Arcanus's:
+  - First come the Myrran Borderlands of your beachhead race, then the other 5 Myrran races in ring order.
+  - Then come 4 Myrran wizards' domains, with wards and Fortresses as on Arcanus, and race regions between them.
+  - City defense starts around the strength of Arcanus's first rival wizard.
+- **Holdings:** the Myrran cities you take are held for the rest of the Planeshift.
+  - Each Myrran race gives a realm bonus that grows with the number of its cities you hold (×(1 + 0.1 per city)).
+  - Its **racial unit** can be trained in every Arcanus run while you hold one of its cities.
+
+| Myrran race | Bonus per city held | Unit |
+|---|---|---|
+| Beastmen | knowledge | Manticore Riders (cavalry) |
+| Dark Elves | mana | Nightblades (melee) |
+| Draconians | army power | Doom Drakes (cavalry) |
+| Dwarves | production | Steam Cannons (siege) |
+| Klackons | gold | Stag Beetles (melee) |
+| Trolls | Myrror siege power | War Trolls (melee) |
+
+**Planar Essence on Planeshift** = (Myrran cities taken ÷ 4)^1.3 × (1 + 0.25 per Myrran race held) × (1 + Myrran wizards banished this Planeshift).
+
+**Parallel choice:** the Myrran **beachhead race**, which decides the order you meet Myrror's races and wizards, plus the wizard profile you start with.
+
+**Essence upgrades:**
+- **Planar Anchor:** +10% army share per level.
+- **Astral Legions:** ×2 Myrror siege power.
+- **Echo of Arcanus:** ×3 production, gold and knowledge.
+- **Wellspring:** ×2 Insight.
+- **Bridgehead:** Myrror starts part-way to your best Myrror frontier.
+
+**Planeshift milestones:**
+- **1: Planewalker.** You stay a Wizard. Ascension milestones count as 3 extra Ascensions. Auto-Refound unlocks.
+- **2:** auto-Ascend unlocks.
+- **3:** start each Planeshift with 2 links.
+- **4:** Myrror Renown. Cities below half your best Myrror frontier surrender.
+
+**Deferred:**
+- Choosing which plane holds your Fortress.
+- Myrror-only resources (Adamantium, Crysx, Quork).
+- Planar Seal and other plane-specific enchantments.
+
+These are good candidates once the core loop has been played.
 
 ---
 

@@ -16,10 +16,17 @@ import { bump, GameState, log, newRun, recordRun } from "./state";
 
 export const MAX_RACE_MASTERY = 5;
 
-/** Fame = (conquered population / 8)^0.9 × (1 + 0.25 × races conquered) */
+/** Fame = (Fame population / 8)^0.9 × (1 + 0.25 × races conquered) */
 const FAME_POP_DIVISOR = 8;
 const FAME_POP_EXPONENT = 0.9;
 const FAME_PER_RACE = 0.25;
+/**
+ * Cities that surrendered to Renown count for this share of their population,
+ * building up linearly over the first TRIBUTE_SECONDS of the run. The ramp
+ * stops "refound the moment Renown finishes" from being free Fame.
+ */
+export const TRIBUTE_SHARE = 0.5;
+export const TRIBUTE_SECONDS = 15 * 60;
 /** Each Fame ever earned gives this much bonus to production, gold, knowledge and army power */
 export const RENOWN_PER_FAME = 0.02;
 
@@ -33,12 +40,22 @@ export function refoundRequirementText(): string {
     return "Conquer a city of another race (reach the first region beyond your Borderlands).";
 }
 
+/** How much of the surrendered cities' tribute has built up (0..TRIBUTE_SHARE) */
+export function tributeShare(state: GameState): number {
+    return TRIBUTE_SHARE * Math.min(1, state.run.time / TRIBUTE_SECONDS);
+}
+
+/** Population that counts for Fame: conquered by force, plus tribute from surrendered cities */
+export function famePop(state: GameState): number {
+    return state.run.conqueredPop + state.run.surrenderedPop * tributeShare(state);
+}
+
 export function fameOnRefound(state: GameState): Decimal {
     if (!canRefound(state)) {
         return D(0);
     }
     const run = state.run;
-    const base = Math.pow(run.conqueredPop / FAME_POP_DIVISOR, FAME_POP_EXPONENT);
+    const base = Math.pow(famePop(state) / FAME_POP_DIVISOR, FAME_POP_EXPONENT);
     const raceMult = 1 + FAME_PER_RACE * run.racesConquered.length;
     return D(base * raceMult).times(getStats(state).get("fame.mult")).floor();
 }
@@ -142,9 +159,14 @@ export function applyRunStart(state: GameState): void {
  * Ascension milestones ("A Wizard's Household": +2, "Legend Never Dies": +4).
  */
 export function effectiveRefounds(state: GameState): number {
-    const asc = state.ascension.ascensions;
+    const asc = effectiveAscensions(state);
     const bonus = asc >= 2 ? 4 : asc >= 1 ? 2 : 0;
     return state.prestige.refounds + bonus;
+}
+
+/** Ascensions as counted for Ascension milestones: Planewalker (1 Planeshift) adds 3 */
+export function effectiveAscensions(state: GameState): number {
+    return state.ascension.ascensions + (state.planes.planeshifts >= 1 ? 3 : 0);
 }
 
 export function hasMilestone(state: GameState, id: MilestoneId): boolean {
@@ -165,9 +187,13 @@ export function renownFraction(state: GameState): number {
     return Math.min(0.95, f);
 }
 
-/** Frontier cities with an index below this surrender without a fight */
+/**
+ * Frontier cities with an index below this surrender without a fight. Uses the
+ * best frontier of this Ascension: a new wizard's realm has to earn its name
+ * again (otherwise it is dropped deep in the frontier with a fresh economy).
+ */
 export function renownLimit(state: GameState): number {
-    return Math.floor(state.prestige.bestFrontier * renownFraction(state));
+    return Math.floor(state.prestige.ascensionBestFrontier * renownFraction(state));
 }
 
 // --- Fame upgrades ---

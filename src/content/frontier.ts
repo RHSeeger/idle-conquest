@@ -27,8 +27,15 @@ export const ARCANUS_WIZARDS = 4;
 
 /** Mutable so the balance simulator can try alternatives from the command line */
 export const FRONTIER_TUNING = {
-    defenseBase: 20,
-    defenseGrowth: 1.8,
+    /**
+     * The opening (first 24 cities) starts tougher and grows more gently, so
+     * the first half hour isn't a blur of conquests; tuned with the sim to
+     * ~7 cities by 10 minutes, ~23 by 30 and the wall at ~2.5h on run 1.
+     */
+    defenseBase: 800,
+    openingIndex: 24,
+    openingGrowth: 1.55,
+    defenseGrowth: 1.6,
     /** Beyond the Layer 1 wall (wizards only) defense grows more slowly */
     lateIndex: 40,
     lateGrowth: 1.45,
@@ -129,9 +136,13 @@ export function regionOf(plan: RegionDef[], index: number): RegionDef {
 
 export function baseDefense(index: number): Decimal {
     const t = FRONTIER_TUNING;
-    const early = Math.min(index, t.lateIndex);
+    const opening = Math.min(index, t.openingIndex);
+    const early = Math.max(0, Math.min(index, t.lateIndex) - t.openingIndex);
     const late = Math.max(0, index - t.lateIndex);
-    return D(t.defenseBase).times(Decimal.pow(t.defenseGrowth, early)).times(Decimal.pow(t.lateGrowth, late));
+    return D(t.defenseBase)
+        .times(Decimal.pow(t.openingGrowth, opening))
+        .times(Decimal.pow(t.defenseGrowth, early))
+        .times(Decimal.pow(t.lateGrowth, late));
 }
 
 /**

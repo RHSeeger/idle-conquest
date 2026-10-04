@@ -1,6 +1,7 @@
-import { frontierCity, REGION_SIZE, wallIndex } from "../content/frontier";
+import { LAIRS } from "../content/exploration";
+import { frontierCity, frontierEnd, REGION_SIZE } from "../content/frontier";
 import { RACES } from "../content/races";
-import { ROLE_NAMES, ROLES, TRAITS, traitRoleMult } from "../content/traits";
+import { ROLE_NAMES, ROLES, TraitId, TRAITS, traitRoleMult } from "../content/traits";
 import { DRILL_STEP, UNITS } from "../content/units";
 import { buyUnits } from "../engine/actions";
 import { availableUnits, currentPlan, currentTarget, powerByRole, siegePower, toNextDrill, unitPower } from "../engine/army";
@@ -8,10 +9,10 @@ import { getStats } from "../engine/collect";
 import { unitAffordable, unitPrice, wallet } from "../engine/costs";
 import { unitPowerStat } from "../engine/effects";
 import { fmt, fmtInt, fmtTime } from "../engine/format";
-import { Settings } from "../engine/state";
-import { isAutomationUnlocked } from "../engine/automation";
-import { ZERO } from "../engine/decimal";
-import { lairTarget, siteName } from "../engine/exploration";
+import { GameState, Settings } from "../engine/state";
+import { AUTO_RAID_SECONDS, isAutomationUnlocked } from "../engine/automation";
+import { isExplorationUnlocked, lairPower, lairTarget, setArmyTarget, siteName } from "../engine/exploration";
+import { isWizard } from "../engine/magic";
 import { AutoToggle } from "./AutoToggle";
 import { HeroesSection } from "./HeroesSection";
 import { BreakdownView, Price, ProgressBar, Tip } from "./components";
@@ -19,82 +20,211 @@ import { game } from "./game";
 
 const BUY_AMOUNTS: Settings["buyAmount"][] = [1, 10, 100, "next", "max"];
 
-function Frontier() {
+/** One line saying what the army is doing right now (also used in the resource bar) */
+export function armyActivity(state: GameState): string {
+    const stats = getStats(state);
+    const raiding = lairTarget(state);
+    if (raiding) {
+        const power = siegePower(state, stats, raiding.traits);
+        const eta = power.gt(0) ? raiding.defense!.minus(state.run.lairSiege).div(power).toNumber() : Infinity;
+        return `Raiding the ${siteName(raiding)} · ${fmtTime(eta)}`;
+    }
+    const target = currentTarget(state);
+    if (!target) return "Halted at a rival wizard's wards";
+    const power = siegePower(state, stats, target.traits);
+    if (power.lte(0)) return "Idle: train troops";
+    const eta = target.defense.minus(state.run.frontier.siege).div(power).toNumber();
+    return `Besieging ${target.name} · ${fmtTime(eta)}`;
+}
+
+function CurrentOrders() {
     const state = game();
     const stats = getStats(state);
-    const plan = currentPlan(state);
-    const target = currentTarget(state);
     const run = state.run;
+    const raiding = lairTarget(state);
+    const target = currentTarget(state);
 
-    if (!target) {
-        const wizardRegion = plan[plan.length - 1];
+    if (raiding) {
+        const power = siegePower(state, stats, raiding.traits);
+        const eta = power.gt(0) ? raiding.defense!.minus(run.lairSiege).div(power).toNumber() : Infinity;
         return (
-            <section>
-                <h2>Frontier</h2>
-                <div class="wall">
-                    <b>{wizardRegion.name}</b>
-                    <p>
-                        Your armies stand before a rival wizard's domain. Mortal soldiers cannot pass the wards that
-                        guard it. Only a wizard could break them.
-                    </p>
+            <div class="target orders">
+                <div class="target-head">
+                    <span class="orders-verb">Raiding</span> the <b>{siteName(raiding)}</b>
+                    <TraitList traits={raiding.traits} />
+                    <button class="toggle" onClick={() => setArmyTarget(state, null)}>
+                        Recall to the frontier
+                    </button>
                 </div>
-            </section>
+                <ProgressBar
+                    fraction={run.lairSiege.div(raiding.defense!).toNumber()}
+                    label={`${fmt(run.lairSiege)} / ${fmt(raiding.defense!)} · ${fmt(power)}/s · ${fmtTime(eta)}`}
+                />
+                <p class="hint">
+                    Then back to the frontier{target ? ` (${target.name}: siege progress there is kept)` : ""}.
+                </p>
+            </div>
         );
     }
 
+    if (!target) {
+        const plan = currentPlan(state);
+        const wizardRegion = plan.find((r) => r.kind === "wizard") ?? plan[plan.length - 1];
+        return (
+            <div class="wall">
+                <b>{wizardRegion.name}</b>
+                <p>
+                    Your armies stand before a rival wizard's domain. Mortal soldiers cannot pass the wards that guard
+                    it. Only a wizard could break them. Lairs can still be raided.
+                </p>
+            </div>
+        );
+    }
+
+    const power = siegePower(state, stats, target.traits);
+    const eta = power.gt(0) ? target.defense.minus(run.frontier.siege).div(power).toNumber() : Infinity;
+    return (
+        <div class="target orders">
+            <div class="target-head">
+                <span class="orders-verb">Besieging</span> <b>{target.name}</b> · {RACES[target.race].adjective}
+                {target.isRegionCapital && <span class="tag">region capital</span>}
+                <TraitList traits={target.traits} />
+                <span class="target-def">Defense {fmt(target.defense)}</span>
+            </div>
+            <ProgressBar
+                fraction={run.frontier.siege.div(target.defense).toNumber()}
+                label={
+                    power.gt(0)
+                        ? `Siege ${fmt(run.frontier.siege)} / ${fmt(target.defense)} · ${fmt(power)}/s · ${fmtTime(eta)}`
+                        : "Train troops to besiege this city"
+                }
+            />
+        </div>
+    );
+}
+
+function TraitList(props: { traits: readonly TraitId[] }) {
+    if (props.traits.length === 0) return <span class="hint"> · no special defenses</span>;
+    return (
+        <span class="traits">
+            {props.traits.map((t) => (
+                <Tip key={t} tip={TRAITS[t].description}>
+                    <span class="trait">{TRAITS[t].name}</span>
+                </Tip>
+            ))}
+        </span>
+    );
+}
+
+/** Lairs: where else the army could be. Raid orders and the auto-raid rule live here. */
+function Lairs() {
+    const state = game();
+    const run = state.run;
     const raiding = lairTarget(state);
-    const power = raiding ? ZERO : siegePower(state, stats, target.traits);
-    const remaining = target.defense.minus(run.frontier.siege);
-    const eta = power.gt(0) ? remaining.div(power).toNumber() : Infinity;
-    const regionIdx = Math.floor(target.index / REGION_SIZE);
-    const upcoming = [1, 2, 3, 4]
-        .map((i) => frontierCity(run.startingRace, plan, target.index + i))
-        .filter((c) => c !== null);
+    const lairs = run.sites.filter((s) => s.kind === "lair" && !s.cleared);
+    const cleared = run.sites.filter((s) => s.kind === "lair" && s.cleared).length;
+    const autoOn = isAutomationUnlocked(state, "lairs") && state.automation.lairs;
+    if (!isExplorationUnlocked(state)) return null;
+
+    return (
+        <>
+            <h3>
+                Monster lairs <AutoToggle kind="lairs" label="Auto-raid" />
+                <span class="count"> · {cleared} cleared this run</span>
+            </h3>
+            <p class="hint">
+                {autoOn
+                    ? `Auto-raid sends the army to the quickest lair it can clear in under ${fmtTime(AUTO_RAID_SECONDS)}, then back to the frontier. Slower lairs are left for you (or for a stronger army).`
+                    : isAutomationUnlocked(state, "lairs")
+                      ? "Auto-raid is off. Raid lairs by hand."
+                      : "Raid lairs by hand. Auto-raid unlocks at 2 Refounds."}{" "}
+                While raiding, the frontier siege pauses (its progress is kept).
+            </p>
+            {lairs.length === 0 ? (
+                <p class="hint">No lairs to raid. Expeditions (Exploration tab) find more.</p>
+            ) : (
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Lair</th>
+                            <th>Monsters</th>
+                            <th class="num">Defense</th>
+                            <th class="num">Time to clear</th>
+                            <th>Treasure</th>
+                            <th />
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {lairs.map((site) => {
+                            const def = LAIRS[site.type];
+                            const power = lairPower(state, site);
+                            const seconds = power.gt(0) ? site.defense!.div(power).toNumber() : Infinity;
+                            const isTarget = raiding?.index === site.index;
+                            return (
+                                <tr key={site.index} class={isTarget ? "current" : ""}>
+                                    <td>{def.name}</td>
+                                    <td>
+                                        <TraitList traits={site.traits} />
+                                    </td>
+                                    <td class="num">{fmt(site.defense!)}</td>
+                                    <td class="num">
+                                        {fmtTime(seconds)}
+                                        {autoOn && (
+                                            <span class={seconds <= AUTO_RAID_SECONDS ? "good" : "hint"}>
+                                                {seconds <= AUTO_RAID_SECONDS ? " · auto" : " · too slow for auto"}
+                                            </span>
+                                        )}
+                                    </td>
+                                    <td class="hint">
+                                        {def.bookChance >= 1 ? "Spellbook, treasure" : `Treasure, ${Math.round(def.bookChance * 100)}% spellbook`}
+                                    </td>
+                                    <td>
+                                        {isTarget ? (
+                                            <span class="good">raiding</span>
+                                        ) : (
+                                            <button onClick={() => setArmyTarget(state, site.index)}>Raid</button>
+                                        )}
+                                    </td>
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </table>
+            )}
+        </>
+    );
+}
+
+function Campaign() {
+    const state = game();
+    const plan = currentPlan(state);
+    const target = currentTarget(state);
+    const run = state.run;
+    const regionIdx = target ? Math.floor(target.index / REGION_SIZE) : plan.length;
+    const upcoming = target
+        ? [1, 2, 3, 4].map((i) => frontierCity(run.startingRace, plan, target.index + i, isWizard(state))).filter((c) => c !== null)
+        : [];
 
     return (
         <section>
-            <h2>
-                Frontier <span class="count">— {target.region.name}</span>
-            </h2>
-            <div class="target">
-                <div class="target-head">
-                    <b>{target.name}</b> · {RACES[target.race].adjective}
-                    {target.isRegionCapital && <span class="tag">region capital</span>}
-                    <span class="target-def">Defense {fmt(target.defense)}</span>
-                </div>
-                <div class="traits">
-                    {target.traits.length === 0 && <span class="hint">No special defenses</span>}
-                    {target.traits.map((t) => (
-                        <Tip key={t} tip={TRAITS[t].description}>
-                            <span class="trait">{TRAITS[t].name}</span>
-                        </Tip>
-                    ))}
-                </div>
-                <ProgressBar
-                    fraction={run.frontier.siege.div(target.defense).toNumber()}
-                    label={
-                        raiding
-                            ? `Paused: the army is raiding the ${siteName(raiding)} (see Exploration)`
-                            : power.gt(0)
-                              ? `Siege ${fmt(run.frontier.siege)} / ${fmt(target.defense)} · ${fmt(power)}/s · ${fmtTime(eta)}`
-                              : "Train troops to besiege this city"
-                    }
-                />
-            </div>
+            <h2>Campaign</h2>
+            <CurrentOrders />
             <div class="regions">
                 {plan.map((r) => (
                     <span key={r.index} class={"region " + (r.index < regionIdx ? "done" : r.index === regionIdx ? "current" : "")}>
                         {r.name}
                     </span>
                 ))}
-                <span class="hint">
-                    {" "}
-                    · city {target.index + 1} of {wallIndex(plan)}
-                </span>
+                {target && (
+                    <span class="hint">
+                        {" "}
+                        · city {target.index + 1} of {frontierEnd(plan, isWizard(state))}
+                    </span>
+                )}
             </div>
             {upcoming.length > 0 && (
                 <div class="upcoming">
-                    <span class="hint">Next: </span>
+                    <span class="hint">Next on the frontier: </span>
                     {upcoming.map((c) => (
                         <span key={c!.index} class="upcoming-city">
                             {c!.name} ({fmt(c!.defense)}
@@ -103,6 +233,7 @@ function Frontier() {
                     ))}
                 </div>
             )}
+            <Lairs />
         </section>
     );
 }
@@ -231,7 +362,7 @@ function Troops() {
 export function ArmyPanel() {
     return (
         <div class="panel">
-            <Frontier />
+            <Campaign />
             <Troops />
             <HeroesSection />
         </div>

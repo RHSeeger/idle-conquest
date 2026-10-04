@@ -18,10 +18,15 @@ export function registerCollector(collector: Collector): void {
     collectors.push(collector);
 }
 
+/** Races with a city in the realm, plus Myrran races held on Myrror (for racial units) */
 export function racesInRealm(state: GameState): RaceId[] {
     const seen = new Set<RaceId>();
     for (const city of state.run.cities) {
         seen.add(city.race);
+    }
+    const held = state.planes.myrror?.holdings ?? {};
+    for (const [race, n] of Object.entries(held)) {
+        if ((n ?? 0) > 0) seen.add(race as RaceId);
     }
     return [...seen];
 }

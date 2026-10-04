@@ -77,6 +77,9 @@ export const STAT_BASE: Record<string, number> = {
     "cost.research": 1,
     "cost.summon": 1,
     "fame.mult": 1,
+    "insight.mult": 1,
+    // planes (Layer 3)
+    "myrror.power": 1,
     // costs
     "cost.building": 1,
     "cost.unit": 1,

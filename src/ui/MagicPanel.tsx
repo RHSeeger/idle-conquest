@@ -28,6 +28,7 @@ import { GameState } from "../engine/state";
 import { AutoToggle } from "./AutoToggle";
 import { BreakdownView, Price, Tip } from "./components";
 import { game } from "./game";
+import { CurrentProfile } from "./AscensionPanel";
 
 const REALM_LABEL: Record<SpellRealm, string> = { arcane: "Arcane", ...Object.fromEntries(REALMS.map((r) => [r, REALM_DEFS[r].name])) } as Record<
     SpellRealm,
@@ -148,6 +149,7 @@ export function MagicPanel() {
                     researched with Knowledge and stay known until you Ascend again. Enchantments last until the end of
                     the run.
                 </p>
+                <CurrentProfile />
                 {(nodes.length > 0 || unmelded > 0) && (
                     <p>
                         Magic nodes: {nodes.map((n) => `${LAIRS[n].name} (${NODE_BONUS[n]?.text})`).join(", ") || "none melded"}

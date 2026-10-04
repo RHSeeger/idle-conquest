@@ -776,3 +776,89 @@ button.toggle.auto {
     margin-left: 8px;
     font-weight: normal;
 }
+
+/* --- overview (Realm tab) --- */
+.overview {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.overview li {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 3px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.overview li:last-child {
+    border-bottom: none;
+}
+
+.ov-label {
+    flex: 0 0 120px;
+    color: var(--muted);
+}
+
+.ov-text {
+    flex: 1;
+}
+
+.ov-auto {
+    font-size: 11px;
+    padding: 0 6px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+}
+
+.ov-auto.on {
+    border-color: var(--good);
+    color: var(--good);
+}
+
+/* --- army orders (Army tab) --- */
+.orders {
+    border-color: var(--accent);
+}
+
+.orders-verb {
+    font-weight: 600;
+    color: var(--accent);
+}
+
+tr.current td {
+    background: var(--accent-soft);
+}
+
+.fame-sources {
+    margin: 4px 0 8px;
+    padding-left: 18px;
+}
+/* --- planes (Layer 3) --- */
+:root {
+    --essence: #1f8a8a;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --essence: #5fd0cc;
+    }
+}
+
+.essence,
+.price.essence,
+.resource.essence .resource-amount {
+    color: var(--essence);
+}
+
+.prestige-button.planeshift {
+    border-color: var(--essence);
+}
+
+.auto-prestige {
+    margin-top: 8px;
+    flex-wrap: wrap;
+    gap: 6px;
+}

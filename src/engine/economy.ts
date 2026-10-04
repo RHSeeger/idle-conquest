@@ -14,8 +14,11 @@ import { Stats } from "./effects";
 import { City, GameState } from "./state";
 import { Decimal, ZERO } from "./decimal";
 
-/** Thousand citizens per second, per point of ((max - pop) / 2 + 1) */
-const GROWTH_SCALE = 0.01;
+/** Mutable so the balance simulator can try alternatives */
+export const ECONOMY_TUNING = {
+    /** Thousand citizens per second, per point of ((max - pop) / 2 + 1) */
+    growthScale: 0.002,
+};
 const SHRINK_RATE = 0.05;
 
 export interface CityEconomy {
@@ -88,7 +91,7 @@ export function cityEconomy(state: GameState, stats: Stats, city: City): CityEco
     const maxPop = r.maxPop;
 
     const growth =
-        pop < maxPop ? GROWTH_SCALE * r.growthMult * ((maxPop - pop) / 2 + 1) : -SHRINK_RATE * (pop - maxPop);
+        pop < maxPop ? ECONOMY_TUNING.growthScale * r.growthMult * ((maxPop - pop) / 2 + 1) : -SHRINK_RATE * (pop - maxPop);
 
     // farmers feed the citizens; food from buildings is surplus that goes to the stockpile
     const farmers = Math.min(pop, pop / r.perFarmer);

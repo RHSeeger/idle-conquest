@@ -8,6 +8,7 @@ import { getStats } from "./collect";
 import { tickEconomy } from "./economy";
 import { tickExploration, tickLair } from "./exploration";
 import { tickMagic } from "./magic";
+import { tickMyrror } from "./planes";
 import { GameState } from "./state";
 
 export function tick(state: GameState, dt: number): void {
@@ -21,6 +22,8 @@ export function tick(state: GameState, dt: number): void {
     if (!tickLair(state, getStats(state), dt)) {
         tickFrontier(state, getStats(state), dt);
     }
+    // Layer 3: the share of the army on Myrror fights there at the same time
+    tickMyrror(state, getStats(state), dt);
     tickAutomation(state, dt);
     state.run.time += dt;
     state.meta.playtime += dt;

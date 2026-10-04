@@ -61,6 +61,24 @@ describe("Save", () => {
         expect(loaded.prestige.chronicle.buildOrder).toEqual([]);
     });
 
+    it("migrates v1 saves: Renown restarts for wizards, the planned profile is the current one", () => {
+        const wizard = newGame(0) as any;
+        wizard.version = 1;
+        wizard.ascension.ascensions = 1;
+        wizard.ascension.books = { life: 4 };
+        wizard.prestige.bestFrontier = 50;
+        delete wizard.prestige.ascensionBestFrontier;
+        const w = deserialize(serialize(wizard));
+        expect(w.prestige.ascensionBestFrontier).toBe(0);
+        expect(w.ascension.planBooks).toEqual({ life: 4 });
+
+        const mortal = newGame(0) as any;
+        mortal.version = 1;
+        mortal.prestige.bestFrontier = 30;
+        delete mortal.prestige.ascensionBestFrontier;
+        expect(deserialize(serialize(mortal)).prestige.ascensionBestFrontier).toBe(30);
+    });
+
     it("exports and imports", () => {
         const state = newGame(0);
         state.run.gold = D(42);

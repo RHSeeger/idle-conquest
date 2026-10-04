@@ -1,6 +1,13 @@
 import { RACES } from "../content/races";
 import { fmtInt, fmtTime } from "../engine/format";
+import { RunRecord } from "../engine/state";
 import { game } from "./game";
+
+const ENDED: Record<RunRecord["ended"], { verb: string; currency: string; cls: string }> = {
+    refound: { verb: "Refounded", currency: "Fame", cls: "fame" },
+    ascend: { verb: "Ascended", currency: "Insight", cls: "insight" },
+    planeshift: { verb: "Planeshifted", currency: "Essence", cls: "essence" },
+};
 
 export function StatsPanel() {
     const state = game();
@@ -33,9 +40,25 @@ export function StatsPanel() {
                             <td class="num">{r.fastestToWall === null ? "—" : fmtTime(r.fastestToWall)}</td>
                         </tr>
                         <tr>
-                            <td>Rival wizards banished</td>
+                            <td>Rival wizards banished from Arcanus</td>
                             <td class="num">{state.ascension.wizardsDefeated.length} / 14</td>
                         </tr>
+                        {state.planes.planeshifts > 0 && (
+                            <>
+                                <tr>
+                                    <td>Planeshifts</td>
+                                    <td class="num">{fmtInt(state.planes.planeshifts)}</td>
+                                </tr>
+                                <tr>
+                                    <td>Best Myrror frontier</td>
+                                    <td class="num">{fmtInt(state.planes.bestMyrror)}</td>
+                                </tr>
+                                <tr>
+                                    <td>Rival wizards banished from Myrror</td>
+                                    <td class="num">{state.planes.wizardsDefeated.length} / 14</td>
+                                </tr>
+                            </>
+                        )}
                     </tbody>
                 </table>
             </section>
@@ -59,12 +82,12 @@ export function StatsPanel() {
                         <tbody>
                             {history.map((h, i) => (
                                 <tr key={i}>
-                                    <td>{h.ended === "ascend" ? "Ascended" : "Refounded"}</td>
+                                    <td>{ENDED[h.ended].verb}</td>
                                     <td>{RACES[h.race].plural}</td>
                                     <td class="num">{fmtTime(h.length)}</td>
                                     <td class="num">{h.frontier}</td>
-                                    <td class={"num " + (h.ended === "ascend" ? "insight" : "fame")}>
-                                        +{fmtInt(h.gain)} {h.ended === "ascend" ? "Insight" : "Fame"}
+                                    <td class={"num " + ENDED[h.ended].cls}>
+                                        +{fmtInt(h.gain)} {ENDED[h.ended].currency}
                                     </td>
                                     <td class="num">{h.ascensions}</td>
                                 </tr>

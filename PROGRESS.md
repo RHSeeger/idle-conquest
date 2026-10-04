@@ -9,9 +9,11 @@ Newest information is at the top of each section. The design itself is in `DESIG
 
 | # | Question | Current placeholder | Blocking? |
 |---|---|---|---|
-| 1 | **Layer 3 (Myrror / Planeshift) design.** DESIGN section 7 proposes "two planes at once": Arcanus runs on autopilot and feeds Myrror, Towers of Wizardry are links, and you choose how to split resources. The alternative is a more conventional "new world, harder numbers, Myrran races" layer. DESIGN section 12 also said to design this properly after Layer 2 has been played. Which direction, and do you want to play Layer 2 first? | Not started. The *gate* (Tower of Wizardry + an Arcane ritual) is being built as part of Layer 2. | **Yes**, for Phase 5 and Phase 6 |
-| 2 | **Feel check.** Phase 1 and Phase 2 "done when" criteria in DESIGN section 12 include a human feel check: does 30 minutes of run 1 feel like an incremental? I can only check pacing with the bot. | Bot pacing matches the targets | No, but it's the most valuable input |
-| 3 | Active play (DESIGN Q5): instant spells (Fire Bolt, Fireball, …) are clickable bursts with cooldowns; auto-cast arrives at Ascension 3. Is that the right amount of active play? | As described | No |
+| 1 | **Feel check, second round.** Run 1 has been re-paced, and there are new Overview and Campaign views (Session 2). Does the first 30–60 minutes now feel calmer and more under control? Is it now *too* slow anywhere? Start a **new game** for this (Options → reset), because your old save keeps its progress. | Bot pacing: 7 cities and 6 buildings by 10 min | No, but it's the most valuable input |
+| 2 | **Layer 3 feel and length.** It's built as a first pass of your chosen "two planes at once". In the sim, the first Planeshift comes at ~10h, and Myrror is about half conquered after 6 Planeshifts (~16h). Is "Arcanus loops automatically while Myrror slowly advances" fun, and is the army-split slider an interesting enough decision? | DESIGN §7 | No |
+| 3 | **Layer 4 (Spell of Mastery and Challenge Wizards).** DESIGN §8 is still tentative. Should the next step be building it, or polishing Layers 0–3 first? | Not started | Yes, for Layer 4 |
+| — | ~~Layer 3 direction~~ | Answered: two planes at once | — |
+| — | ~~Active play amount~~ | Answered: clickable instants with cooldowns, auto-cast from the Grimoire milestone, is fine | — |
 
 ---
 
@@ -30,7 +32,8 @@ Newest information is at the top of each section. The design itself is in `DESIG
 **Dev URL modes** (never touch your save):
 - `?devbot=1800` starts a throwaway game that the bot has already played for 1800 seconds.
 - `?devruns=6&devbot=300` first plays 6 full runs (with Refounds and Ascensions), then 300 seconds into the next run.
-- `&tab=army` opens a specific tab (`realm`, `buildings`, `army`, `lore`, `explore`, `magic`, `prestige`, `ascension`, `stats`, `options`).
+- `&tab=army` opens a specific tab (`realm`, `buildings`, `army`, `lore`, `explore`, `magic`, `prestige`, `ascension`, `planes`, `stats`, `options`).
+- `?devruns=14&devbot=300&tab=planes` reaches Layer 3 (Myrror open). It takes a while to compute.
 
 **In-game dev tools:** Options → Developer tools gives speed ×10/×100, skip ahead, and grant resources/Fame.
 
@@ -150,7 +153,79 @@ Newest information is at the top of each section. The design itself is in `DESIG
 ### Session 2 (2026-10-04)
 
 - Added a **"Next ×2" troop buy amount** (your request). It buys exactly enough to reach the next 25-owned drill doubling (e.g. 5 owned → +20), or nothing if you can't afford that many, the same as ×10/×100.
-- Tests: 47 passing.
+
+**Your play-test feedback, and what I did about each point**
+
+| Your note | Cause found | Change |
+|---|---|---|
+| "Too much going on at once, and everything is too fast" | The sim confirmed it. Run 1 took 22 cities and bought 16 buildings in its first 10 minutes (Library, Explorers' Guild and heroes all inside 7 minutes). Then it slowed to a crawl for the remaining 2 hours. | **Re-paced run 1** (see below), **staged feature unlocks**, and new **Overview** and **Campaign** views (below) |
+| Not sure whether it's quantity or presentation | Probably both | Both are addressed: fewer simultaneous events and one place to see everything |
+| No info on when auto-raid happens | The rule ("lairs it can clear within 2 minutes") was only in code | The Army tab now says the rule, and each lair is marked **auto** or **too slow for auto** |
+| Army raids or besieges, shown on two tabs | — | New **Campaign** section in the Army tab: what the army is doing right now, with progress and time left; the frontier; and every lair with Raid buttons. The top bar's Army box shows the current activity too. The Exploration tab is now expeditions, sites and books only. |
+| How the number of spellbook picks is determined is unclear | — | The picker now says "5 base picks, +N from Deeper Study (Insight upgrade)" |
+| Unclear that retorts use picks | — | The counter now reads "X of Y used (A on spellbooks, B on retorts)"; retort cards you can't afford are disabled |
+| Unclear how retorts unlock | — | Explained above the retort cards; each locked card shows its condition |
+| Auto-study makes spell research impossible | Lore and spells share Knowledge, and auto-study spent all of it | **Auto-study now keeps enough Knowledge for your cheapest unresearched spell.** The Lore tab says how much it's keeping |
+| No Fame from surrendered cities feels weak | — | Surrendered cities now pay **tribute**: up to 50% of their population counts for Fame. It builds up over the first 15 minutes of a run, so refounding the moment Renown finishes still gives nothing |
+| Cities of every race in one run | Far Scouting maxed at +2 regions (6 of 7 neighbours) | Far Scouting now has a 3rd level (250 Fame): **every race of Arcanus in one run** |
+| Picked 4 Life books but no Life spells; Arcane only | **Bug:** book and retort picks lived only in the tab's UI state. Switching tabs reset them to the current profile (none, before the first Ascension), and Ascending with 0 picks was allowed | The planned profile is now **saved in the game state**. The Ascend button warns about unspent picks, and the confirmation names the books and retorts |
+| Not clear what books/retorts you currently have | — | "Your wizard this Ascension: Life ×4 · Warlord" at the top of the Ascension and Magic tabs |
+| Stalled after Ascending: can't Refound, 0 Fame, no books, no Guild | **Dead end.** Renown used your best frontier ever, so a fresh wizard was dropped deep in the frontier with no Fame upgrades and couldn't take the next city. Fame stayed 0, and Refound was disabled at 0 Fame | **Renown now uses your best frontier *this Ascension*** (each Ascension starts over, and is fast thanks to Insight). **Refound is allowed at 0 Fame** (with a warning). The Refound tab now shows where Fame comes from: by force, tribute, races. Your existing save is migrated (v1 → v2) so the next run starts clean |
+
+**Re-pacing run 1 (bot measurements)**
+
+| | Before | After |
+|---|---|---|
+| Cities by 5 / 10 / 20 / 30 min | 13 / 22 / 28 / 30 | 4 / 7 / 17 / 23 |
+| Buildings by 5 / 10 / 20 / 30 min | 10 / 16 / 21 / 22 | 3 / 6 / 13 / 14 |
+| Library / Explorers' Guild / Adventurers' Guild (heroes) | 2m / 3m / 6m | 8m / 13m / 42m |
+| Wall | 2h15m | 2h32m |
+| First Ascension (total play) | ~3h | ~4.4h |
+
+How:
+- The first 24 frontier cities start tougher but grow gentler (`FRONTIER_TUNING`: base 800, ×1.55 per city, then ×1.6 to the wall).
+- City growth is 5× slower (cities fill up over the run instead of in the first minutes). The Fame upgrade *Fertile Lands* now also gives ×1.5 growth per level, so replays aren't slowed.
+- Building costs were rescaled to spread across the run. The Adventurers' Guild moved much later.
+- The sim prints a **Pacing** line (cities and buildings by 5, 10, 20, 30, 60, 90 and 120 minutes). New sim knobs: `popgrowth`, `bstep`, `bcap`, `oindex`, `ogrowth`, `lgrowth`.
+
+**Staged reveal:** the Statistics tab appears after the first Refound, and the Ascension tab once you've found a spellbook *and* refounded once, or built a Wizards' Guild. The Planes tab appears once a Tower is cleared or the Rite is known.
+
+**Overview** (top of the Realm tab): one line per active system, saying what it's doing now and what's next, each marked *auto* or *manual*:
+- Army, next building, next Lore, Settlers and Expeditions
+- Myrror, Magic (next spell) and Refound Fame
+- Ascension gate progress
+
+The city table is now grouped by race; "Show every city" brings back the full list.
+
+**Bot (sim) behaviour:**
+- It refounds when Fame per second drops well below its peak, which is the usual prestige timing.
+- It counts any progress (a conquest, building, lair or book) as not stalled.
+- It holds a run open while the Ascension gate is close.
+
+**Layer 3: Planeshift (Myrror), "two planes at once"** (your choice). The full design is in DESIGN.md §7.
+- **Planeshift** (Planes tab):
+  - **Resets:** Layers 0–2, including Insight, Ascensions and spells.
+  - **Keeps:** you stay a Wizard.
+  - **Gives:** Planar Essence.
+  - **Choices:** a Myrran **beachhead** race, plus your Arcanus starting race.
+- **Myrror:** a second frontier of Myrran races and 4 Myrran wizards. It **persists across Refounds and Ascensions**, and Arcanus keeps looping underneath it.
+- **Army split:**
+  - One slider sends part of the army to Myrror; Arcanus fights with the rest.
+  - The cap is 10% per **planar link**. Each Tower of Wizardry cleared this Planeshift is a link, up to 6, plus the Planar Anchor upgrade.
+- **Holdings:**
+  - Each Myrran race held gives ×(1 + 0.1 per city) to a stat: knowledge, mana, army, production, gold, or Myrror siege.
+  - It also unlocks that race's unit in Arcanus runs: Manticore Riders, Nightblades, Doom Drakes, Steam Cannons, Stag Beetles or War Trolls.
+- **Essence upgrades:** Planar Anchor, Astral Legions, Echo of Arcanus, Wellspring (Insight) and Bridgehead.
+- **Planeshift milestones:**
+  - **Planewalker:** Ascension milestones count +3 (all Layer 2 automation at once) and **auto-Refound** unlocks.
+  - **Eternal Return:** **auto-Ascend** unlocks.
+  - **Twin Towers:** you start with 2 links.
+  - **Known on Two Worlds:** Myrror Renown.
+- **Auto-Refound / auto-Ascend:** these fire when the gain reaches N× everything earned so far (selectable: 0.5×–10×), or when no city has fallen for 10 minutes.
+  - Auto-Refound starts as your least-mastered race, so Mastery fills evenly.
+  - Auto-Ascend uses your planned profile.
+- **Insight softcap:** above 1,000 per Ascension, Insight grows as (x/1000)^0.4. This fixes the old "millions of Insight" snowball.
+- Tests: 58 passing (8 new for Layer 3, plus tribute, Renown and save-migration tests).
 
 ## Decisions made (by me, reversible)
 
@@ -187,6 +262,21 @@ Newest information is at the top of each section. The design itself is in `DESIG
 | Layer 3 gate = Tower of Wizardry cleared this run + Rite of the Tower known | DESIGN 6.3; Arcane so no book choice locks you out | Yes |
 | Heroes are per run (reset on Refound) except one kept by Hall of Heroes | Keeps heroes a run-level choice; the Fame upgrade is the carry-over | Yes |
 | Hero auras and roster (`content/heroes.ts`) | My picks from MoM's hero list | Yes (data) |
+| **Session 2** | | |
+| Renown uses the best frontier *of this Ascension* | The best-ever version stranded fresh wizards deep in the frontier (your stall) | Yes (`renownLimit`) |
+| Surrendered cities pay 50% tribute Fame, ramping over 15 min of run time | Your "feels weak" note. The ramp keeps instant refounds worthless | Yes (`TRIBUTE_SHARE`, `TRIBUTE_SECONDS`) |
+| Refound allowed at 0 Fame | Escape hatch; changing race is a valid reason | Yes |
+| Auto-study keeps Knowledge for the cheapest unresearched spell | Spells matter more than one more Lore level | Yes (`spellReserve`) |
+| Run-1 pacing numbers (frontier opening, 5× slower city growth, building costs) | "Too fast" feedback plus the sim | Yes (tuning constants) |
+| Far Scouting level 3 = every Arcanus race in one run | "Mastering all races should have a purpose" | Yes |
+| Lairs moved from the Exploration tab to the Army tab's Campaign | One place for "what is the army doing" | Yes |
+| Layer 3 resets Insight and Ascensions; you stay a wizard; Planewalker gives Layer 2 automation back | Standard layered reset, with replays that need no thought | Yes |
+| Myrror persists across Refounds and Ascensions; it resets only on Planeshift | This *is* "two planes at once": Arcanus loops push a long-lived Myrror campaign | Medium |
+| Army split capped at 10% per planar link (Towers cleared this Planeshift, max 6) | MoM has 6 Towers; makes Towers matter after the gate | Yes |
+| Myrran races give per-city multipliers and racial units, not their own economy | One economy only, to avoid adding to "too much going on" | Medium |
+| First Planeshift gives 5 Essence | It has no Myrror campaign to reward; otherwise the upgrades would be unusable at first | Yes |
+| Insight softcap above 1,000 per Ascension (^0.4) | Fixes the late snowball noted in Session 1 | Yes (`INSIGHT_SOFTCAP`) |
+| Myrror tuning: base 1e12, ×1.75 per city | Layer 3 should span several Planeshifts | Yes (`MYRROR_TUNING`) |
 
 ---
 
@@ -194,8 +284,10 @@ Newest information is at the top of each section. The design itself is in `DESIG
 
 - ~~Gold piles up mid-run~~: partly fixed by rush-buying. Watch it in play.
 - The bot never touches the tax slider, so sim gold numbers assume 30% tax.
-- **Late Layer 2 Insight snowballs** (millions per Ascension once the frontier reaches ~150) because of the ×1.06-per-city depth factor. It's harmless while Layer 3 is missing, but it needs a cap or softcap when Layer 3 arrives.
-- Right after an Ascension, Renown drops you at the first wizard's wall with a fresh economy; that run earns little Fame until you push past it. It works, but may feel odd.
-- On load, offline catch-up runs synchronously before the page renders. A late-game 24h absence takes about 1.3 s of blank page; a "catching up…" screen would be nicer.
-- Ideas not started: banked offline time beyond 24h, number-notation option, Challenge Wizards (Layer 4), Myrran races and Myrror (Layer 3, blocked).
+- ~~Late Layer 2 Insight snowball~~: softcapped (Session 2).
+- ~~Renown after an Ascension dropped you at the wall~~: fixed (Session 2). This was the cause of your stall.
+- Right after a Planeshift, Arcanus restarts close to a run-1 economy, so the first loops are short and give little Fame. Auto-Refound handles it, and Echo of Arcanus speeds it up, but watch whether it feels like a slog.
+- Early in each Planeshift, Myrror is "too strong for now" (the UI says so) until Arcanus has Ascended a few times. That's intended, but tunable.
+- The bot's Planeshift and Ascension timing is a proxy for a player; Layer 3 sim numbers are rougher than Layer 1's.
+- Ideas not started: banked offline time beyond 24h, number-notation option, Layer 4 (Spell of Mastery, Challenge Wizards), Myrror-only resources, the Fortress-plane choice, plane-specific enchantments.
 - The fandom wiki returns HTTP 402 to automated fetches, so MoM facts come from the strategy guide in `reference/` or general knowledge.

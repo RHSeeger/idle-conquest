@@ -19,6 +19,7 @@ import { RACES } from "../content/races";
 import { Role, ROLES, TraitId, traitRoleMult } from "../content/traits";
 import { DRILL_STEP, UNITS, UNIT_ORDER } from "../content/units";
 import { RIVAL_WIZARD_DEFS } from "../content/wizards";
+import { SHARE_PER_LINK } from "../content/myrror";
 import { XP_PER_CONQUEST } from "../content/heroes";
 import { grantHeroXp } from "./heroes";
 import { racesInRealm } from "./collect";
@@ -95,7 +96,24 @@ export function siegePowerFrom(state: GameState, byRole: Record<Role, Decimal>, 
     for (const role of ROLES) {
         total = total.plus(byRole[role].times(traitRoleMult(applied, role)));
     }
-    return total;
+    // the share fighting on Myrror (Layer 3) isn't here
+    const myrror = myrrorShare(state);
+    return myrror > 0 ? total.times(1 - myrror) : total;
+}
+
+/**
+ * Share of the army fighting on Myrror: what the player asked for, capped by
+ * planar links (10% each) plus Planar Anchor. 0 before Myrror opens.
+ */
+export function maxMyrrorShare(state: GameState): number {
+    const m = state.planes.myrror;
+    if (!m) return 0;
+    const anchor = state.planes.upgrades["planarAnchor"] ?? 0;
+    return Math.min(0.9, SHARE_PER_LINK * (m.links + anchor));
+}
+
+export function myrrorShare(state: GameState): number {
+    return Math.min(state.planes.armyShare, maxMyrrorShare(state));
 }
 
 export function raceRegions(state: GameState): number {
@@ -169,8 +187,9 @@ export function tickFrontier(state: GameState, stats: Stats, dt: number): void {
 }
 
 /**
- * Adds a frontier city to the realm. `surrendered` cities (Renown) don't count
- * toward Fame — otherwise refounding right after Renown would be free Fame.
+ * Adds a frontier city to the realm. `surrendered` cities (Renown) pay Fame
+ * only as tribute that builds up over the run (see prestige.ts), otherwise
+ * refounding right after Renown would be free Fame.
  */
 export function conquer(state: GameState, target: FrontierCity, quiet = false, surrendered = false): void {
     const run = state.run;
@@ -182,7 +201,10 @@ export function conquer(state: GameState, target: FrontierCity, quiet = false, s
         origin: "conquered",
     });
     run.frontier.index = target.index + 1;
-    if (!surrendered) {
+    run.lastConquestAt = run.time;
+    if (surrendered) {
+        run.surrenderedPop += target.pop;
+    } else {
         run.conqueredPop += target.pop;
         grantHeroXp(state, XP_PER_CONQUEST);
     }
@@ -190,9 +212,9 @@ export function conquer(state: GameState, target: FrontierCity, quiet = false, s
     if (isNewRace) {
         run.racesConquered.push(target.race);
     }
-    if (run.frontier.index > state.prestige.bestFrontier) {
-        state.prestige.bestFrontier = run.frontier.index;
-    }
+    const p = state.prestige;
+    p.bestFrontier = Math.max(p.bestFrontier, run.frontier.index);
+    p.ascensionBestFrontier = Math.max(p.ascensionBestFrontier, run.frontier.index);
     if (!surrendered && target.index + 1 === wallIndex(currentPlan(state))) {
         const best = state.records.fastestToWall;
         if (best === null || run.time < best) state.records.fastestToWall = run.time;

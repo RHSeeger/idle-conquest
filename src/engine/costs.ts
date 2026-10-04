@@ -1,7 +1,7 @@
 /**
  * Prices and affordability for everything bought with currencies.
  */
-import { BUILDINGS, Cost, Currency } from "../content/buildings";
+import { BUILDINGS, BUILDING_ORDER, Cost, Currency } from "../content/buildings";
 import { LORE } from "../content/lore";
 import { UNITS } from "../content/units";
 import { D, Decimal } from "./decimal";
@@ -45,8 +45,13 @@ function scaleCost(cost: Cost, mult: Decimal): PriceMap {
     return result;
 }
 
+/** Experiment knobs for the balance simulator: cost × costMult × stepMult^(position in the list) */
+export const BUILDING_TUNING = { costMult: 1, stepMult: 1, stepCap: 99 };
+
 export function buildingPrice(stats: Stats, id: string): PriceMap {
-    return scaleCost(BUILDINGS[id].cost, stats.get("cost.building"));
+    const t = BUILDING_TUNING;
+    const scale = t.costMult * Math.pow(t.stepMult, Math.min(t.stepCap, BUILDING_ORDER.indexOf(id)));
+    return scaleCost(BUILDINGS[id].cost, stats.get("cost.building").times(scale));
 }
 
 // --- Units (geometric series) ---

@@ -3,7 +3,7 @@
  * the early game of each layer. Returns the first unmet goal.
  */
 import { ascensionProgress, planeshiftProgress } from "../engine/ascension";
-import { currentTarget } from "../engine/army";
+import { currentTarget, myrrorShare } from "../engine/army";
 import { isWizard, knowsSpell } from "../engine/magic";
 import { canRefound } from "../engine/prestige";
 import { GameState } from "../engine/state";
@@ -33,6 +33,13 @@ function nextGoal(state: GameState): string | null {
         }
         if (asc.ready) return "You can Ascend (Ascension tab) and become a Wizard.";
         return null;
+    }
+    if (state.planes.myrror) {
+        if (myrrorShare(state) <= 0) return "Send part of your army to Myrror with the slider in the Planes tab.";
+        return null;
+    }
+    if (isWizard(state) && planeshiftProgress(state).ready) {
+        return "The Tower is open: you can Planeshift (Planes tab) and fight on two planes at once.";
     }
     if (isWizard(state)) {
         if (!knowsSpell(state, "magicSpirit")) return "Research Magic Spirit (Magic tab) so captured magic nodes produce mana.";

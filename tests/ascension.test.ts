@@ -65,6 +65,10 @@ describe("Ascension", () => {
         expect(state.run.frontier.index).toBe(0);
         // A Wizard's Household: automation from the start
         expect(hasMilestone(state, "autoRecruit")).toBe(true);
+        // Renown starts over: the new realm is not dropped deep into the frontier
+        expect(state.prestige.bestFrontier).toBeGreaterThan(0);
+        expect(state.prestige.ascensionBestFrontier).toBe(0);
+        expect(state.ascension.books).toEqual({ life: 3, chaos: 2 });
     });
 
     it("rejects an invalid profile", () => {

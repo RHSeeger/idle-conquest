@@ -17,10 +17,12 @@ import {
     insightUpgradeLevel,
     planeshiftProgress,
 } from "../engine/ascension";
-import { isRetortUnlocked, pickableRealms, picksUsed, totalPicks, validateBooks } from "../engine/magic";
+import { isRetortUnlocked, isWizard, pickableRealms, picksUsed, totalPicks, validateBooks } from "../engine/magic";
+import { BASE_PICKS } from "../content/wizards";
 import { RETORTS, RETORT_ORDER } from "../content/retorts";
 import { fmtInt } from "../engine/format";
 import { game } from "./game";
+import { AutoPrestige } from "./AutoToggle";
 
 function Gate() {
     const state = game();
@@ -41,30 +43,57 @@ function Gate() {
     );
 }
 
-function ProfilePicker(props: {
-    books: Partial<Record<Realm, number>>;
-    setBooks: (b: Partial<Record<Realm, number>>) => void;
-    retorts: string[];
-    setRetorts: (r: string[]) => void;
-}) {
+/** "Life ×4, Chaos ×1 · Warlord" */
+export function profileText(books: Partial<Record<Realm, number>>, retorts: readonly string[]): string {
+    const b = REALMS.filter((r) => (books[r] ?? 0) > 0).map((r) => `${REALM_DEFS[r].name} ×${books[r]}`);
+    const parts = [b.length > 0 ? b.join(", ") : "no spellbooks"];
+    if (retorts.length > 0) parts.push(retorts.map((id) => RETORTS[id]?.name ?? id).join(", "));
+    return parts.join(" · ");
+}
+
+/** The wizard profile of the current Ascension */
+export function CurrentProfile() {
     const state = game();
+    const a = state.ascension;
+    if (!isWizard(state)) return null;
+    return (
+        <p>
+            Your wizard this Ascension: <b>{profileText(a.books, a.retorts)}</b>
+        </p>
+    );
+}
+
+function ProfilePicker() {
+    const state = game();
+    const a = state.ascension;
+    const books = a.planBooks;
+    const retorts = a.planRetorts;
     const picks = totalPicks(state);
-    const used = picksUsed(props.books, props.retorts);
+    const deeper = picks - BASE_PICKS;
+    const bookPicks = picksUsed(books);
+    const retortPicks = picksUsed({}, retorts);
+    const used = bookPicks + retortPicks;
     const pickable = pickableRealms(state);
     const change = (r: Realm, delta: number) => {
-        const next = { ...props.books, [r]: Math.max(0, (props.books[r] ?? 0) + delta) };
-        if (delta < 0 || used < picks) props.setBooks(next);
+        if (delta > 0 && used >= picks) return;
+        a.planBooks = { ...books, [r]: Math.max(0, (books[r] ?? 0) + delta) };
     };
     const toggleRetort = (id: string) => {
-        props.setRetorts(props.retorts.includes(id) ? props.retorts.filter((x) => x !== id) : [...props.retorts, id]);
+        a.planRetorts = retorts.includes(id) ? retorts.filter((x) => x !== id) : [...retorts, id];
     };
-    const error = validateBooks(state, props.books, props.retorts);
+    const error = validateBooks(state, books, retorts);
     return (
         <div>
+            <p>
+                Picks: <b>{used}</b> of {picks} used ({bookPicks} on spellbooks, {retortPicks} on retorts)
+                {used < picks && <span class="bad"> · {picks - used} unspent</span>}
+            </p>
             <p class="hint">
-                Spellbook picks: <b>{used}</b> of {picks}. Books in a realm unlock its spells (Common at {RARITY_BOOKS.common}, Uncommon at{" "}
-                {RARITY_BOOKS.uncommon}, Rare at {RARITY_BOOKS.rare}, Very Rare at {RARITY_BOOKS.veryRare}) and make its research cheaper.
-                You can only pick realms whose books you have found (or whose wizard you have defeated). Life and Death cannot be combined.
+                Every wizard has {BASE_PICKS} picks{deeper > 0 && `, +${deeper} from Deeper Study (an Insight upgrade)`}.
+                Spellbooks and retorts share them. Books in a realm unlock its spells (Common at {RARITY_BOOKS.common},
+                Uncommon at {RARITY_BOOKS.uncommon}, Rare at {RARITY_BOOKS.rare}, Very Rare at {RARITY_BOOKS.veryRare}) and
+                make its research cheaper. You can only pick realms whose books you have found (or whose wizard you have
+                defeated). Life and Death cannot be combined.
             </p>
             <div class="books">
                 {REALMS.map((r) => {
@@ -73,10 +102,10 @@ function ProfilePicker(props: {
                         <div key={r} class={"book realm-" + r + (ok ? "" : " none")}>
                             <b>{REALM_DEFS[r].name}</b>
                             <div class="row">
-                                <button disabled={!ok || (props.books[r] ?? 0) <= 0} onClick={() => change(r, -1)}>
+                                <button disabled={!ok || (books[r] ?? 0) <= 0} onClick={() => change(r, -1)}>
                                     −
                                 </button>
-                                <span class="pick-count">{props.books[r] ?? 0}</span>
+                                <span class="pick-count">{books[r] ?? 0}</span>
                                 <button disabled={!ok || used >= picks} onClick={() => change(r, 1)}>
                                     +
                                 </button>
@@ -87,17 +116,21 @@ function ProfilePicker(props: {
                 })}
             </div>
             <h3>Retorts</h3>
-            <p class="hint">Special abilities that cost picks. Most must be unlocked first; once unlocked they can be picked at any Ascension.</p>
+            <p class="hint">
+                Special abilities that cost picks from the same pool as spellbooks. Most start locked: each locked card
+                says what unlocks it (an achievement during play). Once unlocked, a retort stays unlocked and can be
+                picked at any later Ascension.
+            </p>
             <div class="cards retorts">
                 {RETORT_ORDER.map((id) => {
                     const r = RETORTS[id];
                     const unlocked = isRetortUnlocked(state, id);
-                    const chosen = props.retorts.includes(id);
+                    const chosen = retorts.includes(id);
                     return (
                         <button
                             key={id}
                             class={"card" + (chosen ? " chosen" : "")}
-                            disabled={!unlocked}
+                            disabled={!unlocked || (!chosen && used + r.picks > picks)}
                             onClick={() => toggleRetort(id)}
                         >
                             <div class="card-title">
@@ -132,8 +165,7 @@ function BeyondArcanus() {
             </ul>
             {p.ready && (
                 <p class="wall">
-                    The Tower is open. <b>Planeshift (Layer 3) is not built yet</b>: its design is waiting on a decision
-                    (see PROGRESS.md).
+                    The Tower is open: you can <b>Planeshift</b> (Planes tab).
                 </p>
             )}
         </section>
@@ -143,20 +175,22 @@ function BeyondArcanus() {
 export function AscensionPanel() {
     const state = game();
     const a = state.ascension;
-    const [books, setBooks] = useState<Partial<Record<Realm, number>>>(a.books);
-    const [retorts, setRetorts] = useState<string[]>(a.retorts);
+    const books = a.planBooks;
+    const retorts = a.planRetorts;
     const races = ascensionRaceOptions(state);
     const [race, setRace] = useState<RaceId>(state.run.startingRace);
     const chosenRace = races.includes(race) ? race : races[0];
     const insight = insightOnAscend(state);
     const ok = canAscend(state) && validateBooks(state, books, retorts) === null;
+    const unspent = totalPicks(state) - picksUsed(books, retorts);
 
     const doAscend = () => {
-        if (
-            confirm(
-                `Ascend? Your realm, Fame, Fame upgrades and refounds reset${a.ascensions >= 2 ? "" : ", and the Annals are cleared"}. You gain ${fmtInt(insight)} Insight and become a Wizard.`,
-            )
-        ) {
+        const lines = [
+            `Ascend as: ${profileText(books, retorts)}, starting as ${RACES[chosenRace].plural}.`,
+            unspent > 0 ? `WARNING: ${unspent} pick${unspent === 1 ? " is" : "s are"} unspent.` : "",
+            `Your realm, Fame, Fame upgrades and refounds reset${a.ascensions >= 2 ? "" : ", and the Annals are cleared"}. You gain ${fmtInt(insight)} Insight.`,
+        ];
+        if (confirm(lines.filter(Boolean).join("\n\n"))) {
             ascend(state, books, chosenRace, retorts);
         }
     };
@@ -166,7 +200,7 @@ export function AscensionPanel() {
             <section>
                 <h2>Ascend</h2>
                 <p class="hint">
-                    {a.ascensions === 0 ? (
+                    {!isWizard(state) ? (
                         <>
                             Leave the throne and become a <b>Wizard</b>. Every run after this has mana, spells, magic nodes
                             and summoned creatures, and you can break the wards of rival wizards and fight through their
@@ -178,9 +212,10 @@ export function AscensionPanel() {
                     Insight is based on the Fame earned this Ascension ({fmtInt(a.fameEarned)} so far, plus what refounding now
                     would give), the spellbooks you hold this run, and the rival wizards you defeated.
                 </p>
+                <CurrentProfile />
                 <Gate />
-                <h3>Wizard profile</h3>
-                <ProfilePicker books={books} setBooks={setBooks} retorts={retorts} setRetorts={setRetorts} />
+                <h3>Wizard profile for the next Ascension</h3>
+                <ProfilePicker />
                 <h3>Starting race</h3>
                 <div class="race-choice">
                     {races.map((r) => (
@@ -192,9 +227,11 @@ export function AscensionPanel() {
                 <button class="prestige-button ascend" disabled={!ok} onClick={doAscend}>
                     Ascend (+{fmtInt(insight)} Insight)
                 </button>
+                {unspent > 0 && <span class="bad"> {unspent} pick{unspent === 1 ? "" : "s"} unspent</span>}
+                <AutoPrestige kind="ascend" />
             </section>
 
-            {a.ascensions > 0 && (
+            {isWizard(state) && (
                 <section>
                     <h2>
                         Insight <span class="insight">{fmtInt(a.insight)}</span>{" "}
@@ -243,7 +280,7 @@ export function AscensionPanel() {
                 </ul>
             </section>
 
-            {a.ascensions > 0 && <BeyondArcanus />}
+            {isWizard(state) && <BeyondArcanus />}
 
             {a.wizardsDefeated.length > 0 && (
                 <section>

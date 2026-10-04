@@ -1,0 +1,219 @@
+import { ComponentChildren } from "preact";
+import { useState } from "preact/hooks";
+import { isLoreUnlocked } from "../engine/actions";
+import { currentTarget, siegePower } from "../engine/army";
+import { getStats } from "../engine/collect";
+import { Decimal } from "../engine/decimal";
+import { realmEconomy } from "../engine/economy";
+import { fmt, fmtInt, fmtTime } from "../engine/format";
+import { ArmyPanel } from "./ArmyPanel";
+import { BuildingsPanel } from "./BuildingsPanel";
+import { BreakdownView, CURRENCY_ICON, Tip } from "./components";
+import { game, useTicker } from "./game";
+import { LorePanel } from "./LorePanel";
+import { OfflineSummary, OfflineReport } from "./OfflineReport";
+import { OptionsPanel } from "./OptionsPanel";
+import { PrestigePanel } from "./PrestigePanel";
+import { canRefound, fameOnRefound } from "../engine/prestige";
+import { isExplorationUnlocked } from "../engine/exploration";
+import { ExplorationPanel } from "./ExplorationPanel";
+import { AscensionPanel } from "./AscensionPanel";
+import { MagicPanel } from "./MagicPanel";
+import { StatsPanel } from "./StatsPanel";
+import { GoalBar } from "./Goal";
+import { isWizard, manaRate } from "../engine/magic";
+import { RealmPanel } from "./RealmPanel";
+
+type TabId =
+    | "realm"
+    | "buildings"
+    | "army"
+    | "lore"
+    | "explore"
+    | "magic"
+    | "prestige"
+    | "ascension"
+    | "stats"
+    | "options";
+
+interface TabDef {
+    id: TabId;
+    label: string;
+    visible: () => boolean;
+    render: () => ComponentChildren;
+}
+
+const TABS: TabDef[] = [
+    { id: "realm", label: "Realm", visible: () => true, render: () => <RealmPanel /> },
+    { id: "buildings", label: "Buildings", visible: () => true, render: () => <BuildingsPanel /> },
+    { id: "army", label: "Army", visible: () => true, render: () => <ArmyPanel /> },
+    { id: "lore", label: "Lore", visible: () => isLoreUnlocked(game()), render: () => <LorePanel /> },
+    {
+        id: "explore",
+        label: "Exploration",
+        visible: () => isExplorationUnlocked(game()),
+        render: () => <ExplorationPanel />,
+    },
+    { id: "magic", label: "Magic", visible: () => isWizard(game()), render: () => <MagicPanel /> },
+    {
+        id: "prestige",
+        label: "Refound",
+        visible: () => canRefound(game()) || game().prestige.refounds > 0 || game().ascension.ascensions > 0,
+        render: () => <PrestigePanel />,
+    },
+    {
+        id: "ascension",
+        label: "Ascension",
+        visible: () => {
+            const s = game();
+            return s.ascension.ascensions > 0 || s.prestige.realmsSeen.length > 0 || s.run.buildings.includes("wizardsGuild");
+        },
+        render: () => <AscensionPanel />,
+    },
+    { id: "stats", label: "Statistics", visible: () => true, render: () => <StatsPanel /> },
+    { id: "options", label: "Options", visible: () => true, render: () => <OptionsPanel /> },
+];
+
+function Resource(props: { icon: string; name: string; amount: Decimal; rate: Decimal; tip?: ComponentChildren; cls: string }) {
+    const body = (
+        <div class={"resource " + props.cls}>
+            <span class="resource-name">
+                {props.icon} {props.name}
+            </span>
+            <span class="resource-amount">{fmt(props.amount)}</span>
+            <span class="resource-rate">+{fmt(props.rate)}/s</span>
+        </div>
+    );
+    return props.tip ? <Tip tip={props.tip}>{body}</Tip> : body;
+}
+
+function ResourceBar() {
+    const state = game();
+    const stats = getStats(state);
+    const econ = realmEconomy(state, stats);
+    const run = state.run;
+    const target = currentTarget(state);
+    const siege = siegePower(state, stats, target?.traits ?? []);
+    return (
+        <div class="resources">
+            <Resource
+                cls="production"
+                icon={CURRENCY_ICON.production}
+                name="Production"
+                amount={run.production}
+                rate={econ.production}
+                tip={<BreakdownView stats={stats} stat="prod.mult" title="Production multiplier" />}
+            />
+            <Resource
+                cls="gold"
+                icon={CURRENCY_ICON.gold}
+                name="Gold"
+                amount={run.gold}
+                rate={econ.gold}
+                tip={<BreakdownView stats={stats} stat="gold.mult" title="Gold multiplier" />}
+            />
+            <Resource
+                cls="food"
+                icon={CURRENCY_ICON.food}
+                name="Food"
+                amount={run.food}
+                rate={econ.food}
+                tip={<BreakdownView stats={stats} stat="food.flat" title="Surplus food per city" />}
+            />
+            {isLoreUnlocked(state) && (
+                <Resource
+                    cls="knowledge"
+                    icon={CURRENCY_ICON.knowledge}
+                    name="Knowledge"
+                    amount={run.knowledge}
+                    rate={econ.knowledge}
+                    tip={<BreakdownView stats={stats} stat="knowledge.perPop" title="Knowledge per citizen" />}
+                />
+            )}
+            <div class="resource pop">
+                <span class="resource-name">☗ Population</span>
+                <span class="resource-amount">{fmt(econ.population * 1000)}</span>
+                <span class="resource-rate">{run.cities.length} cities</span>
+            </div>
+            {isWizard(state) && (
+                <Resource
+                    cls="mana"
+                    icon={CURRENCY_ICON.mana}
+                    name="Mana"
+                    amount={run.mana}
+                    rate={manaRate(state, stats)}
+                    tip={<BreakdownView stats={stats} stat="mana.mult" title="Mana multiplier" />}
+                />
+            )}
+            {(state.prestige.fameTotal.gt(0) || canRefound(state)) && (
+                <div class="resource fame">
+                    <span class="resource-name">✦ Fame</span>
+                    <span class="resource-amount">{fmtInt(state.prestige.fame)}</span>
+                    <span class="resource-rate">+{fmtInt(fameOnRefound(state))} on refound</span>
+                </div>
+            )}
+            {state.ascension.insightTotal.gt(0) && (
+                <div class="resource insight">
+                    <span class="resource-name">◈ Insight</span>
+                    <span class="resource-amount">{fmtInt(state.ascension.insight)}</span>
+                    <span class="resource-rate">{state.ascension.ascensions} ascensions</span>
+                </div>
+            )}
+            <div class="resource siege">
+                <span class="resource-name">⚔ Siege</span>
+                <span class="resource-amount">{fmt(siege)}/s</span>
+                <span class="resource-rate">frontier {run.frontier.index}</span>
+            </div>
+        </div>
+    );
+}
+
+function Log() {
+    const state = game();
+    const entries = state.log.slice(-40).reverse();
+    return (
+        <aside class="log">
+            <h3>Chronicle</h3>
+            {entries.length === 0 && <p class="hint">Your story has yet to be written.</p>}
+            {entries.map((e, i) => (
+                <div key={i} class={"log-entry " + e.kind}>
+                    <span class="log-time">{fmtTime(e.t)}</span> {e.text}
+                </div>
+            ))}
+        </aside>
+    );
+}
+
+export function App(props: { offline: OfflineSummary | null; initialTab?: string }) {
+    useTicker(10);
+    const [tab, setTab] = useState<TabId>((props.initialTab as TabId) ?? "realm");
+    const [offline, setOffline] = useState(props.offline);
+    const state = game();
+    const visible = TABS.filter((t) => t.visible());
+    const active = visible.find((t) => t.id === tab) ?? visible[0];
+
+    return (
+        <div class="app">
+            <header>
+                <h1>Idle Conquest</h1>
+                <span class="hint">
+                    Run {fmtTime(state.run.time)} · Total {fmtTime(state.meta.playtime)}
+                </span>
+            </header>
+            <ResourceBar />
+            <nav class="tabs">
+                {visible.map((t) => (
+                    <button key={t.id} class={"tab" + (t.id === active.id ? " active" : "")} onClick={() => setTab(t.id)}>
+                        {t.label}
+                    </button>
+                ))}
+            </nav>
+            <GoalBar />
+            <div class="main">
+                <main>{active.render()}</main>
+                <Log />
+            </div>
+            {offline && <OfflineReport summary={offline} onClose={() => setOffline(null)} />}
+        </div>
+    );
+}

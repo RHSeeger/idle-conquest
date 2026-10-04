@@ -1,19 +1,21 @@
 {
   "compilerOptions": {
-    /* Visit https://aka.ms/tsconfig to read more about this file */
-    //"target": "es2016",        /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */
-    "target": "es2016",         /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */
-    "module": "umd",            // Compatible with both Node.js and browser
-    "moduleResolution": "node", // Tell tsc to look in node_modules for modules
-    "sourceMap": true,          // Whether to create *.js.map files
-    "strict": true,             // Strict types, eg. prohibits `var x=0; x=null`
-    "alwaysStrict": true,       // Enable JavaScript's "use strict" mode
-    "esModuleInterop": true,     // CommonJS import behavior similar to Babel/mjs
-    "rootDir": "./src",
-    "outDir": "./dist",
-    "forceConsistentCasingInFileNames": true,            /* Ensure that casing is correct in imports. */
-    "skipLibCheck": true                                 /* Skip type checking all .d.ts files. */
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "types": ["node"],
+    "noEmit": true
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.js"],   // Include all TypeScript and Javascript files in the src folder
-  "exclude": ["node_modules"]   // Exclude node_modules folder
+  "include": ["src", "sim", "tests", "vite.config.ts"]
 }

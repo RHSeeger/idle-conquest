@@ -1,0 +1,70 @@
+/**
+ * Small shared UI pieces: tooltips, stat breakdowns, cost labels, progress bars.
+ */
+import { ComponentChildren } from "preact";
+import { Currency } from "../content/buildings";
+import { Decimal } from "../engine/decimal";
+import { Stats } from "../engine/effects";
+import { fmt } from "../engine/format";
+
+export function Tip(props: { tip: ComponentChildren; children: ComponentChildren; class?: string }) {
+    return (
+        <span class={"tip " + (props.class ?? "")}>
+            {props.children}
+            <span class="tip-body">{props.tip}</span>
+        </span>
+    );
+}
+
+/** Explains how a stat's value was computed */
+export function BreakdownView(props: { stats: Stats; stat: string; scope?: string; title?: string }) {
+    const b = props.stats.breakdown(props.stat, props.scope);
+    return (
+        <div class="breakdown">
+            {props.title && <div class="breakdown-title">{props.title}</div>}
+            <div class="breakdown-row">
+                <span>Base</span>
+                <span>{fmt(b.base)}</span>
+            </div>
+            {b.mods.map((m, i) => (
+                <div class="breakdown-row" key={i}>
+                    <span>{m.source}</span>
+                    <span class={m.op}>
+                        {m.op === "add" ? (m.value.gte(0) ? "+" : "") + fmt(m.value) : "×" + fmt(m.value)}
+                    </span>
+                </div>
+            ))}
+            <div class="breakdown-row total">
+                <span>Total</span>
+                <span>{fmt(b.value)}</span>
+            </div>
+        </div>
+    );
+}
+
+export const CURRENCY_ICON: Record<Currency | "food" | "knowledge", string> = {
+    production: "⚒",
+    gold: "◉",
+    food: "❦",
+    knowledge: "✎",
+    mana: "✧",
+};
+
+export function Price(props: { amount: Decimal; currency: keyof typeof CURRENCY_ICON; have: Decimal }) {
+    const ok = props.have.gte(props.amount);
+    return (
+        <span class={"price " + props.currency + (ok ? "" : " short")}>
+            {CURRENCY_ICON[props.currency]} {fmt(props.amount)}
+        </span>
+    );
+}
+
+export function ProgressBar(props: { fraction: number; label?: ComponentChildren; class?: string }) {
+    const pct = Math.max(0, Math.min(1, props.fraction)) * 100;
+    return (
+        <div class={"progress " + (props.class ?? "")}>
+            <div class="progress-fill" style={{ width: pct + "%" }} />
+            {props.label !== undefined && <div class="progress-label">{props.label}</div>}
+        </div>
+    );
+}

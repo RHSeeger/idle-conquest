@@ -1,81 +1,12 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Idle Conquest Game</title>
-    <link rel="stylesheet" href="css/styles.css">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Idle Conquest</title>
 </head>
 <body>
-    <div class="container">
-        <h1>Idle Conquest Game</h1>
-        <div id="population-section">
-            <h2>Population</h2>
-            <div class="total-population">
-                <span class="label">Total Population</span>
-                <span class="value" id="total-population-value">0</span>
-            </div>
-            <div class="farmer-population">
-                <!-- There must be a minimum number of farmers assigned to feed the population
-                  -- This number may be 0 if there's food stored up
-                  -- If not enough farmers are assigned, they will be reassigned from workers, then military -->
-                <span class="label">Farmers</span>
-                <span class="value" id="farmer-population-value">0</span>
-                <span class="button" id="farmer-remove">-</span>
-                <span class="button" id="farmer-add">+</span>
-            </div>
-            <div class="worker-population">
-                <!-- All workers not assigned to something else will be assigned as workers -->
-                <span class="label">Workers Population</span>
-                <span class="value" id="worker-population-value">0</span>
-            </div>
-            <div class="military-population">
-                <span class="label">Military Population</span>
-                <span class="value" id="military-population-value">0</span>
-            </div>
-
-        </div>
-        <div id="resources-section">
-            <h2>Resources</h2>
-            <div class="food button">
-                <span class="label">Food</span>
-                <span class="value" id="food-value">0</span>
-                of
-                <span class="max-value" id="food-max-value">10</span>
-            </div>
-            <div class="gold">
-                <span class="label">Gold</span>
-                <span class="value" id="gold-value">0</span>
-                of
-                <span class="max-value" id="gold-max-value">10</span>
-            </div>
-            <div class="production">
-                <span class="label">Production</span>
-                <span class="value" id="production-value">0</span>
-                of
-                <span class="max-value" id="production-max-value">10</span>
-            </div>
-        </div>
-        <div id="info">
-            <h2>More Info</h2>
-            <p>Food Required / turn: <span id="food-required">1</span></p>
-            <p>Food Generated / turn: <span id="food-generated">1</span></p>
-            <p>Production Generated / turn: <span id="work-generated">0</span></p>
-            <p>Population Increase / turn: <span id="population-increase">0</span></p>
-            <p>Gold per turn: +<span id="gold-earned-per-turn"></span> -<span id="gold-spent-per-turn"></span></p>
-        </div>
-        <div id="projects">
-            <h2>Projects</h2>
-            <ul class="project-items"></ul>
-            <!-- Actual Projects are added by JS-->
-        </div>
-        <div id="playerData">
-            <div class="player-object">
-                <h2>Player Object</h2>
-                <pre class="data"></pre>
-            </div>
-        </div>
-    </div>
-    <script type="module" src="./javascript/game.js"></script>
+    <div id="app"></div>
+    <script type="module" src="/src/main.tsx"></script>
 </body>
 </html>

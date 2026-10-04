@@ -1,0 +1,199 @@
+/**
+ * The conquest frontier: an ordered, deterministic sequence of cities.
+ *
+ * It is divided into regions of REGION_SIZE cities. Region 0 is the
+ * Borderlands (independent cities of your own race); after that each region
+ * belongs to one race, in the order given by the starting race's neighbours.
+ * The last city of each region is a walled region capital.
+ *
+ * After the race regions lies a rival wizard's domain. Mortal armies cannot
+ * pass its wards — that is Layer 1's ceiling. Wizards (Layer 2) can break the
+ * wards with Dispel Magic; the domain ends in the rival's Fortress, and beyond
+ * it the frontier continues through more races and more rival wizards until
+ * the edge of Arcanus.
+ */
+import { D, Decimal } from "../engine/decimal";
+import { hash, hashFloat, hashPick } from "../engine/rng";
+import { RACES, RaceId, neighborOrder } from "./races";
+import { TraitId } from "./traits";
+
+export const REGION_SIZE = 8;
+/** Race regions (after the Borderlands) before the first wizard's domain */
+export const BASE_RACE_REGIONS = 4;
+/** Race regions between later wizards' domains */
+export const LATER_RACE_REGIONS = 3;
+/** Rival wizards on Arcanus (MoM allows up to four opponents) */
+export const ARCANUS_WIZARDS = 4;
+
+/** Mutable so the balance simulator can try alternatives from the command line */
+export const FRONTIER_TUNING = {
+    defenseBase: 20,
+    defenseGrowth: 1.8,
+    /** Beyond the Layer 1 wall (wizards only) defense grows more slowly */
+    lateIndex: 40,
+    lateGrowth: 1.45,
+    capitalMult: 3,
+    domainMult: 2,
+    fortressMult: 10,
+};
+
+export const RIVAL_WIZARDS = [
+    "Merlin", "Raven", "Sharee", "Lo Pan", "Jafar", "Oberic", "Rjak",
+    "Sss'ra", "Tauron", "Freya", "Horus", "Ariel", "Tlaloc", "Kali",
+] as const;
+
+export type RegionKind = "borderlands" | "race" | "wizard";
+
+export interface RegionDef {
+    index: number;
+    kind: RegionKind;
+    /** The race of the region's cities */
+    race: RaceId;
+    name: string;
+    /** Wizard domains: the rival wizard's name */
+    wizard?: string;
+}
+
+export interface FrontierCity {
+    index: number;
+    region: RegionDef;
+    name: string;
+    race: RaceId;
+    traits: TraitId[];
+    defense: Decimal;
+    /** Population (thousands) the city has when conquered */
+    pop: number;
+    isRegionCapital: boolean;
+    /** Set on a rival wizard's Fortress: taking it defeats that wizard */
+    fortressOf?: string;
+}
+
+/** The rival wizards met by a run starting as `start`, in order (distinct) */
+export function rivalWizards(start: RaceId, count: number): string[] {
+    const pool: string[] = [...RIVAL_WIZARDS];
+    const result: string[] = [];
+    for (let i = 0; i < count && pool.length > 0; i++) {
+        const pick = pool.splice(hash("wizard", start, i) % pool.length, 1)[0];
+        result.push(pick);
+    }
+    return result;
+}
+
+/** The first rival wizard (the Layer 1 wall) */
+export function rivalWizard(start: RaceId): string {
+    return rivalWizards(start, 1)[0];
+}
+
+/**
+ * Builds the region list. `domains` is how many rival wizards' domains are
+ * included (Layer 1 only ever sees the first one).
+ */
+export function regionPlan(start: RaceId, raceRegions = BASE_RACE_REGIONS, domains = 1): RegionDef[] {
+    const regions: RegionDef[] = [
+        { index: 0, kind: "borderlands", race: start, name: `${RACES[start].adjective} Borderlands` },
+    ];
+    const order = neighborOrder(start);
+    const wizards = rivalWizards(start, domains);
+    let cursor = 0;
+    wizards.forEach((wizard, d) => {
+        const block = d === 0 ? raceRegions : LATER_RACE_REGIONS;
+        for (let i = 0; i < block; i++) {
+            const r = order[cursor++ % order.length];
+            regions.push({ index: regions.length, kind: "race", race: r, name: RACES[r].plural });
+        }
+        regions.push({
+            index: regions.length,
+            kind: "wizard",
+            race: hashPick(order, "domainRace", start, wizard),
+            name: `Domain of ${wizard}`,
+            wizard,
+        });
+    });
+    return regions;
+}
+
+/** Index of the first city that lies inside the first wizard's domain */
+export function wallIndex(plan: RegionDef[]): number {
+    const first = plan.findIndex((r) => r.kind === "wizard");
+    return (first < 0 ? plan.length : first) * REGION_SIZE;
+}
+
+/** One past the last reachable frontier index */
+export function frontierEnd(plan: RegionDef[], wizardsPassable: boolean): number {
+    return wizardsPassable ? plan.length * REGION_SIZE : wallIndex(plan);
+}
+
+export function regionOf(plan: RegionDef[], index: number): RegionDef {
+    return plan[Math.min(Math.floor(index / REGION_SIZE), plan.length - 1)];
+}
+
+export function baseDefense(index: number): Decimal {
+    const t = FRONTIER_TUNING;
+    const early = Math.min(index, t.lateIndex);
+    const late = Math.max(0, index - t.lateIndex);
+    return D(t.defenseBase).times(Decimal.pow(t.defenseGrowth, early)).times(Decimal.pow(t.lateGrowth, late));
+}
+
+/**
+ * Returns the city at `index`, or null if it can't be reached: inside a
+ * wizard's domain when `wizardsPassable` is false, or beyond the last region.
+ */
+export function frontierCity(
+    start: RaceId,
+    plan: RegionDef[],
+    index: number,
+    wizardsPassable = false,
+): FrontierCity | null {
+    if (index >= frontierEnd(plan, wizardsPassable)) {
+        return null;
+    }
+    const region = regionOf(plan, index);
+    const raceId = region.race;
+    const local = index % REGION_SIZE;
+    const isRegionCapital = local === REGION_SIZE - 1;
+    let defense = baseDefense(index);
+    const traits: TraitId[] = [];
+    let fortressOf: string | undefined;
+
+    if (region.kind === "wizard") {
+        traits.push("wards");
+        defense = defense.times(FRONTIER_TUNING.domainMult);
+        if (isRegionCapital) {
+            traits.push("walls");
+            defense = defense.times(FRONTIER_TUNING.fortressMult / FRONTIER_TUNING.domainMult);
+            fortressOf = region.wizard;
+        }
+    } else if (isRegionCapital) {
+        traits.push("walls");
+        defense = defense.times(FRONTIER_TUNING.capitalMult);
+    } else if (index >= 3) {
+        const roll = hashFloat("trait", start, index);
+        if (roll < 0.45) {
+            traits.push(RACES[raceId].favoredTrait);
+        } else if (roll < 0.7) {
+            traits.push(hashPick(["archers", "cavalryScreen", "shieldWall"] as TraitId[], "trait2", start, index));
+        }
+        if (index >= 12 && hashFloat("walls", start, index) < 0.2 && !traits.includes("walls")) {
+            traits.push("walls");
+        }
+    }
+
+    const pop = 1 + Math.floor(index / 5) + (isRegionCapital ? 2 : 0);
+
+    return {
+        index,
+        region,
+        name: fortressOf ? `Fortress of ${fortressOf}` : cityName(raceId, start, index),
+        race: raceId,
+        traits,
+        defense,
+        pop,
+        isRegionCapital,
+        fortressOf,
+    };
+}
+
+export function cityName(raceId: RaceId, ...seed: Array<string | number>): string {
+    const parts = RACES[raceId].nameParts;
+    return hashPick(parts.start, "ns", raceId, ...seed) + hashPick(parts.end, "ne", raceId, ...seed);
+}

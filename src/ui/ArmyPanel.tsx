@@ -3,7 +3,7 @@ import { RACES } from "../content/races";
 import { ROLE_NAMES, ROLES, TRAITS, traitRoleMult } from "../content/traits";
 import { DRILL_STEP, UNITS } from "../content/units";
 import { buyUnits } from "../engine/actions";
-import { availableUnits, currentPlan, currentTarget, powerByRole, siegePower, unitPower } from "../engine/army";
+import { availableUnits, currentPlan, currentTarget, powerByRole, siegePower, toNextDrill, unitPower } from "../engine/army";
 import { getStats } from "../engine/collect";
 import { unitAffordable, unitPrice, wallet } from "../engine/costs";
 import { unitPowerStat } from "../engine/effects";
@@ -17,7 +17,7 @@ import { HeroesSection } from "./HeroesSection";
 import { BreakdownView, Price, ProgressBar, Tip } from "./components";
 import { game } from "./game";
 
-const BUY_AMOUNTS: Settings["buyAmount"][] = [1, 10, 100, "max"];
+const BUY_AMOUNTS: Settings["buyAmount"][] = [1, 10, 100, "next", "max"];
 
 function Frontier() {
     const state = game();
@@ -148,8 +148,9 @@ function Troops() {
                         key={String(a)}
                         class={"toggle" + (amount === a ? " on" : "")}
                         onClick={() => (state.settings.buyAmount = a)}
+                        title={a === "next" ? `Buy up to the next ${DRILL_STEP}-owned milestone, where power doubles` : undefined}
                     >
-                        {a === "max" ? "Max" : "×" + a}
+                        {a === "max" ? "Max" : a === "next" ? "Next ×2" : "×" + a}
                     </button>
                 ))}
                 <span class="roles">
@@ -179,7 +180,8 @@ function Troops() {
                         const u = UNITS[id];
                         const owned = state.run.units[id] ?? 0;
                         const affordable = unitAffordable(state, stats, id);
-                        const n = amount === "max" ? Math.max(1, affordable) : amount;
+                        const n =
+                            amount === "max" ? Math.max(1, affordable) : amount === "next" ? toNextDrill(owned) : amount;
                         const price = unitPrice(state, stats, id, n);
                         const each = unitPower(stats, id, owned);
                         const vsTarget = traitRoleMult(traits, u.role);
@@ -208,7 +210,7 @@ function Troops() {
                                 <td class="num">{fmt(each.times(owned))}</td>
                                 <td class="buy">
                                     <button disabled={affordable < n || affordable === 0} onClick={() => buyUnits(state, id, amount)}>
-                                        {amount === "max" ? `+${fmtInt(affordable)}` : `+${n}`}
+                                        {amount === "max" ? `+${fmtInt(affordable)}` : `+${fmtInt(n)}`}
                                     </button>
                                     <Price amount={price} currency={u.currency} have={wallet(state, u.currency)} />
                                 </td>

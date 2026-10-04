@@ -147,6 +147,11 @@ Newest information is at the top of each section. The design itself is in `DESIG
   - After that, runs take 10–60 minutes to sweep Arcanus, and the content runs out until Layer 3 exists.
 - Tests: 46 passing.
 
+### Session 2 (2026-10-04)
+
+- Added a **"Next ×2" troop buy amount** (your request). It buys exactly enough to reach the next 25-owned drill doubling (e.g. 5 owned → +20), or nothing if you can't afford that many, the same as ×10/×100.
+- Tests: 47 passing.
+
 ## Decisions made (by me, reversible)
 
 | Decision | Why | Easy to change? |

@@ -68,6 +68,20 @@ describe("Save", () => {
     });
 });
 
+describe("Buying units", () => {
+    it('"next" buys exactly up to the next drill doubling, or nothing', () => {
+        const state = newGame(0);
+        state.run.production = D(1e9);
+        buyBuilding(state, "barracks");
+        buyUnits(state, "spearmen", 5);
+        expect(buyUnits(state, "spearmen", "next")).toBe(20);
+        expect(buyUnits(state, "spearmen", "next")).toBe(25);
+        expect(state.run.units.spearmen).toBe(50);
+        state.run.production = D(0);
+        expect(buyUnits(state, "spearmen", "next")).toBe(0);
+    });
+});
+
 describe("Simulation", () => {
     function scenario() {
         const state = newGame(0);

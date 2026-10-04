@@ -53,6 +53,11 @@ export function drillMult(count: number): Decimal {
     return drills > 0 ? Decimal.pow(2, drills) : ONE;
 }
 
+/** Units still needed to reach the next drill doubling (1..DRILL_STEP) */
+export function toNextDrill(owned: number): number {
+    return DRILL_STEP - (owned % DRILL_STEP);
+}
+
 /** Siege power per second of one unit, before city traits */
 export function unitPower(stats: Stats, id: string, owned = 0): Decimal {
     const u = UNITS[id];

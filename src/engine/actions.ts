@@ -8,7 +8,7 @@ import { cityName } from "../content/frontier";
 import { LORE } from "../content/lore";
 import { RACES } from "../content/races";
 import { UNITS } from "../content/units";
-import { isUnitAvailable } from "./army";
+import { isUnitAvailable, toNextDrill } from "./army";
 import { getStats, racesInRealm } from "./collect";
 import {
     buildingPrice,
@@ -79,14 +79,19 @@ export function rushBuilding(state: GameState, id: string): boolean {
 
 // --- Units ---
 
-/** Buys up to `amount` units ("max" = as many as affordable). Returns the number bought. */
-export function buyUnits(state: GameState, id: string, amount: number | "max"): number {
+/**
+ * Buys `amount` units, or none if that many aren't affordable. "max" buys as
+ * many as affordable; "next" buys exactly enough to reach the next drill
+ * doubling. Returns the number bought.
+ */
+export function buyUnits(state: GameState, id: string, amount: number | "next" | "max"): number {
     if (!UNITS[id] || !isUnitAvailable(state, id)) {
         return 0;
     }
     const stats = getStats(state);
     const affordable = unitAffordable(state, stats, id);
-    const n = amount === "max" ? affordable : amount <= affordable ? amount : 0;
+    const wanted = amount === "next" ? toNextDrill(state.run.units[id] ?? 0) : amount;
+    const n = wanted === "max" ? affordable : wanted <= affordable ? wanted : 0;
     if (n <= 0) {
         return 0;
     }

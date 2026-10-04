@@ -163,7 +163,8 @@ export interface Records {
 }
 
 export interface Settings {
-    buyAmount: 1 | 10 | 100 | "max";
+    /** "next" = exactly enough to reach the next drill doubling */
+    buyAmount: 1 | 10 | 100 | "next" | "max";
     autosaveSeconds: number;
     /** Simulation speed multiplier (dev tool) */
     devSpeed: number;

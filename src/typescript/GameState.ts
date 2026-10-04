@@ -29,9 +29,13 @@ export default class GameState {
 
     // Military Power
     militaryPowerInStorage: number = 0;
+    militaryDistanceTraveled: number = 0;
+    militaryDistanceLastCityConquered: number = 0;
+    militaryTotalCityStrengthConquered = 0;
 
     // Discoveries
     discoveredNodes: Array<string> = [];
+    // TODO: Rename this to explorerDistanceTravelled - or perhaps grouped data in sub-objects
     distanceTraveled: number = 0;
 }
 

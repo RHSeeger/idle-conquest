@@ -9,7 +9,7 @@
  */
 import GameState from "./GameState";
 import Player from "./Player";
-import { ProjectId } from "./ProjectId";
+import { ProjectId } from "./Projects/ProjectId";
 
 export default class Population {
     readonly player: Player;

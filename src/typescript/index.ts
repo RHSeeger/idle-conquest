@@ -5,12 +5,12 @@ import "../css/styles.css";
 import Player from "./Player"
 // TODO: Remove these if we don't actually need them
 import Population from "./Population"
-import Projects from "./Projects"
+import Projects from "./Projects/Projects"
 import Production from "./Production";
 import Gold from "./Gold";
 import Food from "./Food";
-import { DiscoveryId } from "./DiscoveryId";
-import { ProjectId } from "./ProjectId";
+import { DiscoveryId } from "./Discoveries/DiscoveryId";
+import { ProjectId } from "./Projects/ProjectId";
 
 // Setup the player to the initial values
 let playerObject = new Player();

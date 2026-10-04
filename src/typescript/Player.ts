@@ -3,10 +3,11 @@ import Population from "./Population"
 import Food from "./Food"
 import Production from "./Production"
 import Gold from "./Gold"
-import Projects from "./Projects"
+import Projects from "./Projects/Projects"
 import GameState from "./GameState";
 import Military from "./Military"
-import Discoveries from "./Discoveries"
+import Discoveries from "./Discoveries/Discoveries"
+import Races from "./Races/Races"
 
 /**
  * Effectively, the API to interact with the player's information (game state)
@@ -25,6 +26,7 @@ export default class Player {
     readonly projects: Projects;
     readonly military: Military;
     readonly discoveries: Discoveries;
+    readonly races: Races;
 
     constructor() {
         // [data] is where the "saveable" user data is stored; the data that
@@ -40,6 +42,7 @@ export default class Player {
         this.projects = new Projects(this);
         this.military = new Military(this);
         this.discoveries = new Discoveries(this);
+        this.races = new Races(this);
     }
 
 }

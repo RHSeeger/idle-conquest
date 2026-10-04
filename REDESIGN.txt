@@ -1,0 +1,109 @@
+The files in this repo/project/directory tree represent previous work on creating 
+an incremental/idle game inspired by the game Master of Magic.
+
+Master of Magic is a 4X (explore, expand, exploit, and exterminate) computer 
+strategy game released in 1994.
+
+There have been other games names Master of Magic, and there has been a remake 
+of this game. This is specifically about the 1994 version published by MicroProse. 
+
+Wikipedia: https://en.wikipedia.org/wiki/Master_of_Magic
+Wiki: https://masterofmagic.fandom.com/wiki/Master_of_Magic_Wiki
+
+The goal here is to create an incremental/idle game that 
+- has many of the same "features" as the original
+    - buildings, such as the Granary
+    - troops, such as Pikemen
+    - races, such as Elves and High Men
+    - schools of magic, such as Life and Nature
+    - dimensions, such as Arcanus and Myrror
+    - monsters
+    - cities of various levels of development
+    - the "player" is a wizard that controls their civilization
+    - defeating and capturing other cities
+    - defeating the opponent wizards
+- plays like an incremental
+    - 
+    - and other incremental features
+- has idle gameplay - being away from the game, progress is still made automatically
+
+### Incremental gameplay
+- Normally, an incremental has at least one, if not more, prestiges - which 
+  resets progress in exchange for bonuses. 
+- When prestiging, it should open up a new "type" of play (new mechanics), while
+  also having the player "replay" previous prestige layers
+
+There are multiple "types" or prestige
+1. Layered prestige (stacked resets)
+Each layer resets everything below it and gives a stronger currency.
+Antimatter Dimensions: Dimension Boosts → Galaxies → Infinity → Eternity → Reality
+Realm Grinder: Abdication → Reincarnation → Ascension
+The Prestige Tree: built entirely around many layers
+
+2. Parallel or branching prestige
+Several resets sit at the same level, and you choose which one to take, each with different rewards.
+The Prestige Tree's side branches
+Picking a faction or path when you reset, so each run plays differently
+
+_others_
+
+I would like this game to use both of those. For example
+
+On the first layer
+- Parallel - the player can prestige (when conditions are met) to redo the first 
+  layer (with bonuses) but with new races (the races they have conqured cities 
+  of so far) - which opens up more buildings, races, troops, etc. And possibly
+  with new magics
+- Layered - the player can prestige (when conditions are met) to the next level
+  Right now, that next level is a new dimension (start in Arcanus, unlock Myrror),
+  but that's still to be decided - what the prestige levels are
+
+
+When doing parallel prestige for the first time on a layer, progress should be
+noticeably faster. Anything that required serious thought to "solve" (ie, trying
+to understand how stuff works, how different abilities interact with each other to
+choose which combinations to use) should require much less effort. The second time, 
+even faster. By the third or forth time, it should take almost no effort to complete.
+It might made sense to _do_ more than four parallel prestiges on a layer, but generally
+only to accomplish/gain more of something (for example, wanting to get the rest of
+the races, or magics, etc)
+
+
+The various files in the directory state and/or implement some of my previous designs and
+decisions. However, all my previous work led in a direction where it just didn't
+"feel" like an incremental.
+
+I'd like to design a real incremental version of the game, preferably with multiple prestige layers
+
+My thoughts right now are
+- Prestige Layer 1
+  - Unlock prestige once at least 1 or 2 different races' cities have been conquered and
+    taken over - so you have effectively added that race to your civilization
+  - When you parallel prestige, any races you have conquered are available in your next run (plus 
+    any that were in the current run)
+- Prestige Layer 2 (or 3? - later than 1)
+  - Unlock when unknown - maybe when you are able to cast the spell that opens a portal to the Myrus
+  - Opens up the Myrus dimension and it's unique play mechanics (completly undecided yet what those
+    are)
+
+My current thought is that
+- you start out with no magic
+- you discover magic books 
+- possibly - when you have conqured a race that has magic towers/schools/etc of some kind AND you
+  have found at least N magic books (either types or indivudual) - you can Layer prestige
+  - that layer would be between Layer 1 and the dimensions layer
+  - not sure what unique play mechanics would be, but they would focus more on getting more 
+    magic types and books - to the point where you can cast the spell to open the Myrus prestig
+    layer
+
+I'm pretty open to discussion on all of this since, as noted, my previous attempts
+really just never felt like an incremental. They all just felt like a 4X game, just not 
+as good
+
+
+
+
+
+
+  
+

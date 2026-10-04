@@ -2,10 +2,10 @@
  * Functionality related to finding and keeping track of Discovery items (found by Explorers)
  */
 
-import Player from "./Player"
-import GameState from "./GameState"
+import Player from "../Player"
+import GameState from "../GameState"
 import Discovery from "./Discovery"
-import { Resource } from "./Resource"
+import { Resource } from "../Resource"
 import { DiscoveryType } from "./DiscoveryType"
 import { DiscoveryId } from "./DiscoveryId"
 

@@ -5,9 +5,9 @@
 import GameState from "./GameState";
 import Player from "./Player";
 import { Resource } from "./Resource"
-import Discovery from "./Discovery"
-import { DiscoveryId } from "./DiscoveryId";
-import { ProjectId } from "./ProjectId";
+import Discovery from "./Discoveries/Discovery"
+import { DiscoveryId } from "./Discoveries/DiscoveryId";
+import { ProjectId } from "./Projects/ProjectId";
 
 
 export default class Gold {

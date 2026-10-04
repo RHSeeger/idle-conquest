@@ -9,8 +9,8 @@
  *          example: A Mithril Mine allows the creation of mithril weapons, increasing the maximum Military Power by 10%
  */
 
-import Player from "./Player";
-import { Resource } from "./Resource"
+import Player from "../Player";
+import { Resource } from "../Resource"
 import { DiscoveryType } from "./DiscoveryType"
 import { DiscoveryId } from "./DiscoveryId"
 

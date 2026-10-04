@@ -1,7 +1,7 @@
 
 import Population from "../src/typescript/Population.js"
 import Player from "../src/typescript/Player.js"
-import Projects from "../src/typescript/Projects.js"
+import Projects from "../src/typescript/Projects/Projects.js"
 
 // Initialize game variables
 const initialValues = {

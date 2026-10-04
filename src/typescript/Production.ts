@@ -4,9 +4,9 @@
  */
 import GameState from "./GameState";
 import Player from "./Player";
-import Discovery from "./Discovery"
+import Discovery from "./Discoveries/Discovery"
 import { Resource } from "./Resource"
-import { DiscoveryId } from "./DiscoveryId";
+import { DiscoveryId } from "./Discoveries/DiscoveryId";
 
 
 export default class Production {

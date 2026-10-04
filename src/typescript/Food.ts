@@ -4,9 +4,9 @@
  */
 import GameState from "./GameState";
 import Player from "./Player";
-import Discovery from "./Discovery"
+import Discovery from "./Discoveries/Discovery"
 import { Resource } from "./Resource"
-import { ProjectId } from "./ProjectId"
+import { ProjectId } from "./Projects/ProjectId"
 
 export default class Food {
     static readonly BASE_FOOD_GENERATION_PER_FARMER: number = 2.0;

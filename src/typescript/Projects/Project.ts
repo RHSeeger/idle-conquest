@@ -1,8 +1,8 @@
 /**
  * Something that can be build (building, unit, special project)
  */
-import Player from "./Player";
-import { Resource } from "./Resource"
+import Player from "../Player";
+import { Resource } from "../Resource"
 import { ProjectId } from "./ProjectId"
 
 export default class Project {

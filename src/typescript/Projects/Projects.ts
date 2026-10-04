@@ -1,8 +1,8 @@
 
 import Project from "./Project"
-import Player from "./Player"
-import GameState from "./GameState"
-import { Resource } from "./Resource"
+import Player from "../Player"
+import GameState from "../GameState"
+import { Resource } from "../Resource"
 import { ProjectId } from "./ProjectId"
 
 export default class Projects {

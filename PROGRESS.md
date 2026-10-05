@@ -17,6 +17,16 @@ Newest information is at the top of each section. The design itself is in `DESIG
 
 ---
 
+## TODO (noted by you, not yet scheduled)
+
+Items you've flagged as needing work. They're recorded here and picked up only when you choose what to work on next.
+
+| # | Item | Noted |
+|---|---|---|
+| — | (none yet) | — |
+
+---
+
 ## How to run
 
 | Command | What it does |
@@ -273,7 +283,7 @@ The city table is now grouped by race; "Show every city" brings back the full li
 | **Tab "!" badges** (`ui/attention.ts`): Army when a hero is affordable; Buildings when a building is affordable and auto-build is off; Magic when a spell can be researched (auto-research off) or an enchantment cast (auto-cast off). The tooltip says why | Play-test: heroes were easy to forget. Only things automation won't do for you, so badges stay meaningful. Not for troops, Lore or instants: those would be lit almost all the time | Yes |
 | **Army budget** (new Refound milestone "Quartermasters", 3 Refounds): auto-recruit spends only a chosen share (10/25/50/75%/everything) of the production, gold and mana gained while it's on (mana added after play-testing: summons were still draining it). Unspent budget carries over, never more than what's on hand. Default: everything | Play-test: the player kept toggling auto-recruit on and off so it wouldn't eat everything. A share of *income* rather than "keep X% of stock": auto-recruit runs every second, so a stock cap still drains you down to a few seconds of income. Earned one Refound after auto-recruit, so its absence is felt first | Yes (`accrueRecruitBudget`, `automation.recruitShare`) |
 | Auto-build has two modes, **Cheapest** (by all-gold rush price) and **Chronicle** (default, as before). Troop and building modes are a small segmented switch, shown once the automation is unlocked even while it's off | Play-test request; the old troop mode button was styled like a heading and only appeared while auto-recruit was on | Yes (`buildQueue`, `AutoMode`) |
-| Lairs live in the Exploration tab; the Army tab's Campaign shows the current orders (siege or raid, with progress) | Lairs were briefly in the Army tab, above Troops, which felt wrong in play-testing. The army's current activity stays in one place | Yes |
+| Lairs live in the Exploration tab; the Army tab's Campaign shows the current orders (siege or raid, with progress) | Lairs were briefly in the Army tab, above Troops, which felt wrong in play-testing. The army's current activity stays in one place. The Exploration tab's lair list also shows a one-line raid status (lair, time left, %, Recall), but not the big bar | Yes |
 | Layer 3 resets Insight and Ascensions; you stay a wizard; Planewalker gives Layer 2 automation back | Standard layered reset, with replays that need no thought | Yes |
 | Myrror persists across Refounds and Ascensions; it resets only on Planeshift | This *is* "two planes at once": Arcanus loops push a long-lived Myrror campaign | Medium |
 | Army split capped at 10% per planar link (Towers cleared this Planeshift, max 6) | MoM has 6 Towers; makes Towers matter after the gate | Yes |

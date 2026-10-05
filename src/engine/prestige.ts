@@ -46,16 +46,26 @@ export function tributeShare(state: GameState): number {
 }
 
 /** Population that counts for Fame: conquered by force, plus tribute from surrendered cities */
-export function famePop(state: GameState): number {
-    return state.run.conqueredPop + state.run.surrenderedPop * tributeShare(state);
+export function famePop(state: GameState, tribute = tributeShare(state)): number {
+    return state.run.conqueredPop + state.run.surrenderedPop * tribute;
 }
 
-export function fameOnRefound(state: GameState): Decimal {
+/** Seconds of run time until the tribute from surrendered cities is complete (0 if it already is) */
+export function tributeSecondsLeft(state: GameState): number {
+    return Math.max(0, TRIBUTE_SECONDS - state.run.time);
+}
+
+/** Fame on Refound once the tribute has fully built up (with the current conquests) */
+export function fameWithFullTribute(state: GameState): Decimal {
+    return fameOnRefound(state, TRIBUTE_SHARE);
+}
+
+export function fameOnRefound(state: GameState, tribute = tributeShare(state)): Decimal {
     if (!canRefound(state)) {
         return D(0);
     }
     const run = state.run;
-    const base = Math.pow(famePop(state) / FAME_POP_DIVISOR, FAME_POP_EXPONENT);
+    const base = Math.pow(famePop(state, tribute) / FAME_POP_DIVISOR, FAME_POP_EXPONENT);
     const raceMult = 1 + FAME_PER_RACE * run.racesConquered.length;
     return D(base * raceMult).times(getStats(state).get("fame.mult")).floor();
 }

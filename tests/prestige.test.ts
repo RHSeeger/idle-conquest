@@ -11,7 +11,9 @@ import {
     hasMilestone,
     refound,
     renownLimit,
+    fameWithFullTribute,
     TRIBUTE_SECONDS,
+    tributeSecondsLeft,
 } from "../src/engine/prestige";
 import { GameState, newGame } from "../src/engine/state";
 
@@ -87,16 +89,21 @@ describe("Renown", () => {
         state.prestige.ascensionBestFrontier = 60; // 30 cities surrender
         tickFrontier(state, getStats(state), 0.1);
         expect(canRefound(state)).toBe(true);
-        // ...so refounding the moment Renown is done gives nothing
+        // ...so refounding the moment Renown is done gives nothing, though the full tribute is known
         expect(fameOnRefound(state).toNumber()).toBe(0);
+        const promised = fameWithFullTribute(state).toNumber();
+        expect(promised).toBeGreaterThan(0);
+        expect(tributeSecondsLeft(state)).toBe(TRIBUTE_SECONDS);
         state.run.time = TRIBUTE_SECONDS / 2;
         const half = fameOnRefound(state).toNumber();
         state.run.time = TRIBUTE_SECONDS;
         const full = fameOnRefound(state).toNumber();
         expect(half).toBeGreaterThan(0);
         expect(full).toBeGreaterThan(half);
+        expect(full).toBe(promised);
         state.run.time = TRIBUTE_SECONDS * 3;
         expect(fameOnRefound(state).toNumber()).toBe(full);
+        expect(tributeSecondsLeft(state)).toBe(0);
     });
 
     it("only counts the best frontier of the current Ascension", () => {

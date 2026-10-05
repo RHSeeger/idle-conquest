@@ -3,13 +3,15 @@ import { FAME_BRANCH_NAMES, FAME_UPGRADES, FAME_UPGRADE_ORDER, FameBranch, MILES
 import { regionPlan } from "../content/frontier";
 import { ARCANUS_RING, RACES, RaceId } from "../content/races";
 import { raceRegions } from "../engine/army";
-import { fmt, fmtInt } from "../engine/format";
+import { fmt, fmtInt, fmtTime } from "../engine/format";
 import {
     buyFameUpgrade,
     canBuyFameUpgrade,
     canRefound,
     effectiveRefounds,
     fameOnRefound,
+    fameWithFullTribute,
+    tributeSecondsLeft,
     fameUpgradeCost,
     fameUpgradeLevel,
     MAX_RACE_MASTERY,
@@ -37,13 +39,17 @@ function RefoundSection() {
     const plan = regionPlan(raceForPlan, raceRegions(state));
 
     const doRefound = () => {
-        const gain = fame.gt(0) ? `for +${fmtInt(fame)} Fame` : "for no Fame (you have not conquered anything by force yet)";
+        const full = fameWithFullTribute(state);
+        const gain =
+            (fame.gt(0) ? `for +${fmtInt(fame)} Fame` : "for no Fame") +
+            (full.gt(fame) ? ` (waiting ${fmtTime(tributeSecondsLeft(state))} for the full tribute would give ${fmtInt(full)})` : "");
         if (confirm(`Refound your civilization as ${RACES[raceForPlan].plural}? This run's progress will be reset ${gain}.`)) {
             refound(state, raceForPlan);
         }
     };
     const run = state.run;
     const tribute = tributeShare(state);
+    const fullTribute = fameWithFullTribute(state);
 
     return (
         <section>
@@ -75,9 +81,15 @@ function RefoundSection() {
                 </li>
                 <li>Fame = (counted population ÷ 8,000)^0.9 × the race bonus × Fame multipliers.</li>
             </ul>
-            {ok && fame.lte(0) && (
+            {ok && fullTribute.gt(fame) && (
+                <p class="hint">
+                    Tribute is still building up: Refounding in {fmtTime(tributeSecondsLeft(state))} would give{" "}
+                    <b class="fame">{fmtInt(fullTribute)}</b> Fame from what you hold now (more if you take more cities).
+                </p>
+            )}
+            {ok && fullTribute.lte(0) && (
                 <p class="bad">
-                    This run would give no Fame yet: take cities by force first. You can still Refound, for example to
+                    This run would give no Fame: take cities by force first. You can still Refound, for example to
                     start over as a different race.
                 </p>
             )}

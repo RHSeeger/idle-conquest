@@ -7,6 +7,7 @@ import { D } from "../src/engine/decimal";
 import {
     buyFameUpgrade,
     canRefound,
+    earnsMastery,
     fameOnRefound,
     hasMilestone,
     refound,
@@ -104,6 +105,19 @@ describe("Renown", () => {
         state.run.time = TRIBUTE_SECONDS * 3;
         expect(fameOnRefound(state).toNumber()).toBe(full);
         expect(tributeSecondsLeft(state)).toBe(0);
+    });
+
+    it("gives no Mastery or Chronicle for a run that took nothing by force", () => {
+        const state = newGame(0);
+        state.prestige.refounds = 3;
+        state.prestige.ascensionBestFrontier = 60;
+        state.prestige.chronicle.buildOrder = ["barracks", "smithy"];
+        tickFrontier(state, getStats(state), 0.1); // everything up to Renown's limit surrenders
+        expect(canRefound(state)).toBe(true);
+        expect(earnsMastery(state)).toBe(false);
+        refound(state, "highMen");
+        expect(state.prestige.raceMastery.highMen ?? 0).toBe(0);
+        expect(state.prestige.chronicle.buildOrder).toEqual(["barracks", "smithy"]);
     });
 
     it("only counts the best frontier of the current Ascension", () => {

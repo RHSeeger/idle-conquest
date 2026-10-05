@@ -8,6 +8,7 @@ import {
     buyFameUpgrade,
     canBuyFameUpgrade,
     canRefound,
+    earnsMastery,
     effectiveRefounds,
     fameOnRefound,
     fameWithFullTribute,
@@ -42,7 +43,8 @@ function RefoundSection() {
         const full = fameWithFullTribute(state);
         const gain =
             (fame.gt(0) ? `for +${fmtInt(fame)} Fame` : "for no Fame") +
-            (full.gt(fame) ? ` (waiting ${fmtTime(tributeSecondsLeft(state))} for the full tribute would give ${fmtInt(full)})` : "");
+            (full.gt(fame) ? ` (waiting ${fmtTime(tributeSecondsLeft(state))} for the full tribute would give ${fmtInt(full)})` : "") +
+            (earnsMastery(state) ? "" : `, and no Mastery for the ${RACES[state.run.startingRace].plural} (no city taken by force)`);
         if (confirm(`Refound your civilization as ${RACES[raceForPlan].plural}? This run's progress will be reset ${gain}.`)) {
             refound(state, raceForPlan);
         }
@@ -85,6 +87,13 @@ function RefoundSection() {
                 <p class="hint">
                     Tribute is still building up: Refounding in {fmtTime(tributeSecondsLeft(state))} would give{" "}
                     <b class="fame">{fmtInt(fullTribute)}</b> Fame from what you hold now (more if you take more cities).
+                </p>
+            )}
+            {ok && !earnsMastery(state) && (
+                <p class="hint">
+                    No city taken by force yet this run: Refounding now won't add Mastery for the{" "}
+                    {RACES[run.startingRace].plural} or replace your Chronicle (the build order and army that automation
+                    follows).
                 </p>
             )}
             {ok && fullTribute.lte(0) && (
@@ -234,7 +243,7 @@ function Annals() {
                     })}
                 </tbody>
             </table>
-            <p class="hint">Mastery grows by one each time you complete a run as that race: ×1.1 production and +0.5 max population per star, in that race's cities.</p>
+            <p class="hint">Mastery grows by one each time you Refound after a run as that race that took at least one city by force: ×1.1 production and +0.5 max population per star, in that race's cities.</p>
         </section>
     );
 }

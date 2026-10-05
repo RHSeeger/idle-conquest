@@ -40,6 +40,14 @@ export function refoundRequirementText(): string {
     return "Conquer a city of another race (reach the first region beyond your Borderlands).";
 }
 
+/**
+ * Whether Refounding now grants Mastery for the starting race and records the
+ * run in the Chronicle: the run must have taken at least one city by force.
+ */
+export function earnsMastery(state: GameState): boolean {
+    return state.run.conqueredPop > 0;
+}
+
 /** How much of the surrendered cities' tribute has built up (0..TRIBUTE_SHARE) */
 export function tributeShare(state: GameState): number {
     return TRIBUTE_SHARE * Math.min(1, state.run.time / TRIBUTE_SECONDS);
@@ -87,12 +95,16 @@ export function refound(state: GameState, nextRace: RaceId): boolean {
             p.annals.push(r);
         }
     }
-    p.raceMastery[run.startingRace] = Math.min(MAX_RACE_MASTERY, (p.raceMastery[run.startingRace] ?? 0) + 1);
-    p.chronicle = {
-        buildOrder: [...run.buildings],
-        unitMix: { ...run.units },
-        lore: { ...run.lore },
-    };
+    // only a run that fought for something earns Mastery and becomes the Chronicle:
+    // otherwise Renown would allow instant refounds for free Mastery (and an empty Chronicle)
+    if (earnsMastery(state)) {
+        p.raceMastery[run.startingRace] = Math.min(MAX_RACE_MASTERY, (p.raceMastery[run.startingRace] ?? 0) + 1);
+        p.chronicle = {
+            buildOrder: [...run.buildings],
+            unitMix: { ...run.units },
+            lore: { ...run.lore },
+        };
+    }
     if (run.peakPower.gt(p.bestPower)) {
         p.bestPower = run.peakPower;
     }

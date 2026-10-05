@@ -73,7 +73,10 @@ function SpellAction(props: { state: GameState; spell: SpellDef }) {
                     >
                         {cooldown > 0 ? fmtTime(cooldown) : "Cast"}
                     </button>
-                    <Price amount={instantCost(state, spell)} currency="mana" have={state.run.mana} />
+                    <Tip tip={`Costs ${fmtTime(spell.manaSeconds ?? 0)} of your mana income, so it rises as your income grows (its siege burst grows with your army too).`}>
+                        <Price amount={instantCost(state, spell)} currency="mana" have={state.run.mana} />
+                        <span class="hint"> ({fmtTime(spell.manaSeconds ?? 0)} of mana)</span>
+                    </Tip>
                 </span>
             );
         }

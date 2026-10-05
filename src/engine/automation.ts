@@ -130,7 +130,8 @@ export function autoRefound(state: GameState): boolean {
     return refound(state, leastMastered(state, options));
 }
 
-function isActive(state: GameState, kind: AutomationKind): boolean {
+/** Whether an automation is unlocked and switched on */
+export function isAutomationActive(state: GameState, kind: AutomationKind): boolean {
     return isAutomationUnlocked(state, kind) && state.automation[kind];
 }
 
@@ -350,11 +351,11 @@ function accrueRecruitBudget(state: GameState): void {
 export function runAutomation(state: GameState, force = false): void {
     // prestige automation first (never forced: the bot decides those itself)
     if (!force) {
-        if (isActive(state, "ascend") && autoAscend(state)) return;
-        if (isActive(state, "refound") && autoRefound(state)) return;
+        if (isAutomationActive(state,"ascend") && autoAscend(state)) return;
+        if (isAutomationActive(state,"refound") && autoRefound(state)) return;
     }
     // measure gains before anything spends; remember what's left afterwards
-    const budgeted = !force && isActive(state, "units") && isRecruitBudgeted(state);
+    const budgeted = !force && isAutomationActive(state,"units") && isRecruitBudgeted(state);
     if (budgeted) accrueRecruitBudget(state);
     runAutomationSteps(state, force, budgeted);
     for (const c of BUDGET_CURRENCIES) {
@@ -363,7 +364,7 @@ export function runAutomation(state: GameState, force = false): void {
 }
 
 function runAutomationSteps(state: GameState, force: boolean, budgeted: boolean): void {
-    const on = (kind: AutomationKind) => force || isActive(state, kind);
+    const on = (kind: AutomationKind) => force || isAutomationActive(state,kind);
     const savingFor = on("buildings") ? autoBuild(state) : null;
     if (isWizard(state) && on("research")) autoResearch(state);
     if (on("lore")) autoLore(state);

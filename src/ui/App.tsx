@@ -21,6 +21,7 @@ import { AscensionPanel } from "./AscensionPanel";
 import { MagicPanel } from "./MagicPanel";
 import { StatsPanel } from "./StatsPanel";
 import { GoalBar } from "./Goal";
+import { tabAttention } from "./attention";
 import { isWizard, manaRate } from "../engine/magic";
 import { RealmPanel } from "./RealmPanel";
 import { PlanesPanel } from "./PlanesPanel";
@@ -235,11 +236,20 @@ export function App(props: { offline: OfflineSummary | null; initialTab?: string
             </header>
             <ResourceBar />
             <nav class="tabs">
-                {visible.map((t) => (
-                    <button key={t.id} class={"tab" + (t.id === active.id ? " active" : "")} onClick={() => setTab(t.id)}>
-                        {t.label}
-                    </button>
-                ))}
+                {visible.map((t) => {
+                    const attention = tabAttention(state, t.id);
+                    return (
+                        <button
+                            key={t.id}
+                            class={"tab" + (t.id === active.id ? " active" : "")}
+                            title={attention ?? undefined}
+                            onClick={() => setTab(t.id)}
+                        >
+                            {t.label}
+                            {attention && <span class="tab-badge">!</span>}
+                        </button>
+                    );
+                })}
             </nav>
             <GoalBar />
             <div class="main">

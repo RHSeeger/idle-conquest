@@ -323,7 +323,8 @@ function manaReserve(state: GameState): Decimal {
     return pending ? pending.min(state.run.mana) : ZERO;
 }
 
-const BUDGET_CURRENCIES = ["production", "gold"] as const;
+/** Every currency troops can cost (summoned units cost mana) */
+const BUDGET_CURRENCIES = ["production", "gold", "mana"] as const;
 
 /** Whether auto-recruit is limited to its army budget (Quartermasters milestone, share below 100%) */
 export function isRecruitBudgeted(state: GameState): boolean {
@@ -331,7 +332,7 @@ export function isRecruitBudgeted(state: GameState): boolean {
 }
 
 /**
- * Adds `recruitShare` of the production and gold gained since the last pass to
+ * Adds `recruitShare` of the production, gold and mana gained since the last pass to
  * the army budget. The budget never exceeds what's on hand.
  */
 function accrueRecruitBudget(state: GameState): void {
@@ -376,7 +377,7 @@ function runAutomationSteps(state: GameState, force: boolean, budgeted: boolean)
             gold: savingFor ? state.run.gold.div(2) : ZERO,
             mana: on("cast") ? manaReserve(state) : ZERO,
         };
-        const before = { production: state.run.production, gold: state.run.gold };
+        const before = { production: state.run.production, gold: state.run.gold, mana: state.run.mana };
         if (budgeted) {
             // with an army budget, everything beyond the budget is off limits too
             for (const c of BUDGET_CURRENCIES) {

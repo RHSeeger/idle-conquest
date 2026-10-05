@@ -210,7 +210,7 @@ export const MILESTONES: MilestoneDef[] = [
         id: "quartermasters",
         refounds: 3,
         name: "Quartermasters",
-        text: "Unlock an army budget: auto-recruit spends only a share of the production and gold you gain (Army tab).",
+        text: "Unlock an army budget: auto-recruit spends only a share of the production, gold and mana you gain (Army tab).",
     },
     {
         id: "secondCapital",

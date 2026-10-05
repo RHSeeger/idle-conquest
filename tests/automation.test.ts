@@ -30,6 +30,20 @@ describe("Army budget", () => {
         expect(Object.values(state.run.units).some((n) => n > 0)).toBe(true);
     });
 
+    it("limits mana spent on summoned troops too", () => {
+        const state = recruiting(0.25);
+        state.ascension.ascensions = 1;
+        state.ascension.spellsKnown.push("guardianSpirit");
+        state.run.production = D(0);
+        state.run.gold = D(0);
+        state.run.mana = D(0);
+        runAutomation(state); // baseline
+        state.run.mana = D(10000);
+        runAutomation(state);
+        expect(state.run.units.guardianSpirit ?? 0).toBeGreaterThan(0);
+        expect(state.run.mana.toNumber()).toBeGreaterThanOrEqual(7500);
+    });
+
     it("spends freely at 100%", () => {
         const state = recruiting(1);
         state.run.production = D(10000);

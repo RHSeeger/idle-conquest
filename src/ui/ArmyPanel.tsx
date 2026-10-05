@@ -274,7 +274,7 @@ function Troops() {
                     <span class="auto-budget">
                         Budget{" "}
                         <select
-                            title="Share of the production and gold you gain that auto-recruit may spend"
+                            title="Share of the production, gold and mana you gain that auto-recruit may spend"
                             value={String(state.automation.recruitShare)}
                             onChange={(e) => (state.automation.recruitShare = Number((e.target as HTMLSelectElement).value))}
                         >
@@ -289,9 +289,15 @@ function Troops() {
             </h2>
             {isRecruitBudgeted(state) && (
                 <p class="hint">
-                    Auto-recruit spends {state.automation.recruitShare * 100}% of the production and gold you gain; the rest is
-                    yours. Budget now: <b>{fmt(state.run.recruitBudget.production)}</b> production,{" "}
+                    Auto-recruit saves {state.automation.recruitShare * 100}% of the production, gold
+                    {isWizard(state) && " and mana"} you gain as an army budget, and only spends that; the rest is yours.
+                    Budget now: <b>{fmt(state.run.recruitBudget.production)}</b> production,{" "}
                     <b>{fmt(state.run.recruitBudget.gold)}</b> gold
+                    {isWizard(state) && (
+                        <>
+                            , <b>{fmt(state.run.recruitBudget.mana)}</b> mana
+                        </>
+                    )}
                     {!state.automation.units && " (only builds up while auto-recruit is on)"}.
                 </p>
             )}

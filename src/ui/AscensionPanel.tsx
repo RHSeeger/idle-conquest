@@ -58,7 +58,8 @@ export function CurrentProfile() {
     if (!isWizard(state)) return null;
     return (
         <p>
-            Your wizard this Ascension: <b>{profileText(a.books, a.retorts)}</b>
+            Your wizard this Ascension: <b>{profileText(a.books, a.retorts)}</b>{" "}
+            <span class="hint">({picksUsed(a.books, a.retorts)} picks)</span>
         </p>
     );
 }
@@ -73,6 +74,8 @@ function ProfilePicker() {
     const bookPicks = picksUsed(books);
     const retortPicks = picksUsed({}, retorts);
     const used = bookPicks + retortPicks;
+    // picks the current wizard didn't have when Ascending (bought with Insight since)
+    const gained = isWizard(state) ? Math.max(0, Math.min(picks - used, picks - picksUsed(a.books, a.retorts))) : 0;
     const pickable = pickableRealms(state);
     const change = (r: Realm, delta: number) => {
         if (delta > 0 && used >= picks) return;
@@ -85,8 +88,15 @@ function ProfilePicker() {
     return (
         <div>
             <p>
-                Picks: <b>{used}</b> of {picks} used ({bookPicks} on spellbooks, {retortPicks} on retorts)
-                {used < picks && <span class="bad"> · {picks - used} unspent</span>}
+                Picks for the next Ascension: <b>{used}</b> of {picks} used ({bookPicks} on spellbooks, {retortPicks} on
+                retorts)
+                {used < picks && (
+                    <span class="insight">
+                        {" "}
+                        · {picks - used} left to spend
+                        {gained > 0 && ` (${gained} new from Deeper Study since you Ascended)`}
+                    </span>
+                )}
             </p>
             <p class="hint">
                 Every wizard has {BASE_PICKS} picks{deeper > 0 && `, +${deeper} from Deeper Study (an Insight upgrade)`}.
@@ -227,7 +237,12 @@ export function AscensionPanel() {
                 <button class="prestige-button ascend" disabled={!ok} onClick={doAscend}>
                     Ascend (+{fmtInt(insight)} Insight)
                 </button>
-                {unspent > 0 && <span class="bad"> {unspent} pick{unspent === 1 ? "" : "s"} unspent</span>}
+                {unspent > 0 && (
+                    <span class="bad">
+                        {" "}
+                        The next profile still has {unspent} unspent pick{unspent === 1 ? "" : "s"}
+                    </span>
+                )}
                 <AutoPrestige kind="ascend" />
             </section>
 

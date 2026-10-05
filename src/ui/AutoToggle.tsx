@@ -32,6 +32,43 @@ export function AutoPrestige(props: { kind: "refound" | "ascend" }) {
     );
 }
 
+export interface ModeOption<T extends string> {
+    value: T;
+    label: string;
+    tip: string;
+}
+
+/**
+ * How one kind of automation decides what to buy, as a small segmented switch
+ * sized like AutoToggle. Shown once the automation is unlocked, even while it
+ * is off, so the mode can be set before turning it on.
+ */
+export function AutoMode<T extends string>(props: {
+    kind: AutomationKind;
+    value: T;
+    options: ModeOption<T>[];
+    onChange: (value: T) => void;
+}) {
+    const state = game();
+    if (!isAutomationUnlocked(state, props.kind)) {
+        return null;
+    }
+    return (
+        <span class="auto-mode">
+            {props.options.map((o) => (
+                <button
+                    key={o.value}
+                    class={props.value === o.value ? "on" : ""}
+                    title={o.tip}
+                    onClick={() => props.onChange(o.value)}
+                >
+                    {o.label}
+                </button>
+            ))}
+        </span>
+    );
+}
+
 /** An on/off switch for one kind of automation; hidden until unlocked */
 export function AutoToggle(props: { kind: AutomationKind; label: string }) {
     const state = game();

@@ -777,6 +777,36 @@ button.toggle.auto {
     font-weight: normal;
 }
 
+/* automation mode: a segmented switch the same size as the auto toggle */
+.auto-mode {
+    display: inline-flex;
+    margin-left: 6px;
+    vertical-align: middle;
+}
+
+.auto-mode button {
+    font-size: 12px;
+    font-weight: normal;
+    padding: 1px 8px;
+    border-radius: 0;
+    margin-left: -1px;
+}
+
+.auto-mode button:first-child {
+    border-radius: 5px 0 0 5px;
+    margin-left: 0;
+}
+
+.auto-mode button:last-child {
+    border-radius: 0 5px 5px 0;
+}
+
+.auto-mode button.on {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    position: relative; /* keep the accent border on top of its neighbour's */
+}
+
 /* --- overview (Realm tab) --- */
 .overview {
     list-style: none;

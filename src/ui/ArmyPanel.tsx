@@ -13,7 +13,7 @@ import { GameState, Settings } from "../engine/state";
 import { AUTO_RAID_SECONDS, isAutomationUnlocked } from "../engine/automation";
 import { isExplorationUnlocked, lairPower, lairTarget, setArmyTarget, siteName } from "../engine/exploration";
 import { isWizard } from "../engine/magic";
-import { AutoToggle } from "./AutoToggle";
+import { AutoMode, AutoToggle } from "./AutoToggle";
 import { HeroesSection } from "./HeroesSection";
 import { BreakdownView, Price, ProgressBar, Tip } from "./components";
 import { game } from "./game";
@@ -259,17 +259,15 @@ function Troops() {
         <section>
             <h2>
                 Troops <AutoToggle kind="units" label="Auto-recruit" />
-                {isAutomationUnlocked(state, "units") && state.automation.units && (
-                    <button
-                        class="toggle"
-                        title="Chronicle: rebuild your last run's army mix. Efficient: best power per cost against the current city."
-                        onClick={() =>
-                            (state.automation.unitMode = state.automation.unitMode === "chronicle" ? "efficient" : "chronicle")
-                        }
-                    >
-                        Mode: {state.automation.unitMode === "chronicle" ? "Chronicle" : "Efficient"}
-                    </button>
-                )}
+                <AutoMode
+                    kind="units"
+                    value={state.automation.unitMode}
+                    onChange={(m) => (state.automation.unitMode = m)}
+                    options={[
+                        { value: "efficient", label: "Most efficient", tip: "Best power per cost against the current target" },
+                        { value: "chronicle", label: "Chronicle", tip: "Rebuild your last run's army mix" },
+                    ]}
+                />
             </h2>
             <div class="row">
                 <span class="hint">Buy:</span>

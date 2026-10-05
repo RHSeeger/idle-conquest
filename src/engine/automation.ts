@@ -13,10 +13,13 @@ import {
     buyBuilding,
     buyLore,
     buyUnits,
+    canBuyBuilding,
+    canRushBuilding,
     foundSettlers,
     isBuildingVisible,
     isLoreUnlocked,
     rushBuilding,
+    rushPrice,
 } from "./actions";
 import { availableUnits, currentTarget, powerByRole, siegePower, siegePowerFrom, unitPower } from "./army";
 import { setArmyTarget } from "./exploration";
@@ -131,8 +134,34 @@ function isActive(state: GameState, kind: AutomationKind): boolean {
     return isAutomationUnlocked(state, kind) && state.automation[kind];
 }
 
-/** Building order: the Chronicle's order first, then everything else */
-export function buildQueue(state: GameState): string[] {
+/** Seconds of current income until a building can be bought or rushed (0 if it can now) */
+function secondsToAffordBuilding(state: GameState, econ: { production: Decimal; gold: Decimal }, id: string): number {
+    if (canBuyBuilding(state, id) || canRushBuilding(state, id)) return 0;
+    const price = buildingPrice(getStats(state), id);
+    const wait = (have: Decimal, need: Decimal | undefined, rate: Decimal) =>
+        !need || have.gte(need) ? 0 : need.minus(have).div(rate.max(1e-9)).toNumber();
+    return Math.max(
+        wait(state.run.production, price.production, econ.production),
+        wait(state.run.gold, price.gold, econ.gold),
+    );
+}
+
+/**
+ * Building order for auto-build:
+ *  - "chronicle": the last run's build order first, then everything else
+ *  - "cheapest": whatever can be bought (or rushed) now, cheapest first; then
+ *    the rest by how soon current income affords them. So it always buys
+ *    something when anything is affordable, and otherwise saves for the
+ *    building it can get soonest.
+ */
+export function buildQueue(state: GameState, mode = state.automation.buildMode): string[] {
+    if (mode === "cheapest") {
+        const econ = realmEconomy(state, getStats(state));
+        return BUILDING_ORDER.filter((id) => !state.run.buildings.includes(id) && isBuildingVisible(state, id))
+            .map((id) => ({ id, seconds: secondsToAffordBuilding(state, econ, id), price: rushPrice(state, id) }))
+            .sort((a, b) => a.seconds - b.seconds || a.price.cmp(b.price))
+            .map((x) => x.id);
+    }
     const chronicle = state.prestige.chronicle.buildOrder.filter((id) => BUILDING_ORDER.includes(id));
     return [...chronicle, ...BUILDING_ORDER.filter((id) => !chronicle.includes(id))];
 }
@@ -143,20 +172,21 @@ export function buildQueue(state: GameState): string[] {
  */
 export function autoBuild(state: GameState): string | null {
     const econ = realmEconomy(state, getStats(state));
-    for (const id of buildQueue(state)) {
-        if (state.run.buildings.includes(id) || !isBuildingVisible(state, id)) continue;
-        // buy normally, or rush with gold when the treasury can cover it all
-        if (buyBuilding(state, id) || rushBuilding(state, id)) continue;
-        const price = buildingPrice(getStats(state), id);
-        const wait = (have: Decimal, need: Decimal | undefined, rate: Decimal) =>
-            need ? need.minus(have).div(rate.max(1e-9)).toNumber() : 0;
-        const seconds = Math.max(
-            wait(state.run.production, price.production, econ.production),
-            wait(state.run.gold, price.gold, econ.gold),
-        );
-        if (seconds < SAVE_FOR_BUILDING_SECONDS) {
-            return id;
+    // the queue is worked out again after each purchase (the cheapest order depends on what's left)
+    for (let guard = 0; guard < BUILDING_ORDER.length; guard++) {
+        let bought = false;
+        for (const id of buildQueue(state)) {
+            if (state.run.buildings.includes(id) || !isBuildingVisible(state, id)) continue;
+            // buy normally, or rush with gold when the treasury can cover it all
+            if (buyBuilding(state, id) || rushBuilding(state, id)) {
+                bought = true;
+                break;
+            }
+            if (secondsToAffordBuilding(state, econ, id) < SAVE_FOR_BUILDING_SECONDS) {
+                return id;
+            }
         }
+        if (!bought) return null;
     }
     return null;
 }

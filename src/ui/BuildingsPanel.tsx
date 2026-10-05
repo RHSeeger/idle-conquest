@@ -12,7 +12,7 @@ import {
 } from "../engine/actions";
 import { getStats } from "../engine/collect";
 import { buildingPrice, wallet } from "../engine/costs";
-import { AutoToggle } from "./AutoToggle";
+import { AutoMode, AutoToggle } from "./AutoToggle";
 import { Price, Tip } from "./components";
 import { game } from "./game";
 
@@ -35,6 +35,15 @@ export function BuildingsPanel() {
             <section>
                 <h2>
                     Available <AutoToggle kind="buildings" label="Auto-build" />
+                    <AutoMode
+                        kind="buildings"
+                        value={state.automation.buildMode}
+                        onChange={(m) => (state.automation.buildMode = m)}
+                        options={[
+                            { value: "cheapest", label: "Cheapest", tip: "Build whatever costs least first" },
+                            { value: "chronicle", label: "Chronicle", tip: "Follow your last run's build order" },
+                        ]}
+                    />
                 </h2>
                 {available.length === 0 && <p class="hint">Nothing to build right now.</p>}
                 <div class="cards">

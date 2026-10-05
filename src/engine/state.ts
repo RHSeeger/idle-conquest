@@ -221,6 +221,8 @@ export interface Automation {
     ascend: boolean;
     /** How auto-recruit picks troops */
     unitMode: "chronicle" | "efficient";
+    /** How auto-build orders buildings: the last run's build order, or cheapest first */
+    buildMode: "chronicle" | "cheapest";
     /** Auto-Refound once Fame on Refound reaches this multiple of all Fame earned so far */
     refoundAt: number;
     /** Auto-Ascend once Insight on Ascending reaches this multiple of all Insight earned so far */
@@ -351,6 +353,7 @@ export function newGame(now = Date.now()): GameState {
             refound: true,
             ascend: true,
             unitMode: "chronicle",
+            buildMode: "chronicle",
             refoundAt: 1,
             ascendAt: 1,
             loreSpendCap: 0.1,

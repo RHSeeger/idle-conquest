@@ -2,8 +2,9 @@ import { NODES } from "../content/exploration";
 import { REALM_DEFS, REALMS } from "../content/magic";
 import { ascensionProgress, ASCENSION_BOOKS, ASCENSION_REALMS } from "../engine/ascension";
 import { getStats } from "../engine/collect";
-import { exploreSpeed, lairTarget, nextSiteCost, siteName } from "../engine/exploration";
+import { exploreSpeed, nextSiteCost } from "../engine/exploration";
 import { fmt, fmtTime } from "../engine/format";
+import { Lairs } from "./ArmyPanel";
 import { ProgressBar } from "./components";
 import { game } from "./game";
 
@@ -13,9 +14,6 @@ export function ExplorationPanel() {
     const run = state.run;
     const speed = exploreSpeed(state, stats);
     const cost = nextSiteCost(state);
-    const target = lairTarget(state);
-
-    const lairs = run.sites.filter((s) => s.kind === "lair");
     const nodeCounts: Record<string, number> = {};
     for (const s of run.sites) {
         if (s.kind === "node") nodeCounts[s.type] = (nodeCounts[s.type] ?? 0) + 1;
@@ -34,20 +32,7 @@ export function ExplorationPanel() {
                 <p class="hint">{run.sites.length} sites discovered this run.</p>
             </section>
 
-            <section>
-                <h2>Monster lairs</h2>
-                <p>
-                    {lairs.length === 0
-                        ? "No lairs found yet."
-                        : `${lairs.length} found, ${lairs.filter((s) => s.cleared).length} cleared.`}{" "}
-                    {target && (
-                        <>
-                            Your army is raiding the <b>{siteName(target)}</b>.{" "}
-                        </>
-                    )}
-                    <span class="hint">Lairs are raided from the Army tab (Campaign), next to the frontier.</span>
-                </p>
-            </section>
+            <Lairs />
 
             <section>
                 <h2>Resource sites</h2>

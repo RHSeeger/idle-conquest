@@ -123,7 +123,7 @@ export function Overview() {
                 {isExplorationUnlocked(state) && (
                     <Line icon="🧭" label="Expeditions" auto="lairs">
                         next discovery in {fmtTime((nextSiteCost(state) - run.exploreProgress) / exploreSpeed(state, stats))}
-                        {sites > 0 && ` · ${sites} lair${sites === 1 ? "" : "s"} to raid (Army tab)`}
+                        {sites > 0 && ` · ${sites} lair${sites === 1 ? "" : "s"} to raid`}
                     </Line>
                 )}
                 {state.planes.myrror && (

@@ -75,7 +75,7 @@ function CurrentOrders() {
                 <b>{wizardRegion.name}</b>
                 <p>
                     Your armies stand before a rival wizard's domain. Mortal soldiers cannot pass the wards that guard
-                    it. Only a wizard could break them. Lairs can still be raided.
+                    it. Only a wizard could break them. Lairs can still be raided (Exploration tab).
                 </p>
             </div>
         );
@@ -116,8 +116,8 @@ function TraitList(props: { traits: readonly TraitId[] }) {
     );
 }
 
-/** Lairs: where else the army could be. Raid orders and the auto-raid rule live here. */
-function Lairs() {
+/** Lairs (Exploration tab): where else the army could be. Raid orders and the auto-raid rule live here. */
+export function Lairs() {
     const state = game();
     const run = state.run;
     const raiding = lairTarget(state);
@@ -127,21 +127,21 @@ function Lairs() {
     if (!isExplorationUnlocked(state)) return null;
 
     return (
-        <>
-            <h3>
+        <section>
+            <h2>
                 Monster lairs <AutoToggle kind="lairs" label="Auto-raid" />
                 <span class="count"> · {cleared} cleared this run</span>
-            </h3>
+            </h2>
             <p class="hint">
                 {autoOn
                     ? `Auto-raid sends the army to the quickest lair it can clear in under ${fmtTime(AUTO_RAID_SECONDS)}, then back to the frontier. Slower lairs are left for you (or for a stronger army).`
                     : isAutomationUnlocked(state, "lairs")
                       ? "Auto-raid is off. Raid lairs by hand."
                       : "Raid lairs by hand. Auto-raid unlocks at 2 Refounds."}{" "}
-                While raiding, the frontier siege pauses (its progress is kept).
+                While raiding, the frontier siege pauses (its progress is kept); the Army tab shows the raid's progress.
             </p>
             {lairs.length === 0 ? (
-                <p class="hint">No lairs to raid. Expeditions (Exploration tab) find more.</p>
+                <p class="hint">No lairs to raid. Expeditions find more.</p>
             ) : (
                 <table>
                     <thead>
@@ -191,7 +191,7 @@ function Lairs() {
                     </tbody>
                 </table>
             )}
-        </>
+        </section>
     );
 }
 
@@ -233,7 +233,6 @@ function Campaign() {
                     ))}
                 </div>
             )}
-            <Lairs />
         </section>
     );
 }

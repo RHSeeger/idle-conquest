@@ -61,8 +61,8 @@ export function ExplorationPanel() {
                 </div>
                 <p class="hint">
                     You are no wizard, but your scholars puzzle over these books. With a <b>Wizards' Guild</b>{" "}
-                    {asc.wizardsGuild ? "✓" : "✗"} and {ASCENSION_BOOKS} books ({asc.books}) from {ASCENSION_REALMS} realms (
-                    {asc.realms}), you could learn to wield magic yourself.
+                    {asc.wizardsGuild ? "✓" : "✗"} and {ASCENSION_BOOKS} books (you have {asc.books}) from {ASCENSION_REALMS}{" "}
+                    realms (you have {asc.realms}), you could learn to wield magic yourself.
                 </p>
             </section>
         </div>

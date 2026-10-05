@@ -34,10 +34,10 @@ function Gate() {
                 {check(p.wizardsGuild)} A Wizards' Guild in your realm
             </li>
             <li>
-                {check(p.books >= ASCENSION_BOOKS)} {ASCENSION_BOOKS} spellbooks found this run ({p.books})
+                {check(p.books >= ASCENSION_BOOKS)} Spellbooks found this run: {p.books} of {ASCENSION_BOOKS}
             </li>
             <li>
-                {check(p.realms >= ASCENSION_REALMS)} from at least {ASCENSION_REALMS} realms ({p.realms})
+                {check(p.realms >= ASCENSION_REALMS)} Realms among them: {p.realms} of at least {ASCENSION_REALMS}
             </li>
         </ul>
     );

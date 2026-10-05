@@ -23,7 +23,11 @@ Items you've flagged as needing work. They're recorded here and picked up only w
 
 | # | Item | Noted |
 |---|---|---|
-| — | (none yet) | — |
+| 1 | **Planes feels thin.** Beyond the army-split slider there's nothing Myrror-specific to buy, cast or decide. Layer 3 needs its own things to do. | 2026-10-05 |
+| 2 | **Heroes through Ascension.** Add a perk (probably Insight) that keeps heroes through an Ascension, like Fame → Hall of Heroes does for Refound. | 2026-10-05 |
+| 3 | **Royal Architect (Fame) is weak.** What its first level grants gets bought almost at once anyway, so it barely matters. The idea is fine but needs tuning to be impactful. Starting buildings that matter: the Adventurers' Guild (you end up waiting on it before exploration can start) and the Library (it starts Knowledge). | 2026-10-05 |
+| 4 | **Insight needs more interesting things to spend it on.** (TODO #2, heroes kept through Ascension, could be one of them.) | 2026-10-05 |
+| 5 | **Fame upgrades after an Ascension: automate them or keep them.** Your idea, open for discussion. (a) An Insight purchase adds auto-buy for Fame upgrades (Chronicle or Cheapest), though Cheapest may choose badly. (b) A Planar Essence purchase, which can be switched off, keeps Fame upgrades through Ascension: you keep what you bought, but can't buy more until the Fame you've earned again exceeds what they would cost to rebuy. Together with keeping heroes (TODO #2, perhaps Essence rather than Insight), you'd keep everything except through a Planeshift. | 2026-10-05 |
 
 ---
 

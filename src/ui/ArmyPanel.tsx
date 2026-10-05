@@ -7,6 +7,7 @@ import { buyUnits } from "../engine/actions";
 import { availableUnits, currentPlan, currentTarget, powerByRole, siegePower, toNextDrill, unitPower } from "../engine/army";
 import { getStats } from "../engine/collect";
 import { unitAffordable, unitPrice, wallet } from "../engine/costs";
+import { ZERO } from "../engine/decimal";
 import { unitPowerStat } from "../engine/effects";
 import { fmt, fmtInt, fmtTime } from "../engine/format";
 import { GameState, Settings } from "../engine/state";
@@ -127,6 +128,10 @@ export function Lairs() {
     const cleared = run.sites.filter((s) => s.kind === "lair" && s.cleared).length;
     const autoOn = isAutomationUnlocked(state, "lairs") && state.automation.lairs;
     if (!isExplorationUnlocked(state)) return null;
+    const raidPower = raiding ? lairPower(state, raiding) : ZERO;
+    const raidFraction = raiding ? Math.min(1, run.lairSiege.div(raiding.defense!).toNumber()) : 0;
+    const raidSecondsLeft =
+        raiding && raidPower.gt(0) ? raiding.defense!.minus(run.lairSiege).div(raidPower).toNumber() : Infinity;
 
     return (
         <section>
@@ -142,6 +147,17 @@ export function Lairs() {
                       : "Raid lairs by hand. Auto-raid unlocks at 2 Refounds."}{" "}
                 While raiding, the frontier siege pauses (its progress is kept); the Army tab shows the raid's progress.
             </p>
+            {raiding ? (
+                <p>
+                    Your army is raiding the <b>{siteName(raiding)}</b>: <b>{fmtTime(raidSecondsLeft)}</b> left (
+                    {Math.floor(raidFraction * 100)}%).{" "}
+                    <button class="toggle" onClick={() => setArmyTarget(state, null)}>
+                        Recall to the frontier
+                    </button>
+                </p>
+            ) : (
+                lairs.length > 0 && <p class="hint">Your army is at the frontier, not raiding.</p>
+            )}
             {lairs.length === 0 ? (
                 <p class="hint">No lairs to raid. Expeditions find more.</p>
             ) : (
@@ -170,8 +186,8 @@ export function Lairs() {
                                     </td>
                                     <td class="num">{fmt(site.defense!)}</td>
                                     <td class="num">
-                                        {fmtTime(seconds)}
-                                        {autoOn && (
+                                        {isTarget ? `${fmtTime(raidSecondsLeft)} left` : fmtTime(seconds)}
+                                        {autoOn && !isTarget && (
                                             <span class={seconds <= AUTO_RAID_SECONDS ? "good" : "hint"}>
                                                 {seconds <= AUTO_RAID_SECONDS ? " · auto" : " · too slow for auto"}
                                             </span>
@@ -182,7 +198,7 @@ export function Lairs() {
                                     </td>
                                     <td>
                                         {isTarget ? (
-                                            <span class="good">raiding</span>
+                                            <span class="good">raiding · {Math.floor(raidFraction * 100)}%</span>
                                         ) : (
                                             <button onClick={() => setArmyTarget(state, site.index)}>Raid</button>
                                         )}

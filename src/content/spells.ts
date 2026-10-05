@@ -96,7 +96,7 @@ const list: SpellDef[] = [
         kind: "utility",
         requiresTower: true,
         discountedBy: { spell: "planeShift", mult: 0.5 },
-        text: "Open a captured Tower of Wizardry onto Myrror. (Needs a Tower of Wizardry cleared this run.)",
+        text: "Open a captured Tower of Wizardry onto Myrror.",
     },
 
     // --- Life ---

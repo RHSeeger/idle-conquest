@@ -165,6 +165,7 @@ export type MilestoneId =
     | "autoRecruit"
     | "renown"
     | "autoSettle"
+    | "quartermasters"
     | "secondCapital";
 
 export interface MilestoneDef {
@@ -204,6 +205,12 @@ export const MILESTONES: MilestoneDef[] = [
         refounds: 3,
         name: "Pioneers",
         text: "Unlock auto-settle, and start every run with 2 extra settled towns.",
+    },
+    {
+        id: "quartermasters",
+        refounds: 3,
+        name: "Quartermasters",
+        text: "Unlock an army budget: auto-recruit spends only a share of the production and gold you gain (Army tab).",
     },
     {
         id: "secondCapital",

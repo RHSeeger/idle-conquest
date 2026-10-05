@@ -10,7 +10,8 @@ import { unitAffordable, unitPrice, wallet } from "../engine/costs";
 import { unitPowerStat } from "../engine/effects";
 import { fmt, fmtInt, fmtTime } from "../engine/format";
 import { GameState, Settings } from "../engine/state";
-import { AUTO_RAID_SECONDS, isAutomationUnlocked } from "../engine/automation";
+import { AUTO_RAID_SECONDS, isAutomationUnlocked, isRecruitBudgeted } from "../engine/automation";
+import { hasMilestone } from "../engine/prestige";
 import { isExplorationUnlocked, lairPower, lairTarget, setArmyTarget, siteName } from "../engine/exploration";
 import { isWizard } from "../engine/magic";
 import { AutoMode, AutoToggle } from "./AutoToggle";
@@ -19,6 +20,7 @@ import { BreakdownView, Price, ProgressBar, Tip } from "./components";
 import { game } from "./game";
 
 const BUY_AMOUNTS: Settings["buyAmount"][] = [1, 10, 100, "next", "max"];
+const RECRUIT_SHARES = [0.1, 0.25, 0.5, 0.75, 1];
 
 /** One line saying what the army is doing right now (also used in the resource bar) */
 export function armyActivity(state: GameState): string {
@@ -268,7 +270,31 @@ function Troops() {
                         { value: "chronicle", label: "Chronicle", tip: "Rebuild your last run's army mix" },
                     ]}
                 />
+                {hasMilestone(state, "quartermasters") && (
+                    <span class="auto-budget">
+                        Budget{" "}
+                        <select
+                            title="Share of the production and gold you gain that auto-recruit may spend"
+                            value={String(state.automation.recruitShare)}
+                            onChange={(e) => (state.automation.recruitShare = Number((e.target as HTMLSelectElement).value))}
+                        >
+                            {RECRUIT_SHARES.map((s) => (
+                                <option key={s} value={String(s)}>
+                                    {s >= 1 ? "everything" : `${s * 100}% of income`}
+                                </option>
+                            ))}
+                        </select>
+                    </span>
+                )}
             </h2>
+            {isRecruitBudgeted(state) && (
+                <p class="hint">
+                    Auto-recruit spends {state.automation.recruitShare * 100}% of the production and gold you gain; the rest is
+                    yours. Budget now: <b>{fmt(state.run.recruitBudget.production)}</b> production,{" "}
+                    <b>{fmt(state.run.recruitBudget.gold)}</b> gold
+                    {!state.automation.units && " (only builds up while auto-recruit is on)"}.
+                </p>
+            )}
             <div class="row">
                 <span class="hint">Buy:</span>
                 {BUY_AMOUNTS.map((a) => (

@@ -1,8 +1,43 @@
 import { describe, expect, it } from "vitest";
 import { canBuyBuilding, canRushBuilding, rushPrice } from "../src/engine/actions";
-import { autoBuild, buildQueue } from "../src/engine/automation";
+import { autoBuild, buildQueue, runAutomation } from "../src/engine/automation";
 import { D } from "../src/engine/decimal";
 import { newGame } from "../src/engine/state";
+
+describe("Army budget", () => {
+    /** A run with auto-recruit on, troops available and nothing else automated */
+    function recruiting(share: number) {
+        const state = newGame(0);
+        state.prestige.refounds = 3; // Quartermasters
+        state.automation = { ...state.automation, buildings: false, lore: false, settlers: false, lairs: false, units: true };
+        state.automation.recruitShare = share;
+        state.automation.unitMode = "efficient";
+        state.run.buildings.push("barracks");
+        return state;
+    }
+
+    it("lets auto-recruit spend only its share of what is gained", () => {
+        const state = recruiting(0.25);
+        state.run.production = D(0);
+        state.run.gold = D(0);
+        runAutomation(state); // baseline
+        state.run.production = D(10000);
+        state.run.gold = D(10000);
+        runAutomation(state);
+        // at most a quarter of the gain went on troops
+        expect(state.run.production.toNumber()).toBeGreaterThanOrEqual(7500);
+        expect(state.run.gold.toNumber()).toBeGreaterThanOrEqual(7500);
+        expect(Object.values(state.run.units).some((n) => n > 0)).toBe(true);
+    });
+
+    it("spends freely at 100%", () => {
+        const state = recruiting(1);
+        state.run.production = D(10000);
+        state.run.gold = D(10000);
+        runAutomation(state);
+        expect(state.run.production.plus(state.run.gold).toNumber()).toBeLessThan(15000);
+    });
+});
 
 describe("Auto-build order", () => {
     it("follows the Chronicle first, then the default order", () => {

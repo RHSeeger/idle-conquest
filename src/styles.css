@@ -777,6 +777,19 @@ button.toggle.auto {
     font-weight: normal;
 }
 
+/* army budget: a small labelled select, sized like the auto toggle */
+.auto-budget {
+    margin-left: 8px;
+    font-size: 12px;
+    font-weight: normal;
+    color: var(--muted);
+}
+
+.auto-budget select {
+    font-size: 12px;
+    padding: 1px 4px;
+}
+
 /* automation mode: a segmented switch the same size as the auto toggle */
 .auto-mode {
     display: inline-flex;

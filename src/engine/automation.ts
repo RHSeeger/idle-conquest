@@ -323,6 +323,28 @@ function manaReserve(state: GameState): Decimal {
     return pending ? pending.min(state.run.mana) : ZERO;
 }
 
+const BUDGET_CURRENCIES = ["production", "gold"] as const;
+
+/** Whether auto-recruit is limited to its army budget (Quartermasters milestone, share below 100%) */
+export function isRecruitBudgeted(state: GameState): boolean {
+    return hasMilestone(state, "quartermasters") && state.automation.recruitShare < 1;
+}
+
+/**
+ * Adds `recruitShare` of the production and gold gained since the last pass to
+ * the army budget. The budget never exceeds what's on hand.
+ */
+function accrueRecruitBudget(state: GameState): void {
+    const run = state.run;
+    for (const c of BUDGET_CURRENCIES) {
+        const gained = wallet(state, c).minus(run.recruitSeen[c]);
+        if (gained.gt(0)) {
+            run.recruitBudget[c] = run.recruitBudget[c].plus(gained.times(state.automation.recruitShare));
+        }
+        run.recruitBudget[c] = run.recruitBudget[c].min(wallet(state, c));
+    }
+}
+
 /** Runs every automation the player has unlocked and enabled */
 export function runAutomation(state: GameState, force = false): void {
     // prestige automation first (never forced: the bot decides those itself)
@@ -330,6 +352,16 @@ export function runAutomation(state: GameState, force = false): void {
         if (isActive(state, "ascend") && autoAscend(state)) return;
         if (isActive(state, "refound") && autoRefound(state)) return;
     }
+    // measure gains before anything spends; remember what's left afterwards
+    const budgeted = !force && isActive(state, "units") && isRecruitBudgeted(state);
+    if (budgeted) accrueRecruitBudget(state);
+    runAutomationSteps(state, force, budgeted);
+    for (const c of BUDGET_CURRENCIES) {
+        state.run.recruitSeen[c] = wallet(state, c);
+    }
+}
+
+function runAutomationSteps(state: GameState, force: boolean, budgeted: boolean): void {
     const on = (kind: AutomationKind) => force || isActive(state, kind);
     const savingFor = on("buildings") ? autoBuild(state) : null;
     if (isWizard(state) && on("research")) autoResearch(state);
@@ -344,7 +376,20 @@ export function runAutomation(state: GameState, force = false): void {
             gold: savingFor ? state.run.gold.div(2) : ZERO,
             mana: on("cast") ? manaReserve(state) : ZERO,
         };
+        const before = { production: state.run.production, gold: state.run.gold };
+        if (budgeted) {
+            // with an army budget, everything beyond the budget is off limits too
+            for (const c of BUDGET_CURRENCIES) {
+                reserve[c] = reserve[c].max(wallet(state, c).minus(state.run.recruitBudget[c]));
+            }
+        }
         autoRecruit(state, force ? "efficient" : state.automation.unitMode, reserve);
+        if (budgeted) {
+            for (const c of BUDGET_CURRENCIES) {
+                const spent = before[c].minus(wallet(state, c)).max(0);
+                state.run.recruitBudget[c] = state.run.recruitBudget[c].minus(spent).max(0);
+            }
+        }
     }
 }
 

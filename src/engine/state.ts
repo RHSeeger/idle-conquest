@@ -95,6 +95,10 @@ export interface RunState {
     peakPower: Decimal;
     /** Run time of the last Arcanus conquest (auto-Refound's "stalled" check) */
     lastConquestAt: number;
+    /** Army budget: what auto-recruit may still spend (a share of production and gold gained) */
+    recruitBudget: { production: Decimal; gold: Decimal };
+    /** Production and gold on hand after the last automation pass (to measure what was gained since) */
+    recruitSeen: { production: Decimal; gold: Decimal };
 }
 
 export interface PrestigeState {
@@ -223,6 +227,8 @@ export interface Automation {
     unitMode: "chronicle" | "efficient";
     /** How auto-build orders buildings: the last run's build order, or cheapest first */
     buildMode: "chronicle" | "cheapest";
+    /** Army budget (Quartermasters): share of production and gold gained that auto-recruit may spend (1 = no limit) */
+    recruitShare: number;
     /** Auto-Refound once Fame on Refound reaches this multiple of all Fame earned so far */
     refoundAt: number;
     /** Auto-Ascend once Insight on Ascending reaches this multiple of all Insight earned so far */
@@ -294,6 +300,8 @@ export function newRun(startingRace: RaceId): RunState {
         racesConquered: [],
         peakPower: D(0),
         lastConquestAt: 0,
+        recruitBudget: { production: D(0), gold: D(0) },
+        recruitSeen: { production: D(0), gold: D(0) },
     };
 }
 
@@ -354,6 +362,7 @@ export function newGame(now = Date.now()): GameState {
             ascend: true,
             unitMode: "chronicle",
             buildMode: "chronicle",
+            recruitShare: 1,
             refoundAt: 1,
             ascendAt: 1,
             loreSpendCap: 0.1,

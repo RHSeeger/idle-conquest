@@ -225,6 +225,11 @@ export interface Automation {
     refoundAt: number;
     /** Auto-Ascend once Insight on Ascending reaches this multiple of all Insight earned so far */
     ascendAt: number;
+    /**
+     * While a spell is waiting to be researched, auto-study spends at most this
+     * share of current Knowledge on any one study (1 = no limit)
+     */
+    loreSpendCap: number;
 }
 
 export interface GameState {
@@ -348,6 +353,7 @@ export function newGame(now = Date.now()): GameState {
             unitMode: "chronicle",
             refoundAt: 1,
             ascendAt: 1,
+            loreSpendCap: 0.1,
         },
         settings: { buyAmount: 1, autosaveSeconds: 15, devSpeed: 1, showDevTools: false },
         meta: { created: now, lastTick: now, playtime: 0 },

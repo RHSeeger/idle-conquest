@@ -10,7 +10,7 @@ Newest information is at the top of each section. The design itself is in `DESIG
 | # | Question | Current placeholder | Blocking? |
 |---|---|---|---|
 | 1 | **Feel check, second round.** Run 1 has been re-paced, and there are new Overview and Campaign views (Session 2). Does the first 30–60 minutes now feel calmer and more under control? Is it now *too* slow anywhere? Start a **new game** for this (Options → reset), because your old save keeps its progress. | Bot pacing: 7 cities and 6 buildings by 10 min | No, but it's the most valuable input |
-| 2 | **Layer 3 feel and length.** It's built as a first pass of your chosen "two planes at once". In the sim, the first Planeshift comes at ~10h, and Myrror is about half conquered after 6 Planeshifts (~16h). Is "Arcanus loops automatically while Myrror slowly advances" fun, and is the army-split slider an interesting enough decision? | DESIGN §7 | No |
+| 2 | **Layer 3 feel and length.** It's built as a first pass of your chosen "two planes at once". In the sim, the first Planeshift comes at ~7h (it was ~10h before the auto-study change), and Myrror is about half conquered after 6 Planeshifts (~16h). Is "Arcanus loops automatically while Myrror slowly advances" fun, and is the army-split slider an interesting enough decision? | DESIGN §7 | No |
 | 3 | **Layer 4 (Spell of Mastery and Challenge Wizards).** DESIGN §8 is still tentative. Should the next step be building it, or polishing Layers 0–3 first? | Not started | Yes, for Layer 4 |
 | — | ~~Layer 3 direction~~ | Answered: two planes at once | — |
 | — | ~~Active play amount~~ | Answered: clickable instants with cooldowns, auto-cast from the Grimoire milestone, is fine | — |
@@ -266,7 +266,7 @@ The city table is now grouped by race; "Show every city" brings back the full li
 | Renown uses the best frontier *of this Ascension* | The best-ever version stranded fresh wizards deep in the frontier (your stall) | Yes (`renownLimit`) |
 | Surrendered cities pay 50% tribute Fame, ramping over 15 min of run time | Your "feels weak" note. The ramp keeps instant refounds worthless | Yes (`TRIBUTE_SHARE`, `TRIBUTE_SECONDS`) |
 | Refound allowed at 0 Fame | Escape hatch; changing race is a valid reason | Yes |
-| Auto-study keeps Knowledge for the cheapest unresearched spell | Spells matter more than one more Lore level | Yes (`spellReserve`) |
+| ~~Auto-study keeps Knowledge for the cheapest unresearched spell~~ Replaced: while a spell is left to research, auto-study pays at most a set share of current Knowledge for one study (default 10%; choices 1%–100% in the Lore tab) | Holding back a whole spell's cost starved Lore early in a run (play-test: 15K held back at 35/s). The cap keeps buying cheap studies while most Knowledge piles up. In the sim, the first wizard run went from 4h49m to 1h55m, and the first Planeshift came at ~6.9h instead of ~9.7h | Yes (`loreSpendLimit`, `automation.loreSpendCap`) |
 | Run-1 pacing numbers (frontier opening, 5× slower city growth, building costs) | "Too fast" feedback plus the sim | Yes (tuning constants) |
 | Far Scouting level 3 = every Arcanus race in one run | "Mastering all races should have a purpose" | Yes |
 | Lairs moved from the Exploration tab to the Army tab's Campaign | One place for "what is the army doing" | Yes |

@@ -161,29 +161,28 @@ export function autoBuild(state: GameState): string | null {
     return null;
 }
 
+/** Whether the wizard has a spell left to research (auto-study then holds back Knowledge) */
+export function isSavingForSpell(state: GameState): boolean {
+    return isWizard(state) && availableSpells(state).some((s) => !knowsSpell(state, s.id));
+}
+
 /**
- * Knowledge auto-study leaves alone: enough for the cheapest spell the wizard
- * can research but doesn't know yet. Spells come first; Lore gets the rest.
+ * The most auto-study will pay for one study right now: `loreSpendCap` of the
+ * Knowledge on hand while a spell is left to research, so most Knowledge piles
+ * up for spells while cheap studies still get bought. No limit otherwise.
  */
-export function spellReserve(state: GameState): Decimal {
-    if (!isWizard(state)) return ZERO;
-    const stats = getStats(state);
-    const costs = availableSpells(state)
-        .filter((s) => !knowsSpell(state, s.id))
-        .map((s) => researchCost(state, stats, s))
-        .sort((a, b) => a.cmp(b));
-    return costs[0] ?? ZERO;
+export function loreSpendLimit(state: GameState): Decimal {
+    return isSavingForSpell(state) ? state.run.knowledge.times(state.automation.loreSpendCap) : state.run.knowledge;
 }
 
 export function autoLore(state: GameState): void {
     if (!isLoreUnlocked(state)) return;
-    const reserve = spellReserve(state);
     for (let guard = 0; guard < 100; guard++) {
         const stats = getStats(state);
         const cheapest = LORE_ORDER.map((id) => ({ id, price: lorePrice(state, stats, id) })).sort((a, b) =>
             a.price.cmp(b.price),
         )[0];
-        if (state.run.knowledge.minus(cheapest.price).lt(reserve) || !buyLore(state, cheapest.id)) return;
+        if (cheapest.price.gt(loreSpendLimit(state)) || !buyLore(state, cheapest.id)) return;
     }
 }
 

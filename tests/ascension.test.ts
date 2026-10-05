@@ -20,6 +20,9 @@ import {
 import { hasMilestone, refound } from "../src/engine/prestige";
 import { GameState, newGame } from "../src/engine/state";
 import { SPELLS } from "../src/content/spells";
+import { LORE_ORDER } from "../src/content/lore";
+import { autoLore } from "../src/engine/automation";
+import { lorePrice } from "../src/engine/costs";
 
 /** A state that meets the Ascension gate */
 function readyToAscend(): GameState {
@@ -89,6 +92,23 @@ describe("Magic", () => {
         expect(manaRate(newGame(0), getStats(newGame(0))).eq(0)).toBe(true);
         const state = wizard();
         expect(manaRate(state, getStats(state)).toNumber()).toBe(6); // 1 + 5 books
+    });
+
+    it("auto-study holds back Knowledge while a spell is left to research", () => {
+        const state = wizard();
+        state.run.buildings.push("library");
+        const firstLore = LORE_ORDER.map((id) => lorePrice(state, getStats(state), id)).sort((a, b) => a.cmp(b))[0];
+        // enough for every study, but over 10× the cheapest: only cheap studies get bought
+        state.run.knowledge = firstLore.times(15);
+        state.automation.loreSpendCap = 0.1;
+        autoLore(state);
+        const levels = Object.values(state.run.lore).reduce((a, b) => a + b, 0);
+        expect(levels).toBeGreaterThan(0);
+        expect(state.run.knowledge.gt(firstLore.times(10))).toBe(true);
+        // with no limit, it spends down to less than one study
+        state.automation.loreSpendCap = 1;
+        autoLore(state);
+        expect(Object.values(state.run.lore).reduce((a, b) => a + b, 0)).toBeGreaterThan(levels);
     });
 
     it("gates spells by books in the realm", () => {

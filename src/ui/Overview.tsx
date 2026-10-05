@@ -8,10 +8,10 @@ import { BUILDINGS } from "../content/buildings";
 import { LORE, LORE_ORDER } from "../content/lore";
 import { isBuildingVisible, isLoreUnlocked, isSettlersUnlocked } from "../engine/actions";
 import { ascensionProgress, ASCENSION_BOOKS, ASCENSION_REALMS, canAscend } from "../engine/ascension";
-import { AutomationKind, buildQueue, isAutomationUnlocked, spellReserve } from "../engine/automation";
+import { AutomationKind, buildQueue, isAutomationUnlocked, isSavingForSpell } from "../engine/automation";
 import { getStats } from "../engine/collect";
 import { buildingPrice, lorePrice, PriceMap, settlersPrice } from "../engine/costs";
-import { Decimal } from "../engine/decimal";
+import { Decimal, ZERO } from "../engine/decimal";
 import { realmEconomy, RealmEconomy } from "../engine/economy";
 import { exploreSpeed, isExplorationUnlocked, nextSiteCost } from "../engine/exploration";
 import { fmtInt, fmtTime } from "../engine/format";
@@ -65,7 +65,9 @@ export function Overview() {
     const cheapestLore = isLoreUnlocked(state)
         ? LORE_ORDER.map((id) => ({ id, price: lorePrice(state, stats, id) })).sort((a, b) => a.price.cmp(b.price))[0]
         : null;
-    const reserve = spellReserve(state);
+    // auto-study only pays loreSpendCap of the Knowledge on hand while saving for a spell
+    const spendCap = isAutomationUnlocked(state, "lore") && state.automation.lore && isSavingForSpell(state) ? state.automation.loreSpendCap : 1;
+    const loreNeed = cheapestLore ? cheapestLore.price.div(spendCap) : ZERO;
     const sites = run.sites.filter((s) => s.kind === "lair" && !s.cleared).length;
     const asc = ascensionProgress(state);
     // the spell auto-research would pick next: the cheapest unknown one
@@ -97,13 +99,13 @@ export function Overview() {
                     <Line icon="✎" label="Lore" auto="lore">
                         next: <b>{LORE[cheapestLore.id].name}</b>,{" "}
                         {when(
-                            run.knowledge.gte(cheapestLore.price.plus(reserve))
+                            run.knowledge.gte(loreNeed)
                                 ? 0
                                 : econ.knowledge.lte(0)
                                   ? Infinity
-                                  : cheapestLore.price.plus(reserve).minus(run.knowledge).div(econ.knowledge).toNumber(),
+                                  : loreNeed.minus(run.knowledge).div(econ.knowledge).toNumber(),
                         )}
-                        {reserve.gt(0) && <span class="hint"> (after saving for a spell)</span>}
+                        {spendCap < 1 && <span class="hint"> (auto-study waits until it's {Math.round(spendCap * 100)}% of your Knowledge)</span>}
                     </Line>
                 )}
                 {isSettlersUnlocked(state) && (

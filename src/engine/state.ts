@@ -157,6 +157,11 @@ export interface AscensionState {
     planFamiliar: FamiliarChoice;
     /** Spells researched during this Ascension */
     spellsKnown: string[];
+    /**
+     * Spell Memory (Insight): spells remembered across Ascensions. They become
+     * known again whenever the profile has the books for them. Reset on Planeshift.
+     */
+    spellMemory: string[];
     /** Fame upgrades bought during the last Ascension, in order (auto-buy's Chronicle mode) */
     fameChronicle: string[];
     /** Fame earned from Refounds during this Ascension (feeds Insight) */
@@ -357,6 +362,7 @@ export function newGame(now = Date.now()): GameState {
             familiar: null,
             planFamiliar: "match",
             spellsKnown: [],
+            spellMemory: [],
             fameChronicle: [],
             fameEarned: D(0),
             lastFameEarned: D(0),

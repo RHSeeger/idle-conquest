@@ -107,6 +107,19 @@ const insightList: InsightUpgradeDef[] = [
                 : `A familiar of one realm, chosen with your profile (level ${l}: e.g. Nature +${l} food and +${15 * l}% production)`,
     },
     {
+        id: "spellMemory",
+        name: "Spell Memory",
+        maxLevel: 2,
+        cost: (l) => [50, 400][l] ?? Infinity,
+        effects: [],
+        text: (l) =>
+            [
+                "Researched spells are forgotten when you Ascend",
+                "When you Ascend, keep the spells of realms still in your profile (if it has the books for them)",
+                "Remember every spell you learn: it returns whenever your profile has the books for it",
+            ][l],
+    },
+    {
         id: "royalStewards",
         name: "Royal Stewards",
         maxLevel: 1,

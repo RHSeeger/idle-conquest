@@ -11,6 +11,7 @@ import {
     canCastInstant,
     canResearch,
     castEnchantment,
+    dormantSpells,
     castInstant,
     enchantmentCost,
     fortressMana,
@@ -22,6 +23,7 @@ import {
     research,
     researchCost,
     spellAvailable,
+    spellMemoryLevel,
     towerCleared,
 } from "../engine/magic";
 import { GameState } from "../engine/state";
@@ -113,6 +115,11 @@ function RealmSpells(props: { realm: SpellRealm }) {
                                         <SpellAction state={state} spell={s} />
                                     ) : (
                                         <span class="hint">
+                                            {state.ascension.spellMemory.includes(s.id) && !knowsSpell(state, s.id) && (
+                                                <span class="insight" title="Spell Memory: known again once your profile has the books">
+                                                    remembered ·{" "}
+                                                </span>
+                                            )}
                                             {s.requiresTower && !towerCleared(state)
                                                 ? "needs a Tower of Wizardry cleared this run"
                                                 : `needs ${RARITY_BOOKS[s.rarity]} books`}
@@ -125,6 +132,24 @@ function RealmSpells(props: { realm: SpellRealm }) {
                 </tbody>
             </table>
         </section>
+    );
+}
+
+/** Spell Memory: remembered spells the profile lacks the books for, grouped by realm */
+function DormantSpells() {
+    const state = game();
+    const dormant = dormantSpells(state).map((id) => SPELLS[id]).filter((s) => s);
+    if (dormant.length === 0) return null;
+    const byRealm = REALMS.map((r) => ({ realm: r, spells: dormant.filter((s) => s.realm === r) })).filter((g) => g.spells.length > 0);
+    return (
+        <p class="hint">
+            <span class="insight">Spell Memory:</span> {dormant.length} remembered spell{dormant.length === 1 ? "" : "s"} wait for
+            the books to use them:{" "}
+            {byRealm
+                .map((g) => `${REALM_DEFS[g.realm].name} (${g.spells.map((s) => `${s.name}, ${RARITY_BOOKS[s.rarity]} books`).join("; ")})`)
+                .join(" · ")}
+            .
+        </p>
     );
 }
 
@@ -149,10 +174,12 @@ export function MagicPanel() {
                 <p class="hint">
                     Your Fortress channels {fortressMana(state)} mana/s (1 + one per spellbook). Shrines, Temples and
                     Cathedrals add mana in every city; the Wizards' Guild and melded magic nodes multiply it. Spells are
-                    researched with Knowledge and stay known until you Ascend again. Enchantments last until the end of
-                    the run.
+                    researched with Knowledge and stay known until you Ascend again
+                    {spellMemoryLevel(state) > 0 && " (Spell Memory brings them back after an Ascension, if your profile has the books)"}.
+                    Enchantments last until the end of the run.
                 </p>
                 <CurrentProfile />
+                <DormantSpells />
                 {(nodes.length > 0 || unmelded > 0) && (
                     <p>
                         Magic nodes: {nodes.map((n) => `${LAIRS[n].name} (${NODE_BONUS[n]?.text})`).join(", ") || "none melded"}

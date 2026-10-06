@@ -182,9 +182,60 @@ export function research(state: GameState, id: string): boolean {
     if (!canResearch(state, id)) return false;
     state.run.knowledge = state.run.knowledge.minus(researchCost(state, getStats(state), SPELLS[id]));
     state.ascension.spellsKnown.push(id);
+    rememberKnownSpells(state);
     bump(state);
     log(state, "milestone", `Researched ${SPELLS[id].name}.`);
     return true;
+}
+
+// --- Spell Memory (Insight) ---
+// Level 1 keeps the spells of realms still in the new profile when you Ascend;
+// level 2 remembers every spell for good (until a Planeshift). Either way the
+// books still gate them: a remembered spell is known only while the profile
+// has enough books in its realm for its rarity, and dormant otherwise.
+
+export function spellMemoryLevel(state: GameState): number {
+    return state.ascension.upgrades["spellMemory"] ?? 0;
+}
+
+/** Whether the current profile has the books for a spell (Arcane needs none; ignores the Tower) */
+export function hasBooksFor(state: GameState, spell: SpellDef): boolean {
+    return spell.realm === "arcane" || booksIn(state, spell.realm) >= RARITY_BOOKS[spell.rarity];
+}
+
+/** Adds every known spell to the memory (when Spell Memory is owned) */
+export function rememberKnownSpells(state: GameState): void {
+    const a = state.ascension;
+    if (spellMemoryLevel(state) === 0) return;
+    for (const id of a.spellsKnown) if (!a.spellMemory.includes(id)) a.spellMemory.push(id);
+}
+
+/**
+ * On Ascending, after the new profile is set and the known spells cleared:
+ * level 1 forgets realms the profile dropped, then every remembered spell the
+ * books allow becomes known again. Returns the spells restored.
+ */
+export function restoreRememberedSpells(state: GameState): string[] {
+    const a = state.ascension;
+    const level = spellMemoryLevel(state);
+    if (level === 0) {
+        a.spellMemory = [];
+        return [];
+    }
+    if (level === 1) {
+        a.spellMemory = a.spellMemory.filter((id) => {
+            const realm = SPELLS[id]?.realm;
+            return realm === "arcane" || (realm !== undefined && booksIn(state, realm) > 0);
+        });
+    }
+    const restored = a.spellMemory.filter((id) => SPELLS[id] && hasBooksFor(state, SPELLS[id]) && !a.spellsKnown.includes(id));
+    a.spellsKnown.push(...restored);
+    return restored;
+}
+
+/** Remembered spells the current profile lacks the books for */
+export function dormantSpells(state: GameState): string[] {
+    return state.ascension.spellMemory.filter((id) => !state.ascension.spellsKnown.includes(id));
 }
 
 // --- Mana ---

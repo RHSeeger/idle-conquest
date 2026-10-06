@@ -1,7 +1,7 @@
 import { useState } from "preact/hooks";
 import { REALM_DEFS, REALMS, Realm } from "../content/magic";
 import { RACES, RaceId } from "../content/races";
-import { RARITY_BOOKS } from "../content/spells";
+import { RARITY_BOOKS, SPELLS } from "../content/spells";
 import { ASCENSION_MILESTONES, INSIGHT_UPGRADES, INSIGHT_UPGRADE_ORDER, RIVAL_WIZARD_DEFS } from "../content/wizards";
 import {
     ascend,
@@ -29,6 +29,7 @@ import {
     picksUsed,
     resolveFamiliar,
     retortPicks,
+    spellMemoryLevel,
     totalPicks,
     validateBooks,
 } from "../engine/magic";
@@ -128,6 +129,14 @@ export function profileChanges(state: GameState): string[] {
     }
     for (const id of a.planRetorts) if (!a.retorts.includes(id)) changes.push(`+ ${RETORTS[id]?.name ?? id}`);
     for (const id of a.retorts) if (!a.planRetorts.includes(id)) changes.push(`− ${RETORTS[id]?.name ?? id}`);
+    // Spell Memory level 1 forgets the spells of realms the next profile drops
+    if (spellMemoryLevel(state) === 1) {
+        for (const r of REALMS) {
+            if ((a.planBooks[r] ?? 0) > 0) continue;
+            const lost = a.spellMemory.filter((id) => SPELLS[id]?.realm === r).length;
+            if (lost > 0) changes.push(`forgets ${lost} remembered ${REALM_DEFS[r].name} spell${lost === 1 ? "" : "s"}`);
+        }
+    }
     if (familiarLevel(state) > 0) {
         const now = a.familiar;
         const next = resolveFamiliar(a.planFamiliar, a.planBooks);

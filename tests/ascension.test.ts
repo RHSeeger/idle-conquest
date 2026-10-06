@@ -11,7 +11,10 @@ import {
     castInstant,
     checkRetortUnlocks,
     currentFamiliar,
+    dormantSpells,
     effectiveTraits,
+    rememberKnownSpells,
+    restoreRememberedSpells,
     freeRetorts,
     resolveFamiliar,
     retortPicks,
@@ -25,7 +28,8 @@ import {
 } from "../src/engine/magic";
 import { fameUpgradesValue, gainFame, hasMilestone, refound } from "../src/engine/prestige";
 import { GameState, newGame } from "../src/engine/state";
-import { SPELLS } from "../src/content/spells";
+import { RARITY_BOOKS, SPELLS } from "../src/content/spells";
+import { Realm } from "../src/content/magic";
 import { LORE_ORDER } from "../src/content/lore";
 import { autoLore } from "../src/engine/automation";
 import { lorePrice } from "../src/engine/costs";
@@ -221,6 +225,59 @@ describe("Magic", () => {
             conquer(state, frontierCity(state.run.startingRace, plan, state.run.frontier.index, true)!, true);
         }
         refound(state, "highMen");
+        expect(knowsSpell(state, "heroism")).toBe(true);
+    });
+});
+
+describe("Spell Memory", () => {
+    /** A wizard who knows a common Life spell, a rare Life spell and an Arcane spell */
+    function learned(level: number): GameState {
+        const state = newGame(0);
+        state.ascension.ascensions = 1;
+        state.ascension.upgrades.spellMemory = level;
+        state.ascension.books = { life: RARITY_BOOKS.rare };
+        state.ascension.spellsKnown = ["heroism", "prosperity", "detectMagic"];
+        rememberKnownSpells(state);
+        return state;
+    }
+    /** What Ascending does to the known spells: new books, forget, restore */
+    function ascendTo(state: GameState, books: Partial<Record<Realm, number>>) {
+        state.ascension.books = books;
+        state.ascension.spellsKnown = [];
+        restoreRememberedSpells(state);
+        return [...state.ascension.spellsKnown].sort();
+    }
+
+    it("without it, nothing is kept", () => {
+        const state = learned(0);
+        expect(ascendTo(state, { life: RARITY_BOOKS.rare })).toEqual([]);
+    });
+
+    it("level 1 keeps realms still in the profile (and Arcane), and forgets dropped realms", () => {
+        const state = learned(1);
+        expect(ascendTo(state, { life: RARITY_BOOKS.rare })).toEqual(["detectMagic", "heroism", "prosperity"]);
+        expect(ascendTo(state, { chaos: 3 })).toEqual(["detectMagic"]);
+        expect(ascendTo(state, { life: RARITY_BOOKS.rare })).toEqual(["detectMagic"]); // forgotten for good
+    });
+
+    it("books still gate remembered spells; they wait, dormant, until the books are there", () => {
+        const state = learned(1);
+        expect(ascendTo(state, { life: RARITY_BOOKS.common })).toEqual(["detectMagic", "heroism"]);
+        expect(dormantSpells(state)).toEqual(["prosperity"]);
+        expect(ascendTo(state, { life: RARITY_BOOKS.rare })).toEqual(["detectMagic", "heroism", "prosperity"]);
+    });
+
+    it("level 2 remembers realms through Ascensions without them", () => {
+        const state = learned(2);
+        expect(ascendTo(state, { chaos: 3 })).toEqual(["detectMagic"]);
+        expect(ascendTo(state, { life: RARITY_BOOKS.rare })).toEqual(["detectMagic", "heroism", "prosperity"]);
+    });
+
+    it("works through a real Ascension", () => {
+        const state = readyToAscend();
+        state.ascension.upgrades.spellMemory = 1;
+        state.ascension.spellsKnown = ["heroism"];
+        expect(ascend(state, { life: 3, chaos: 2 }, "highMen")).toBe(true);
         expect(knowsSpell(state, "heroism")).toBe(true);
     });
 });

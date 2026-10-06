@@ -20,7 +20,16 @@ import { D, Decimal } from "./decimal";
 import { fmtInt } from "./format";
 import { spellbookCount, spellbookRealmCount } from "./exploration";
 import { Hero, heroCarryLog, mostExperienced } from "./heroes";
-import { knowsSpell, resolveFamiliar, towerCleared, validateBooks } from "./magic";
+import {
+    dormantSpells,
+    knowsSpell,
+    rememberKnownSpells,
+    resolveFamiliar,
+    restoreRememberedSpells,
+    spellMemoryLevel,
+    towerCleared,
+    validateBooks,
+} from "./magic";
 import {
     applyRunStart,
     closeFameChronicle,
@@ -132,7 +141,9 @@ export function ascend(
     // the next Ascension's plan starts as this one
     a.planBooks = { ...a.books };
     a.planRetorts = [...a.retorts];
+    rememberKnownSpells(state);
     a.spellsKnown = [];
+    const restored = restoreRememberedSpells(state);
     a.wizardsDefeatedThisAscension = [];
 
     const keepAnnals = hasAscensionMilestone(state, "keepAnnals");
@@ -159,6 +170,15 @@ export function ascend(
         "prestige",
         `You Ascend as a Wizard (+${fmtInt(insight)} Insight). Your new realm is founded by ${RACES[startRace].plural}.`,
     );
+    if (spellMemoryLevel(state) > 0) {
+        const dormant = dormantSpells(state).length;
+        log(
+            state,
+            "milestone",
+            `Spell Memory: you remember ${restored.length} spell${restored.length === 1 ? "" : "s"}` +
+                (dormant > 0 ? ` (${dormant} more wait until your profile has the books for them).` : "."),
+        );
+    }
     const kept = heroesKeptOnAscend(state);
     heroCarryLog(state, kept, "Eternal Companions");
     state.run = newRun(startRace);
@@ -218,6 +238,8 @@ export function buyInsightUpgrade(state: GameState, id: string): boolean {
     // the first Familiar arrives at once, as planned for this profile
     const a = state.ascension;
     if (id === "familiar" && a.familiar === null) a.familiar = resolveFamiliar(a.planFamiliar, a.books);
+    // Spell Memory starts with what you know now
+    if (id === "spellMemory") rememberKnownSpells(state);
     bump(state);
     return true;
 }

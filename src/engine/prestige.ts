@@ -7,6 +7,7 @@
  */
 import { ARCHITECT_BUILDINGS, FAME_UPGRADES, MILESTONES, MilestoneId, warChestAmount } from "../content/fame";
 import { cityName } from "../content/frontier";
+import { HEROES } from "../content/heroes";
 import { RACES, RaceId } from "../content/races";
 import { getStats, registerCollector } from "./collect";
 import { D, Decimal } from "./decimal";
@@ -46,6 +47,22 @@ export function refoundRequirementText(): string {
  */
 export function earnsMastery(state: GameState): boolean {
     return state.run.conqueredPop > 0;
+}
+
+/** The heroes Hall of Heroes would carry into the next run: the most experienced, one per level */
+export function heroesKeptOnRefound(state: GameState): Array<{ id: string; xp: number }> {
+    const slots = fameUpgradeLevel(state, "hallOfHeroes");
+    return [...state.run.heroes].sort((a, b) => b.xp - a.xp).slice(0, slots);
+}
+
+export function heroName(id: string): string {
+    return `${HEROES[id].name} ${HEROES[id].title}`;
+}
+
+/** "A", "A and B", "A, B and C" */
+export function heroList(heroes: Array<{ id: string }>): string {
+    const names = heroes.map((h) => heroName(h.id));
+    return names.length <= 1 ? names.join("") : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
 }
 
 /** How much of the surrendered cities' tribute has built up (0..TRIBUTE_SHARE) */
@@ -119,13 +136,18 @@ export function refound(state: GameState, nextRace: RaceId): boolean {
         `Refounded as ${RACES[nextRace].plural} after ${Math.round(run.time / 60)} minutes. +${fmtInt(fame)} Fame. Races in the Annals: ${newRaces}.`,
     );
 
-    const keptHero =
-        fameUpgradeLevel(state, "hallOfHeroes") > 0 ? [...run.heroes].sort((a, b) => b.xp - a.xp)[0] : undefined;
+    const kept = heroesKeptOnRefound(state);
+    if (run.heroes.length > 0) {
+        const left = run.heroes.filter((h) => !kept.includes(h));
+        const parts = [
+            kept.length > 0 ? `${heroList(kept)} follow${kept.length === 1 ? "s" : ""} you to the new realm (Hall of Heroes).` : "",
+            left.length > 0 ? `${heroList(left)} stay${left.length === 1 ? "s" : ""} behind.` : "",
+        ];
+        log(state, "prestige", parts.filter((s) => s).join(" "));
+    }
 
     state.run = newRun(nextRace);
-    if (keptHero) {
-        state.run.heroes.push({ ...keptHero });
-    }
+    state.run.heroes = kept.map((h) => ({ ...h }));
     applyRunStart(state);
     bump(state);
     for (const m of MILESTONES) {

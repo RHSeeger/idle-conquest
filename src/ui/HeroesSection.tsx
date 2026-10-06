@@ -1,7 +1,28 @@
 import { HEROES, HERO_RANKS, HERO_XP, heroLevel, MAX_HEROES } from "../content/heroes";
 import { canHire, hireCost, hireHero, isTavernOpen, tavernOffers } from "../engine/heroes";
+import { fameUpgradeLevel, heroesKeptOnRefound, heroList } from "../engine/prestige";
+import { GameState } from "../engine/state";
 import { Price, ProgressBar } from "./components";
 import { game } from "./game";
+
+/** What happens to the current heroes on Refound (Hall of Heroes) and on Ascension */
+export function heroCarryText(state: GameState): string {
+    const slots = fameUpgradeLevel(state, "hallOfHeroes");
+    const heroes = state.run.heroes;
+    const kept = heroesKeptOnRefound(state);
+    const left = heroes.filter((h) => !kept.includes(h));
+    let text: string;
+    if (slots === 0) {
+        text = "When you Refound, your heroes stay behind (Fame → Legacy → Hall of Heroes keeps one more hero per level).";
+    } else if (left.length === 0) {
+        text = `Hall of Heroes (keeps ${slots} of ${MAX_HEROES}): when you Refound, ${heroes.length === 1 ? "your hero follows" : `all ${heroes.length} of your heroes follow`} you.`;
+    } else {
+        text =
+            `Hall of Heroes keeps your ${slots === 1 ? "most experienced hero" : `${slots} most experienced heroes`} when you Refound: ` +
+            `${heroList(kept)} would follow you; ${heroList(left)} would stay behind.`;
+    }
+    return text + " Heroes never follow you through an Ascension.";
+}
 
 export function HeroesSection() {
     const state = game();
@@ -10,6 +31,7 @@ export function HeroesSection() {
     }
     const cost = hireCost(state);
     const full = state.run.heroes.length >= MAX_HEROES;
+    const kept = heroesKeptOnRefound(state);
     return (
         <section>
             <h2>
@@ -29,6 +51,11 @@ export function HeroesSection() {
                             <div key={h.id} class="card panel-card">
                                 <div class="card-title">
                                     {def.name} <span class="count">{def.title}</span>
+                                    {kept.includes(h) && (
+                                        <span class="tag" title="Hall of Heroes: follows you when you Refound">
+                                            kept on Refound
+                                        </span>
+                                    )}
                                 </div>
                                 <div class="card-text">
                                     {HERO_RANKS[level - 1]} (level {level}): {def.text(level)}
@@ -47,6 +74,7 @@ export function HeroesSection() {
                     })}
                 </div>
             )}
+            {state.run.heroes.length > 0 && <p class="hint">{heroCarryText(state)}</p>}
             {isTavernOpen(state) && !full && (
                 <>
                     <p class="hint">

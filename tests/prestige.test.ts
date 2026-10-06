@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { frontierCity, REGION_SIZE } from "../src/content/frontier";
 import { conquer, currentPlan, tickFrontier } from "../src/engine/army";
-import { isAutomationUnlocked } from "../src/engine/automation";
+import { autoRefound, isAutomationUnlocked } from "../src/engine/automation";
 import { getStats } from "../src/engine/collect";
 import { D } from "../src/engine/decimal";
 import {
@@ -58,6 +58,30 @@ describe("Refound", () => {
         const state = newGame(0);
         conquerTo(state, REGION_SIZE + 1);
         expect(refound(state, "orc")).toBe(false);
+    });
+
+    it("Hall of Heroes keeps one hero per level, most experienced first, also on auto-Refound", () => {
+        const cases: Array<[number, string[]]> = [
+            [0, []],
+            [1, ["zaldron"]],
+            [2, ["zaldron", "valana"]],
+            [6, ["zaldron", "valana", "brax"]],
+        ];
+        for (const auto of [false, true]) {
+            for (const [level, expected] of cases) {
+                const state = newGame(0);
+                state.prestige.upgrades.hallOfHeroes = level;
+                conquerTo(state, REGION_SIZE + 1);
+                state.run.heroes = [
+                    { id: "brax", xp: 5 },
+                    { id: "zaldron", xp: 40 },
+                    { id: "valana", xp: 20 },
+                ];
+                state.run.time = 10000; // stalled, so auto-Refound fires
+                expect(auto ? autoRefound(state) : refound(state, "highMen")).toBe(true);
+                expect(state.run.heroes.map((h) => h.id)).toEqual(expected);
+            }
+        }
     });
 
     it("grants milestones by refound count", () => {

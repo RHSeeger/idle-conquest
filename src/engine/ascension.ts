@@ -136,7 +136,8 @@ export function ascend(
     log(
         state,
         "prestige",
-        `You Ascend as a Wizard (+${fmtInt(insight)} Insight). Your new realm is founded by ${RACES[startRace].plural}.`,
+        `You Ascend as a Wizard (+${fmtInt(insight)} Insight). Your new realm is founded by ${RACES[startRace].plural}.` +
+            (state.run.heroes.length > 0 ? " Your heroes stay behind: Ascension resets the Fame upgrades, Hall of Heroes too." : ""),
     );
     state.run = newRun(startRace);
     applyRunStart(state);

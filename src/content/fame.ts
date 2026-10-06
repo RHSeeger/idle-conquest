@@ -7,6 +7,7 @@
  * player automation and head starts.
  */
 import { EffectDef } from "../engine/effects";
+import { MAX_HEROES } from "./heroes";
 
 export type FameBranch = "economy" | "warfare" | "legacy";
 
@@ -120,10 +121,15 @@ const list: FameUpgradeDef[] = [
         id: "hallOfHeroes",
         name: "Hall of Heroes",
         branch: "legacy",
-        maxLevel: 1,
-        cost: () => 25,
+        maxLevel: MAX_HEROES,
+        cost: (l) => Math.round(25 * Math.pow(2.5, l)),
         effects: [],
-        text: (l) => (l === 0 ? "Heroes leave when you Refound" : "Your most experienced hero follows you to each new realm"),
+        text: (l) =>
+            l === 0
+                ? "Heroes leave when you Refound"
+                : l >= MAX_HEROES
+                  ? "When you Refound, all your heroes follow you to the new realm"
+                  : `When you Refound, your ${l === 1 ? "most experienced hero follows" : `${l} most experienced heroes follow`} you to the new realm`,
     },
     {
         id: "legend",

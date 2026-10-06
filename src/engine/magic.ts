@@ -3,6 +3,7 @@
  * Only wizards (after the first Ascension) have any of this.
  */
 import { LAIRS } from "../content/exploration";
+import { FAMILIARS, FamiliarChoice } from "../content/familiars";
 import { REALMS, Realm, REALM_DEFS } from "../content/magic";
 import {
     RARITY_BOOKS,
@@ -45,11 +46,51 @@ export function pickableRealms(state: GameState): Realm[] {
     return REALMS.filter((r) => state.prestige.realmsSeen.includes(r));
 }
 
-export function picksUsed(books: Partial<Record<Realm, number>>, retorts: readonly string[] = []): number {
-    return (
-        REALMS.reduce((sum, r) => sum + (books[r] ?? 0), 0) + retorts.reduce((sum, id) => sum + (RETORTS[id]?.picks ?? 0), 0)
-    );
+/** Retort Mastery (Insight): how many retorts cost no picks */
+export function freeRetortSlots(state: GameState): number {
+    return state.ascension.upgrades["retortMastery"] ?? 0;
 }
+
+/** The retorts that cost no picks: the `free` most expensive ones */
+export function freeRetorts(retorts: readonly string[], free: number): string[] {
+    return [...retorts].sort((a, b) => (RETORTS[b]?.picks ?? 0) - (RETORTS[a]?.picks ?? 0)).slice(0, free);
+}
+
+/** Picks spent on retorts, after `free` of them (Retort Mastery) cost nothing */
+export function retortPicks(retorts: readonly string[], free = 0): number {
+    const freeOnes = freeRetorts(retorts, free);
+    return retorts.filter((id) => !freeOnes.includes(id)).reduce((sum, id) => sum + (RETORTS[id]?.picks ?? 0), 0);
+}
+
+export function picksUsed(books: Partial<Record<Realm, number>>, retorts: readonly string[] = [], free = 0): number {
+    return REALMS.reduce((sum, r) => sum + (books[r] ?? 0), 0) + retortPicks(retorts, free);
+}
+
+// --- Familiar ---
+
+/** The realm a planned familiar resolves to for a profile ("match": most books, first realm on ties) */
+export function resolveFamiliar(choice: FamiliarChoice, books: Partial<Record<Realm, number>>): Realm | null {
+    if (choice !== "match") return choice;
+    let best: Realm | null = null;
+    for (const r of REALMS) {
+        if ((books[r] ?? 0) > 0 && (best === null || (books[r] ?? 0) > (books[best] ?? 0))) best = r;
+    }
+    return best;
+}
+
+export function familiarLevel(state: GameState): number {
+    return state.ascension.upgrades["familiar"] ?? 0;
+}
+
+/** The familiar of this Ascension, if the upgrade is owned */
+export function currentFamiliar(state: GameState): Realm | null {
+    return familiarLevel(state) > 0 ? state.ascension.familiar : null;
+}
+
+registerCollector((state, stats) => {
+    const realm = currentFamiliar(state);
+    if (realm) stats.applyEffects(FAMILIARS[realm].name, FAMILIARS[realm].effects, familiarLevel(state));
+});
 
 /** Checks a proposed wizard profile (book picks + retorts); returns an error message or null */
 export function validateBooks(
@@ -57,7 +98,7 @@ export function validateBooks(
     books: Partial<Record<Realm, number>>,
     retorts: readonly string[] = [],
 ): string | null {
-    if (picksUsed(books, retorts) > totalPicks(state)) {
+    if (picksUsed(books, retorts, freeRetortSlots(state)) > totalPicks(state)) {
         return `Only ${totalPicks(state)} picks available`;
     }
     for (const id of retorts) {
@@ -265,7 +306,7 @@ export function castInstant(state: GameState, id: string, powerAgainstTarget: De
     const spell = SPELLS[id];
     state.run.mana = state.run.mana.minus(instantCost(state, spell));
     state.run.cooldowns[id] = spell.cooldown ?? 0;
-    const damage = powerAgainstTarget.times(spell.siegeSeconds ?? 0);
+    const damage = powerAgainstTarget.times(spell.siegeSeconds ?? 0).times(getStats(state).get("instant.power"));
     if (state.run.armyTarget !== null) {
         state.run.lairSiege = state.run.lairSiege.plus(damage);
     } else {

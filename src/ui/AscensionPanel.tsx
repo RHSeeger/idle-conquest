@@ -17,7 +17,22 @@ import {
     insightUpgradeLevel,
     planeshiftProgress,
 } from "../engine/ascension";
-import { isRetortUnlocked, isWizard, pickableRealms, picksUsed, totalPicks, validateBooks } from "../engine/magic";
+import {
+    currentFamiliar,
+    familiarLevel,
+    freeRetorts,
+    freeRetortSlots,
+    isRetortUnlocked,
+    isWizard,
+    pickableRealms,
+    picksUsed,
+    resolveFamiliar,
+    retortPicks,
+    totalPicks,
+    validateBooks,
+} from "../engine/magic";
+import { FAMILIARS, FamiliarChoice } from "../content/familiars";
+import { GameState } from "../engine/state";
 import { BASE_PICKS } from "../content/wizards";
 import { RETORTS, RETORT_ORDER } from "../content/retorts";
 import { fmtInt } from "../engine/format";
@@ -73,16 +88,84 @@ export function profileText(books: Partial<Record<Realm, number>>, retorts: read
     return parts.join(" · ");
 }
 
+function familiarName(realm: Realm | null): string {
+    return realm ? REALM_DEFS[realm].name : "none (no spellbooks)";
+}
+
 /** The wizard profile of the current Ascension */
 export function CurrentProfile() {
     const state = game();
     const a = state.ascension;
     if (!isWizard(state)) return null;
+    const familiar = currentFamiliar(state);
     return (
         <p>
             Your wizard this Ascension: <b>{profileText(a.books, a.retorts)}</b>{" "}
-            <span class="hint">({picksUsed(a.books, a.retorts)} picks)</span>
+            <span class="hint">({picksUsed(a.books, a.retorts, freeRetortSlots(state))} picks)</span>
+            {familiar && (
+                <>
+                    <br />
+                    Familiar: <b>{REALM_DEFS[familiar].name}</b>{" "}
+                    <span class="hint">({FAMILIARS[familiar].text(familiarLevel(state))})</span>
+                </>
+            )}
         </p>
+    );
+}
+
+/**
+ * How the planned profile differs from this Ascension's, e.g.
+ * ["Life 3 → 4", "+ Warlord", "− Alchemy", "familiar Life → Chaos"]. Empty if the same.
+ */
+export function profileChanges(state: GameState): string[] {
+    const a = state.ascension;
+    const changes: string[] = [];
+    for (const r of REALMS) {
+        const now = a.books[r] ?? 0;
+        const next = a.planBooks[r] ?? 0;
+        if (now !== next) changes.push(`${REALM_DEFS[r].name} ${now} → ${next}`);
+    }
+    for (const id of a.planRetorts) if (!a.retorts.includes(id)) changes.push(`+ ${RETORTS[id]?.name ?? id}`);
+    for (const id of a.retorts) if (!a.planRetorts.includes(id)) changes.push(`− ${RETORTS[id]?.name ?? id}`);
+    if (familiarLevel(state) > 0) {
+        const now = a.familiar;
+        const next = resolveFamiliar(a.planFamiliar, a.planBooks);
+        if (now !== next) changes.push(`familiar ${familiarName(now)} → ${familiarName(next)}`);
+    }
+    return changes;
+}
+
+const FAMILIAR_CHOICES: FamiliarChoice[] = ["match", ...REALMS];
+
+/** Familiar for the next Ascension: a realm, or "match my spellbooks" */
+function FamiliarPicker() {
+    const state = game();
+    const a = state.ascension;
+    const level = familiarLevel(state);
+    if (level === 0) return null;
+    const resolved = resolveFamiliar(a.planFamiliar, a.planBooks);
+    return (
+        <>
+            <h4>Familiar</h4>
+            <div class="race-choice">
+                {FAMILIAR_CHOICES.map((c) => (
+                    <button
+                        key={c}
+                        class={"toggle" + (a.planFamiliar === c ? " on" : "")}
+                        title={c === "match" ? "The realm you have the most books in (first realm on ties)" : FAMILIARS[c].text(level)}
+                        onClick={() => (a.planFamiliar = c)}
+                    >
+                        {c === "match" ? `Match my spellbooks (${familiarName(resolveFamiliar("match", a.planBooks))})` : REALM_DEFS[c].name}
+                    </button>
+                ))}
+            </div>
+            <p class="hint">
+                {resolved
+                    ? `Next Ascension's familiar: ${REALM_DEFS[resolved].name}, ${FAMILIARS[resolved].text(level)}.`
+                    : "With no spellbooks, Match my spellbooks gives no familiar."}
+                {isWizard(state) && resolved !== a.familiar && <span class="insight"> Changed: this Ascension's is {familiarName(a.familiar)}.</span>}
+            </p>
+        </>
     );
 }
 
@@ -93,11 +176,14 @@ function ProfilePicker() {
     const retorts = a.planRetorts;
     const picks = totalPicks(state);
     const deeper = picks - BASE_PICKS;
+    const free = freeRetortSlots(state);
+    const freeOnes = freeRetorts(retorts, free);
     const bookPicks = picksUsed(books);
-    const retortPicks = picksUsed({}, retorts);
-    const used = bookPicks + retortPicks;
+    const retortCost = retortPicks(retorts, free);
+    const used = bookPicks + retortCost;
+    const wizard = isWizard(state);
     // picks the current wizard didn't have when Ascending (bought with Insight since)
-    const gained = isWizard(state) ? Math.max(0, Math.min(picks - used, picks - picksUsed(a.books, a.retorts))) : 0;
+    const gained = wizard ? Math.max(0, Math.min(picks - used, picks - picksUsed(a.books, a.retorts, free))) : 0;
     const pickable = pickableRealms(state);
     const change = (r: Realm, delta: number) => {
         if (delta > 0 && used >= picks) return;
@@ -110,13 +196,13 @@ function ProfilePicker() {
     return (
         <div>
             <p>
-                Picks for the next Ascension: <b>{used}</b> of {picks} used ({bookPicks} on spellbooks, {retortPicks} on
-                retorts)
+                Picks for the next Ascension: <b>{used}</b> of {picks} used ({bookPicks} on spellbooks, {retortCost} on
+                retorts{free > 0 && `; Retort Mastery makes your ${free === 1 ? "most expensive retort" : `${free} most expensive retorts`} free`})
                 {used < picks && (
                     <span class="insight">
                         {" "}
                         · {picks - used} left to spend
-                        {gained > 0 && ` (${gained} new from Deeper Study since you Ascended)`}
+                        {gained > 0 && ` (${gained} new since you Ascended)`}
                     </span>
                 )}
             </p>
@@ -130,6 +216,7 @@ function ProfilePicker() {
             <div class="books">
                 {REALMS.map((r) => {
                     const ok = pickable.includes(r);
+                    const now = a.books[r] ?? 0;
                     return (
                         <div key={r} class={"book realm-" + r + (ok ? "" : " none")}>
                             <b>{REALM_DEFS[r].name}</b>
@@ -143,6 +230,7 @@ function ProfilePicker() {
                                 </button>
                             </div>
                             {!ok && <div class="hint">never found</div>}
+                            {wizard && now !== (books[r] ?? 0) && <div class="hint insight">changed · this Ascension: {now}</div>}
                         </div>
                     );
                 })}
@@ -158,16 +246,22 @@ function ProfilePicker() {
                     const r = RETORTS[id];
                     const unlocked = isRetortUnlocked(state, id);
                     const chosen = retorts.includes(id);
+                    const current = a.retorts.includes(id);
+                    // would adding it still fit? (it may push another retort out of the free slots)
+                    const fits = picksUsed(books, [...retorts, id], free) <= picks;
                     return (
                         <button
                             key={id}
                             class={"card" + (chosen ? " chosen" : "")}
-                            disabled={!unlocked || (!chosen && used + r.picks > picks)}
+                            disabled={!unlocked || (!chosen && !fits)}
                             onClick={() => toggleRetort(id)}
                         >
                             <div class="card-title">
                                 {r.name} <span class="count">{r.picks} pick{r.picks > 1 ? "s" : ""}</span>
                                 {chosen && <span class="tag">chosen</span>}
+                                {chosen && freeOnes.includes(id) && <span class="tag" title="Retort Mastery: costs no picks">free</span>}
+                                {wizard && chosen && !current && <span class="tag" title="Not in this Ascension's profile">new</span>}
+                                {wizard && !chosen && current && <span class="tag" title="In this Ascension's profile, not the next">dropped</span>}
                             </div>
                             <div class="card-text">{r.text}</div>
                             {!unlocked && r.unlock && <div class="card-text bad">🔒 {r.unlock.text}</div>}
@@ -175,6 +269,7 @@ function ProfilePicker() {
                     );
                 })}
             </div>
+            <FamiliarPicker />
             {error && <p class="bad">{error}</p>}
         </div>
     );
@@ -214,11 +309,13 @@ export function AscensionPanel() {
     const chosenRace = races.includes(race) ? race : races[0];
     const insight = insightOnAscend(state);
     const ok = canAscend(state) && validateBooks(state, books, retorts) === null;
-    const unspent = totalPicks(state) - picksUsed(books, retorts);
+    const unspent = totalPicks(state) - picksUsed(books, retorts, freeRetortSlots(state));
+    const changes = isWizard(state) ? profileChanges(state) : [];
 
     const doAscend = () => {
         const lines = [
-            `Ascend as: ${profileText(books, retorts)}, starting as ${RACES[chosenRace].plural}.`,
+            `Ascend as: ${profileText(books, retorts)}, starting as ${RACES[chosenRace].plural}.` +
+                (familiarLevel(state) > 0 ? ` Familiar: ${familiarName(resolveFamiliar(a.planFamiliar, books))}.` : ""),
             unspent > 0 ? `WARNING: ${unspent} pick${unspent === 1 ? " is" : "s are"} unspent.` : "",
             `Your realm, Fame, Fame upgrades and refounds reset${a.ascensions >= 2 ? "" : ", and the Annals are cleared"}. You gain ${fmtInt(insight)} Insight.`,
         ];
@@ -244,9 +341,13 @@ export function AscensionPanel() {
                     Insight is based on the Fame earned this Ascension ({fmtInt(a.fameEarned)} so far, plus what refounding now
                     would give), the spellbooks you hold this run, and the rival wizards you defeated.
                 </p>
+                {isWizard(state) && <h3>This Ascension</h3>}
                 <CurrentProfile />
                 <Gate />
-                <h3>Wizard profile for the next Ascension</h3>
+                <h3>
+                    {isWizard(state) ? "Next Ascension" : "Your first wizard profile"}{" "}
+                    <span class="count">· auto-Ascend uses this</span>
+                </h3>
                 <ProfilePicker />
                 <h3>Starting race</h3>
                 <div class="race-choice">
@@ -258,6 +359,13 @@ export function AscensionPanel() {
                 </div>
                 {state.run.heroes.length > 0 && <p class="hint">{heroAscendText(state)}</p>}
                 <KeepFameToggle />
+                {isWizard(state) && (
+                    <p class={changes.length > 0 ? "insight" : "hint"}>
+                        {changes.length === 0
+                            ? "Next Ascension: the same profile as this one."
+                            : `Next Ascension changes: ${changes.join(", ")}.`}
+                    </p>
+                )}
                 <button class="prestige-button ascend" disabled={!ok} onClick={doAscend}>
                     Ascend (+{fmtInt(insight)} Insight)
                 </button>

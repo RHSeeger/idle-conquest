@@ -1,14 +1,19 @@
 import { describe, expect, it } from "vitest";
 import { frontierCity, regionPlan, REGION_SIZE, wallIndex } from "../src/content/frontier";
 import { conquer, cityAt, currentPlan, siegePower } from "../src/engine/army";
-import { ascend, canAscend, insightOnAscend, planeshiftProgress } from "../src/engine/ascension";
+import { ascend, buyInsightUpgrade, canAscend, insightOnAscend, planeshiftProgress } from "../src/engine/ascension";
+import { RETORTS, RETORT_ORDER } from "../src/content/retorts";
 import { getStats } from "../src/engine/collect";
 import { D } from "../src/engine/decimal";
 import {
     castEnchantment,
     castInstant,
     checkRetortUnlocks,
+    currentFamiliar,
     effectiveTraits,
+    freeRetorts,
+    resolveFamiliar,
+    retortPicks,
     isWizard,
     knowsSpell,
     manaRate,
@@ -219,6 +224,37 @@ describe("Magic", () => {
     });
 });
 
+describe("Familiar", () => {
+    it("'match' follows the realm with the most books", () => {
+        expect(resolveFamiliar("match", { life: 2, chaos: 3 })).toBe("chaos");
+        expect(resolveFamiliar("match", { life: 2, chaos: 2 })).toBe("life"); // ties: first realm
+        expect(resolveFamiliar("match", {})).toBe(null);
+        expect(resolveFamiliar("nature", { life: 4 })).toBe("nature");
+    });
+
+    it("is set on Ascending from the plan, and applies its effects with the upgrade's level", () => {
+        const state = readyToAscend();
+        state.ascension.upgrades.familiar = 2;
+        state.ascension.planFamiliar = "sorcery";
+        ascend(state, { life: 3, chaos: 2 }, "highMen");
+        expect(state.ascension.familiar).toBe("sorcery");
+        expect(state.ascension.planFamiliar).toBe("sorcery"); // the plan carries over
+        expect(getStats(state).num("cost.research")).toBeCloseTo(0.85 ** 2);
+    });
+
+    it("arrives at once when first bought mid-Ascension", () => {
+        const state = readyToAscend();
+        ascend(state, { life: 3, chaos: 2 }, "highMen");
+        expect(state.ascension.familiar).toBe("life"); // 'match' picks Life
+        expect(currentFamiliar(state)).toBe(null); // no upgrade yet
+        state.ascension.familiar = null;
+        state.ascension.insight = D(1000);
+        expect(buyInsightUpgrade(state, "familiar")).toBe(true);
+        expect(currentFamiliar(state)).toBe("life");
+        expect(getStats(state).num("pop.growth")).toBeGreaterThan(getStats(newGame(0)).num("pop.growth"));
+    });
+});
+
 describe("Retorts", () => {
     it("cost picks, need unlocking and may need books", () => {
         const state = readyToAscend();
@@ -227,6 +263,19 @@ describe("Retorts", () => {
         expect(validateBooks(state, { life: 3 }, ["warlord"])).toMatch(/not unlocked/);
         state.ascension.unlockedRetorts.push("divinePower");
         expect(validateBooks(state, { life: 2 }, ["divinePower"])).toMatch(/needs 4 Life/);
+    });
+
+    it("Retort Mastery makes the most expensive retorts free", () => {
+        const state = readyToAscend();
+        expect(validateBooks(state, { life: 5 }, ["alchemy"])).toMatch(/picks/);
+        state.ascension.upgrades.retortMastery = 1;
+        expect(validateBooks(state, { life: 5 }, ["alchemy"])).toBeNull();
+        // the free slot goes to the priciest retort
+        const pricey = RETORT_ORDER.reduce((a, b) => (RETORTS[b].picks > RETORTS[a].picks ? b : a));
+        expect(RETORTS[pricey].picks).toBeGreaterThan(1);
+        expect(freeRetorts(["alchemy", pricey], 1)).toEqual([pricey]);
+        expect(retortPicks(["alchemy", pricey], 1)).toBe(1);
+        expect(retortPicks(["alchemy", pricey], 2)).toBe(0);
     });
 
     it("apply their effects once picked", () => {

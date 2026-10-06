@@ -20,7 +20,7 @@ import { D, Decimal } from "./decimal";
 import { fmtInt } from "./format";
 import { spellbookCount, spellbookRealmCount } from "./exploration";
 import { Hero, heroCarryLog, mostExperienced } from "./heroes";
-import { knowsSpell, towerCleared, validateBooks } from "./magic";
+import { knowsSpell, resolveFamiliar, towerCleared, validateBooks } from "./magic";
 import {
     applyRunStart,
     closeFameChronicle,
@@ -127,6 +127,8 @@ export function ascend(
     a.fameEarned = D(0);
     a.books = Object.fromEntries(REALMS.filter((r) => (books[r] ?? 0) > 0).map((r) => [r, books[r]]));
     a.retorts = [...retorts];
+    // the planned familiar choice stays as it is ("match" keeps following the books)
+    a.familiar = resolveFamiliar(a.planFamiliar, a.books);
     // the next Ascension's plan starts as this one
     a.planBooks = { ...a.books };
     a.planRetorts = [...a.retorts];
@@ -213,6 +215,9 @@ export function buyInsightUpgrade(state: GameState, id: string): boolean {
     if (!canBuyInsightUpgrade(state, id)) return false;
     state.ascension.insight = state.ascension.insight.minus(insightUpgradeCost(state, id));
     state.ascension.upgrades[id] = insightUpgradeLevel(state, id) + 1;
+    // the first Familiar arrives at once, as planned for this profile
+    const a = state.ascension;
+    if (id === "familiar" && a.familiar === null) a.familiar = resolveFamiliar(a.planFamiliar, a.books);
     bump(state);
     return true;
 }

@@ -85,6 +85,28 @@ const insightList: InsightUpgradeDef[] = [
         text: (l) => `×${Math.pow(1.5, l).toFixed(2)} Fame from Refounds`,
     },
     {
+        id: "retortMastery",
+        name: "Retort Mastery",
+        maxLevel: 3,
+        cost: (l) => Math.round(20 * Math.pow(4, l)),
+        effects: [],
+        text: (l) =>
+            l === 0
+                ? "Every retort costs picks"
+                : `Your ${l === 1 ? "most expensive retort costs" : `${l} most expensive retorts cost`} no picks`,
+    },
+    {
+        id: "familiar",
+        name: "Familiar",
+        maxLevel: 5,
+        cost: (l) => Math.round(10 * Math.pow(2.5, l)),
+        effects: [],
+        text: (l) =>
+            l === 0
+                ? "No familiar"
+                : `A familiar of one realm, chosen with your profile (level ${l}: e.g. Nature +${l} food and +${15 * l}% production)`,
+    },
+    {
         id: "royalStewards",
         name: "Royal Stewards",
         maxLevel: 1,

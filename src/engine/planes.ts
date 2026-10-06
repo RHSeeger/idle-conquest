@@ -214,6 +214,7 @@ export function planeshift(state: GameState, beachhead: MyrranRaceId, startRace:
     a.retorts = profile.retorts;
     a.planBooks = { ...profile.books };
     a.planRetorts = [...profile.retorts];
+    a.familiar = null; // the Familiar upgrade resets with the others
     a.spellsKnown = [];
     a.fameEarned = D(0);
     a.lastFameEarned = D(0);

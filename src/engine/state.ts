@@ -3,6 +3,7 @@
  * converted by save.ts). No class instances, no DOM references.
  */
 import { cityName } from "../content/frontier";
+import { FamiliarChoice } from "../content/familiars";
 import { Realm } from "../content/magic";
 import { MyrranRaceId, RaceId } from "../content/races";
 import { TraitId } from "../content/traits";
@@ -151,6 +152,9 @@ export interface AscensionState {
     /** The profile being planned for the next Ascension (kept so it survives tab switches and reloads) */
     planBooks: Partial<Record<Realm, number>>;
     planRetorts: string[];
+    /** Familiar (Insight upgrade) of this Ascension, and the one planned for the next */
+    familiar: Realm | null;
+    planFamiliar: FamiliarChoice;
     /** Spells researched during this Ascension */
     spellsKnown: string[];
     /** Fame upgrades bought during the last Ascension, in order (auto-buy's Chronicle mode) */
@@ -350,6 +354,8 @@ export function newGame(now = Date.now()): GameState {
             unlockedRetorts: [],
             planBooks: {},
             planRetorts: [],
+            familiar: null,
+            planFamiliar: "match",
             spellsKnown: [],
             fameChronicle: [],
             fameEarned: D(0),

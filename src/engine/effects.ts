@@ -76,6 +76,8 @@ export const STAT_BASE: Record<string, number> = {
     "summon.power": 1,
     "cost.research": 1,
     "cost.summon": 1,
+    /** Multiplies the siege damage of instant spells (Chaos familiar) */
+    "instant.power": 1,
     /** Scales how much each unit bought raises the next one's price (costGrowth − 1) */
     "cost.unitGrowth": 1,
     "fame.mult": 1,

@@ -22,6 +22,9 @@ export interface FameUpgradeDef {
     text: (level: number) => string;
 }
 
+/** Standing Army: each level multiplies every unit's per-unit cost growth (the part above ×1) by this */
+const STANDING_ARMY_STEP = 0.95;
+
 const list: FameUpgradeDef[] = [
     // --- Economy ---
     {
@@ -83,6 +86,18 @@ const list: FameUpgradeDef[] = [
         cost: (l) => Math.round(3 * Math.pow(2, l)),
         effects: [{ stat: "cost.unit", op: "mult", value: (l) => Math.pow(0.8, l) }],
         text: (l) => `×${fmtNum(Math.pow(0.8, l))} troop costs`,
+    },
+    {
+        id: "standingArmy",
+        name: "Standing Army",
+        branch: "warfare",
+        maxLevel: 5,
+        cost: (l) => Math.round(10 * Math.pow(3, l)),
+        effects: [{ stat: "cost.unitGrowth", op: "mult", value: (l) => Math.pow(STANDING_ARMY_STEP, l) }],
+        text: (l) =>
+            l === 0
+                ? "Each unit costs 8–10% more than the last"
+                : `Each unit raises the next one's price ${fmtNum(Math.pow(STANDING_ARMY_STEP, l))}× as much (Spearmen: +${(8 * Math.pow(STANDING_ARMY_STEP, l)).toFixed(1)}% each instead of +8%)`,
     },
     {
         id: "scouting",

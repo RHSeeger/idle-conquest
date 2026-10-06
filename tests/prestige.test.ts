@@ -16,7 +16,8 @@ import {
     TRIBUTE_SECONDS,
     tributeSecondsLeft,
 } from "../src/engine/prestige";
-import { GameState, newGame } from "../src/engine/state";
+import { bump, GameState, newGame } from "../src/engine/state";
+import { unitGrowth, unitPrice } from "../src/engine/costs";
 
 /** Conquers frontier cities up to (not including) `index` */
 function conquerTo(state: GameState, index: number) {
@@ -161,6 +162,18 @@ describe("Fame upgrades", () => {
         expect(buyFameUpgrade(state, "veteranOfficers")).toBe(true);
         expect(getStats(state).num("army.power")).toBeGreaterThan(before);
         expect(state.prestige.fame.lt(100)).toBe(true);
+    });
+
+    it("Standing Army slows how fast unit costs grow", () => {
+        const state = newGame(0);
+        state.run.units.spearmen = 100;
+        const before = unitPrice(state, getStats(state), "spearmen", 1).toNumber();
+        expect(unitGrowth(getStats(state), "spearmen")).toBeCloseTo(1.08);
+        state.prestige.upgrades.standingArmy = 2;
+        bump(state);
+        expect(unitGrowth(getStats(state), "spearmen")).toBeCloseTo(1 + 0.08 * 0.95 ** 2);
+        // the 101st spearman: 10 × 1.08^100 → 10 × 1.0722^100, about 2× cheaper
+        expect(unitPrice(state, getStats(state), "spearmen", 1).toNumber()).toBeCloseTo(before / 2.06, -2);
     });
 
     it("Far Scouting adds a region before the wall", () => {

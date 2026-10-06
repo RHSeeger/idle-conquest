@@ -61,11 +61,15 @@ function unitStart(stats: Stats, id: string): Decimal {
     return D(u.baseCost).times(stats.get(u.spell !== undefined ? "cost.summon" : "cost.unit"));
 }
 
+/** Price ratio between one unit and the next (Standing Army shrinks the part above 1) */
+export function unitGrowth(stats: Stats, id: string): number {
+    return 1 + (UNITS[id].costGrowth - 1) * stats.num("cost.unitGrowth");
+}
+
 /** Price of buying `amount` more of a unit */
 export function unitPrice(state: GameState, stats: Stats, id: string, amount: number): Decimal {
-    const u = UNITS[id];
     const owned = state.run.units[id] ?? 0;
-    return Decimal.sumGeometricSeries(amount, unitStart(stats, id), u.costGrowth, owned);
+    return Decimal.sumGeometricSeries(amount, unitStart(stats, id), unitGrowth(stats, id), owned);
 }
 
 /** How many of a unit can be afforded right now */
@@ -75,9 +79,8 @@ export function unitAffordable(state: GameState, stats: Stats, id: string): numb
 
 /** How many of a unit a given budget can buy */
 export function unitAffordableWith(state: GameState, stats: Stats, id: string, budget: Decimal): number {
-    const u = UNITS[id];
     const owned = state.run.units[id] ?? 0;
-    const n = Decimal.affordGeometricSeries(budget, unitStart(stats, id), u.costGrowth, owned);
+    const n = Decimal.affordGeometricSeries(budget, unitStart(stats, id), unitGrowth(stats, id), owned);
     return Math.max(0, Math.floor(n.toNumber()));
 }
 

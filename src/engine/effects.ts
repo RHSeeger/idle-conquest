@@ -76,6 +76,8 @@ export const STAT_BASE: Record<string, number> = {
     "summon.power": 1,
     "cost.research": 1,
     "cost.summon": 1,
+    /** Scales how much each unit bought raises the next one's price (costGrowth − 1) */
+    "cost.unitGrowth": 1,
     "fame.mult": 1,
     "insight.mult": 1,
     // planes (Layer 3)

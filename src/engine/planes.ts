@@ -224,6 +224,7 @@ export function planeshift(state: GameState, beachhead: MyrranRaceId, startRace:
     p.fameTotal = D(0);
     closeFameChronicle(state);
     p.upgrades = {};
+    p.fameDebt = D(0);
     p.refounds = 0;
     p.ascensionBestFrontier = 0;
     if (!p.annals.includes(startRace)) p.annals.push(startRace);

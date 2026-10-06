@@ -170,6 +170,12 @@ function FameTree() {
                     gold, knowledge and army power
                 </span>
             </h2>
+            {p.fameDebt.gt(0) && (
+                <p class="hint">
+                    Enduring Legacy: your Fame upgrades were kept through the Ascension. Earned Fame repays them first:{" "}
+                    <b class="fame">{fmtInt(p.fameDebt)}</b> still to go before you can buy more.
+                </p>
+            )}
             <FameAutoBuy />
             <div class="fame-branches">
                 {branches.map((branch) => (

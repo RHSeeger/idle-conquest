@@ -24,6 +24,27 @@ import { fmtInt } from "../engine/format";
 import { game } from "./game";
 import { AutoPrestige } from "./AutoToggle";
 import { heroAscendText } from "./HeroesSection";
+import { fameUpgradesValue } from "../engine/prestige";
+
+/** Enduring Legacy (Essence): whether the next Ascension keeps the Fame upgrades */
+function KeepFameToggle() {
+    const state = game();
+    if ((state.planes.upgrades.enduringLegacy ?? 0) === 0) return null;
+    const on = state.automation.keepFame;
+    const value = fameUpgradesValue(state);
+    return (
+        <div class="row auto-prestige">
+            <button class={"toggle auto" + (on ? " on" : "")} onClick={() => (state.automation.keepFame = !on)}>
+                Keep Fame upgrades: {on ? "on" : "off"}
+            </button>
+            <span class="hint">
+                {on
+                    ? `Enduring Legacy: your Fame upgrades stay when you Ascend. The first ${fmtInt(value)} Fame you earn afterwards repays them, before you can buy more.`
+                    : "Enduring Legacy is off: Ascending resets your Fame upgrades as usual."}
+            </span>
+        </div>
+    );
+}
 
 function Gate() {
     const state = game();
@@ -236,6 +257,7 @@ export function AscensionPanel() {
                     ))}
                 </div>
                 {state.run.heroes.length > 0 && <p class="hint">{heroAscendText(state)}</p>}
+                <KeepFameToggle />
                 <button class="prestige-button ascend" disabled={!ok} onClick={doAscend}>
                     Ascend (+{fmtInt(insight)} Insight)
                 </button>

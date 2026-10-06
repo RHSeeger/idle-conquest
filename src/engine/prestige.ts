@@ -108,7 +108,7 @@ export function refound(state: GameState, nextRace: RaceId): boolean {
     const p = state.prestige;
     const fame = fameOnRefound(state);
 
-    p.fame = p.fame.plus(fame);
+    gainFame(state, fame);
     p.fameTotal = p.fameTotal.plus(fame);
     state.ascension.fameEarned = state.ascension.fameEarned.plus(fame);
     for (const r of run.racesConquered) {
@@ -264,13 +264,41 @@ export function buyFameUpgrade(state: GameState, id: string): boolean {
 }
 
 /**
- * Called when the Fame tree resets (Ascension, Planeshift): this Ascension's
- * purchase order becomes the Fame Chronicle that auto-buy can replay.
+ * Called when an Ascension ends (Ascension, Planeshift): this Ascension's
+ * purchase order becomes the Fame Chronicle that auto-buy can replay. `reset`
+ * is false when the upgrades are kept (Enduring Legacy), so the order keeps growing.
  */
-export function closeFameChronicle(state: GameState): void {
+export function closeFameChronicle(state: GameState, reset = true): void {
     const p = state.prestige;
     if (p.fameOrder.length > 0) state.ascension.fameChronicle = [...p.fameOrder];
-    p.fameOrder = [];
+    if (reset) p.fameOrder = [];
+}
+
+// --- Enduring Legacy (Essence): keeping Fame upgrades through Ascension ---
+
+/** Whether the next Ascension keeps the Fame upgrades (owned and switched on) */
+export function keepsFameUpgrades(state: GameState): boolean {
+    // read directly: planes.ts imports this module
+    return (state.planes.upgrades.enduringLegacy ?? 0) > 0 && state.automation.keepFame;
+}
+
+/** What the current Fame upgrades would cost to buy again from scratch */
+export function fameUpgradesValue(state: GameState): Decimal {
+    let total = 0;
+    for (const [id, level] of Object.entries(state.prestige.upgrades)) {
+        const u = FAME_UPGRADES[id];
+        if (!u) continue;
+        for (let l = 0; l < level; l++) total += u.cost(l);
+    }
+    return D(total);
+}
+
+/** Adds Fame to spend, after repaying any Enduring Legacy debt */
+export function gainFame(state: GameState, amount: Decimal): void {
+    const p = state.prestige;
+    const repaid = Decimal.min(amount, p.fameDebt);
+    p.fameDebt = p.fameDebt.minus(repaid);
+    p.fame = p.fame.plus(amount.minus(repaid));
 }
 
 // --- Effect sources ---

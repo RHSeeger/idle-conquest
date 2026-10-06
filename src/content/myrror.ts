@@ -221,6 +221,17 @@ const essenceList: EssenceUpgradeDef[] = [
                 ? "Myrror starts from scratch"
                 : `Myrror cities below ${Math.round(l * BRIDGEHEAD_PER_LEVEL * 100)}% of your best Myrror frontier surrender at once (${headStartWithRenownPct(l)}% with Known on Two Worlds)`,
     },
+    {
+        id: "enduringLegacy",
+        name: "Enduring Legacy",
+        maxLevel: 1,
+        cost: () => 20,
+        effects: [],
+        text: (l) =>
+            l === 0
+                ? "Ascending resets your Fame upgrades"
+                : "Keep your Fame upgrades when you Ascend (can be switched off). Fame you earn afterwards first repays what they cost, before you can buy more",
+    },
 ];
 
 export const ESSENCE_UPGRADES: Record<string, EssenceUpgradeDef> = Object.fromEntries(essenceList.map((u) => [u.id, u]));

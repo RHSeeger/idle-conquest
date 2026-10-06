@@ -21,7 +21,15 @@ import { fmtInt } from "./format";
 import { spellbookCount, spellbookRealmCount } from "./exploration";
 import { Hero, heroCarryLog, mostExperienced } from "./heroes";
 import { knowsSpell, towerCleared, validateBooks } from "./magic";
-import { applyRunStart, closeFameChronicle, effectiveAscensions, fameOnRefound } from "./prestige";
+import {
+    applyRunStart,
+    closeFameChronicle,
+    effectiveAscensions,
+    fameOnRefound,
+    fameUpgradesValue,
+    gainFame,
+    keepsFameUpgrades,
+} from "./prestige";
 import { bump, GameState, log, newRun, recordRun } from "./state";
 
 export const ASCENSION_BOOKS = 6;
@@ -127,10 +135,19 @@ export function ascend(
 
     const keepAnnals = hasAscensionMilestone(state, "keepAnnals");
     const annals = keepAnnals ? ascensionRaceOptions(state) : [...new Set<RaceId>(["highMen", startRace])];
-    p.fame = hasAscensionMilestone(state, "fameEcho") ? a.lastFameEarned.times(0.25).floor() : D(0);
+    const keepFame = keepsFameUpgrades(state);
     p.fameTotal = D(0);
-    closeFameChronicle(state);
-    p.upgrades = {};
+    if (keepFame) {
+        // Enduring Legacy: the upgrades stay, and their cost must be earned back before buying more
+        closeFameChronicle(state, false);
+        p.fameDebt = fameUpgradesValue(state);
+    } else {
+        closeFameChronicle(state);
+        p.upgrades = {};
+        p.fameDebt = D(0);
+    }
+    p.fame = D(0);
+    if (hasAscensionMilestone(state, "fameEcho")) gainFame(state, a.lastFameEarned.times(0.25).floor());
     p.refounds = 0;
     p.annals = annals;
     p.ascensionBestFrontier = 0;

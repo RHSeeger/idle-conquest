@@ -111,6 +111,11 @@ export interface PrestigeState {
     upgrades: Record<string, number>;
     /** Fame upgrades bought this Ascension, in order (becomes the Fame Chronicle when you Ascend) */
     fameOrder: string[];
+    /**
+     * Enduring Legacy: the cost of Fame upgrades kept through the last Ascension
+     * that hasn't been repaid yet. Fame earned pays this off before it can be spent.
+     */
+    fameDebt: Decimal;
     /** Completed runs as each starting race */
     raceMastery: Partial<Record<RaceId, number>>;
     /** Furthest frontier ever reached, and furthest during this Ascension (Renown uses the latter) */
@@ -229,6 +234,8 @@ export interface Automation {
     ascend: boolean;
     /** Auto-buy Fame upgrades (Royal Stewards, Insight) */
     fame: boolean;
+    /** Enduring Legacy (Essence): keep Fame upgrades when Ascending (when owned) */
+    keepFame: boolean;
     /** How auto-buy picks Fame upgrades: the last Ascension's purchase order, or cheapest first */
     fameMode: "chronicle" | "cheapest";
     /** How auto-recruit picks troops */
@@ -325,6 +332,7 @@ export function newGame(now = Date.now()): GameState {
             annals: ["highMen"],
             upgrades: {},
             fameOrder: [],
+            fameDebt: D(0),
             raceMastery: {},
             bestFrontier: 0,
             ascensionBestFrontier: 0,
@@ -371,6 +379,7 @@ export function newGame(now = Date.now()): GameState {
             refound: true,
             ascend: true,
             fame: true,
+            keepFame: true,
             fameMode: "chronicle",
             unitMode: "chronicle",
             buildMode: "chronicle",

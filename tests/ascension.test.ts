@@ -17,7 +17,7 @@ import {
     spellAvailable,
     validateBooks,
 } from "../src/engine/magic";
-import { hasMilestone, refound } from "../src/engine/prestige";
+import { fameUpgradesValue, gainFame, hasMilestone, refound } from "../src/engine/prestige";
 import { GameState, newGame } from "../src/engine/state";
 import { SPELLS } from "../src/content/spells";
 import { LORE_ORDER } from "../src/content/lore";
@@ -110,6 +110,32 @@ describe("Ascension", () => {
         state.run.racesConquered = ["halfling"];
         refound(state, "highMen");
         expect(state.run.heroes.map((h) => h.id)).toEqual(["zaldron", "valana", "brax"]);
+    });
+
+    it("Enduring Legacy keeps Fame upgrades; earned Fame repays them before it can be spent", () => {
+        const state = readyToAscend();
+        state.planes.upgrades = { enduringLegacy: 1 };
+        state.prestige.upgrades = { warChest: 2, hallOfHeroes: 1 }; // 4 + 10 + 25 = 39 Fame
+        expect(fameUpgradesValue(state).toNumber()).toBe(39);
+        expect(ascend(state, { life: 3, chaos: 2 }, "highMen")).toBe(true);
+        expect(state.prestige.upgrades).toEqual({ warChest: 2, hallOfHeroes: 1 });
+        expect(state.prestige.fameDebt.toNumber()).toBe(39);
+        gainFame(state, D(30));
+        expect(state.prestige.fame.toNumber()).toBe(0);
+        expect(state.prestige.fameDebt.toNumber()).toBe(9);
+        gainFame(state, D(20));
+        expect(state.prestige.fameDebt.toNumber()).toBe(0);
+        expect(state.prestige.fame.toNumber()).toBe(11);
+    });
+
+    it("Enduring Legacy switched off resets Fame upgrades as usual", () => {
+        const state = readyToAscend();
+        state.planes.upgrades = { enduringLegacy: 1 };
+        state.automation.keepFame = false;
+        state.prestige.upgrades = { warChest: 2 };
+        expect(ascend(state, { life: 3, chaos: 2 }, "highMen")).toBe(true);
+        expect(state.prestige.upgrades).toEqual({});
+        expect(state.prestige.fameDebt.toNumber()).toBe(0);
     });
 
     it("rejects an invalid profile", () => {

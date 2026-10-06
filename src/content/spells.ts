@@ -5,7 +5,7 @@
  *  - enchantment: cast once per run for mana, lasts until the run ends
  *  - summon:      opens a creature you can conjure in stacks with mana (see units.ts)
  *  - instant:     a burst of siege damage worth N seconds of your army's power,
- *                 with a cooldown
+ *                 for a fixed mana cost, with a cooldown
  *  - utility:     a lasting capability (e.g. Magic Spirit melds nodes,
  *                 Dispel Magic breaks rival wizards' wards)
  *
@@ -47,9 +47,9 @@ export interface SpellDef {
     effects?: EffectDef[];
     /** summon: the unit id it opens */
     unit?: string;
-    /** instant: siege damage in seconds of current power, cost in seconds of mana income, cooldown */
+    /** instant: siege damage in seconds of current power, a fixed mana cost (as in MoM), cooldown */
     siegeSeconds?: number;
-    manaSeconds?: number;
+    mana?: number;
     cooldown?: number;
     /** Can only be researched after clearing a Tower of Wizardry this run */
     requiresTower?: boolean;
@@ -148,7 +148,7 @@ const list: SpellDef[] = [
         text: "×5 army power",
     },
     { id: "archangel", name: "Archangel", realm: "life", rarity: "veryRare", kind: "summon", unit: "archangel", text: "Summon Archangels (cavalry)" },
-    { id: "holyWord", name: "Holy Word", realm: "life", rarity: "rare", kind: "instant", siegeSeconds: 240, manaSeconds: 60, cooldown: 120, text: "Siege burst: 240s of army power" },
+    { id: "holyWord", name: "Holy Word", realm: "life", rarity: "rare", kind: "instant", siegeSeconds: 240, mana: 2e4, cooldown: 120, text: "Siege burst: 240s of army power" },
 
     // --- Death ---
     {
@@ -190,10 +190,10 @@ const list: SpellDef[] = [
         effects: [{ stat: "army.power", op: "mult", value: 4 }, { stat: "mana.mult", op: "mult", value: 1.5 }],
         text: "×4 army power, ×1.5 mana",
     },
-    { id: "deathWish", name: "Death Wish", realm: "death", rarity: "veryRare", kind: "instant", siegeSeconds: 600, manaSeconds: 120, cooldown: 300, text: "Siege burst: 600s of army power" },
+    { id: "deathWish", name: "Death Wish", realm: "death", rarity: "veryRare", kind: "instant", siegeSeconds: 600, mana: 6e5, cooldown: 300, text: "Siege burst: 600s of army power" },
 
     // --- Chaos ---
-    { id: "fireBolt", name: "Fire Bolt", realm: "chaos", rarity: "common", kind: "instant", siegeSeconds: 30, manaSeconds: 10, cooldown: 20, text: "Siege burst: 30s of army power" },
+    { id: "fireBolt", name: "Fire Bolt", realm: "chaos", rarity: "common", kind: "instant", siegeSeconds: 30, mana: 25, cooldown: 20, text: "Siege burst: 30s of army power" },
     { id: "hellHounds", name: "Hell Hounds", realm: "chaos", rarity: "common", kind: "summon", unit: "hellHounds", text: "Summon Hell Hounds (cavalry)" },
     {
         id: "eldritchWeapon",
@@ -204,7 +204,7 @@ const list: SpellDef[] = [
         effects: [{ stat: "role.melee", op: "mult", value: 2 }, { stat: "role.cavalry", op: "mult", value: 2 }],
         text: "×2 melee and cavalry power",
     },
-    { id: "fireball", name: "Fireball", realm: "chaos", rarity: "uncommon", kind: "instant", siegeSeconds: 90, manaSeconds: 20, cooldown: 45, text: "Siege burst: 90s of army power" },
+    { id: "fireball", name: "Fireball", realm: "chaos", rarity: "uncommon", kind: "instant", siegeSeconds: 90, mana: 750, cooldown: 45, text: "Siege burst: 90s of army power" },
     { id: "chaosSpawn", name: "Chaos Spawn", realm: "chaos", rarity: "rare", kind: "summon", unit: "chaosSpawn", text: "Summon Chaos Spawn (melee)" },
     {
         id: "chaosRift",
@@ -288,7 +288,7 @@ const list: SpellDef[] = [
         effects: [{ stat: "gold.mult", op: "mult", value: 2 }, { stat: "knowledge.mult", op: "mult", value: 1.5 }],
         text: "×2 gold, ×1.5 knowledge",
     },
-    { id: "psionicBlast", name: "Psionic Blast", realm: "sorcery", rarity: "uncommon", kind: "instant", siegeSeconds: 60, manaSeconds: 15, cooldown: 30, text: "Siege burst: 60s of army power" },
+    { id: "psionicBlast", name: "Psionic Blast", realm: "sorcery", rarity: "uncommon", kind: "instant", siegeSeconds: 60, mana: 500, cooldown: 30, text: "Siege burst: 60s of army power" },
     { id: "stormGiant", name: "Storm Giant", realm: "sorcery", rarity: "rare", kind: "summon", unit: "stormGiant", text: "Summon Storm Giants (ranged)" },
     {
         id: "flight",
@@ -308,7 +308,7 @@ const list: SpellDef[] = [
         text: "Step between the planes: the Rite of the Tower costs half as much to research",
     },
     { id: "skyDrake", name: "Sky Drake", realm: "sorcery", rarity: "veryRare", kind: "summon", unit: "skyDrake", text: "Summon Sky Drakes (cavalry)" },
-    { id: "timeStop", name: "Time Stop", realm: "sorcery", rarity: "veryRare", kind: "instant", siegeSeconds: 900, manaSeconds: 150, cooldown: 400, text: "Siege burst: 900s of army power" },
+    { id: "timeStop", name: "Time Stop", realm: "sorcery", rarity: "veryRare", kind: "instant", siegeSeconds: 900, mana: 8e5, cooldown: 400, text: "Siege burst: 900s of army power" },
 ];
 
 export const SPELLS: Record<string, SpellDef> = Object.fromEntries(list.map((s) => [s.id, s]));

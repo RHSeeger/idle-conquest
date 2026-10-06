@@ -17,6 +17,7 @@ import {
     restoreRememberedSpells,
     freeRetorts,
     hasBooksForRetort,
+    instantCost,
     resolveFamiliar,
     retortPicks,
     retortsHoldingBooks,
@@ -33,7 +34,7 @@ import { GameState, newGame } from "../src/engine/state";
 import { RARITY_BOOKS, SPELLS } from "../src/content/spells";
 import { Realm } from "../src/content/magic";
 import { LORE_ORDER } from "../src/content/lore";
-import { autoLore } from "../src/engine/automation";
+import { autoLore, INSTANT_RESERVE_SECONDS, manaReserve } from "../src/engine/automation";
 import { lorePrice } from "../src/engine/costs";
 
 /** A state that meets the Ascension gate */
@@ -216,6 +217,33 @@ describe("Magic", () => {
         expect(castInstant(state, "fireBolt", D(100))).toBe(true);
         expect(state.run.frontier.siege.toNumber()).toBe(3000); // 30s x 100
         expect(castInstant(state, "fireBolt", D(100))).toBe(false);
+    });
+
+    it("instants have a fixed mana price, whatever your income", () => {
+        const state = wizard();
+        state.run.knowledge = D(1e6);
+        research(state, "fireBolt");
+        const price = instantCost(SPELLS.fireBolt);
+        expect(price.toNumber()).toBe(SPELLS.fireBolt.mana);
+        state.prestige.upgrades.scholars = 5; // anything that changes the economy leaves the price alone
+        state.rev++;
+        expect(instantCost(SPELLS.fireBolt).eq(price)).toBe(true);
+        state.run.mana = price;
+        expect(castInstant(state, "fireBolt", D(100))).toBe(true);
+        expect(state.run.mana.toNumber()).toBe(0);
+    });
+
+    it("auto-recruit leaves mana for instants within reach of your income", () => {
+        const state = wizard();
+        state.ascension.spellsKnown = ["fireBolt", "timeStop"];
+        state.run.mana = D(1e9);
+        const reach = manaRate(state, getStats(state)).times(INSTANT_RESERVE_SECONDS);
+        expect(reach.gte(SPELLS.fireBolt.mana!)).toBe(true);
+        expect(reach.lt(SPELLS.timeStop.mana!)).toBe(true);
+        // Fire Bolt is within reach and kept; Time Stop is out of reach and isn't
+        expect(manaReserve(state).toNumber()).toBe(SPELLS.fireBolt.mana);
+        state.run.mana = D(5);
+        expect(manaReserve(state).toNumber()).toBe(5); // never more than is on hand
     });
 
     it("keeps known spells across Refounds within an Ascension", () => {

@@ -357,8 +357,9 @@ export function castEnchantment(state: GameState, id: string): boolean {
 
 // --- Instants ---
 
-export function instantCost(state: GameState, spell: SpellDef): Decimal {
-    return manaRate(state, getStats(state)).times(spell.manaSeconds ?? 0).max(10);
+/** A fixed price per spell, so more mana income means more casts */
+export function instantCost(spell: SpellDef): Decimal {
+    return D(spell.mana ?? 0);
 }
 
 export function canCastInstant(state: GameState, id: string): boolean {
@@ -368,7 +369,7 @@ export function canCastInstant(state: GameState, id: string): boolean {
         spell.kind === "instant" &&
         knowsSpell(state, id) &&
         (state.run.cooldowns[id] ?? 0) <= 0 &&
-        state.run.mana.gte(instantCost(state, spell))
+        state.run.mana.gte(instantCost(spell))
     );
 }
 
@@ -380,7 +381,7 @@ export function canCastInstant(state: GameState, id: string): boolean {
 export function castInstant(state: GameState, id: string, powerAgainstTarget: Decimal): boolean {
     if (!canCastInstant(state, id)) return false;
     const spell = SPELLS[id];
-    state.run.mana = state.run.mana.minus(instantCost(state, spell));
+    state.run.mana = state.run.mana.minus(instantCost(spell));
     state.run.cooldowns[id] = spell.cooldown ?? 0;
     const damage = powerAgainstTarget.times(spell.siegeSeconds ?? 0).times(getStats(state).get("instant.power"));
     if (state.run.armyTarget !== null) {

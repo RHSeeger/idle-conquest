@@ -55,8 +55,10 @@ import {
     castEnchantment,
     castInstant,
     enchantmentCost,
+    instantCost,
     isWizard,
     knowsSpell,
+    manaRate,
     research,
     researchCost,
     validateBooks,
@@ -394,14 +396,27 @@ export function autoCast(state: GameState): void {
     }
 }
 
-/** Mana to keep for the cheapest known enchantment not yet cast this run */
-function manaReserve(state: GameState): Decimal {
-    const pending = state.ascension.spellsKnown
-        .map((id) => SPELLS[id])
+/** Auto-recruit leaves mana for every known instant that costs at most this many seconds of mana income */
+export const INSTANT_RESERVE_SECONDS = 120;
+
+/**
+ * Mana auto-recruit leaves alone: the cheapest known enchantment not yet cast
+ * this run, or the instants within reach (INSTANT_RESERVE_SECONDS of income),
+ * whichever is more. Summons would otherwise spend every mana point first.
+ */
+export function manaReserve(state: GameState): Decimal {
+    const known = state.ascension.spellsKnown.map((id) => SPELLS[id]).filter((s) => s);
+    const pending = known
         .filter((s) => s.kind === "enchantment" && !state.run.enchantments.includes(s.id))
         .map((s) => enchantmentCost(s))
         .sort((a, b) => a.cmp(b))[0];
-    return pending ? pending.min(state.run.mana) : ZERO;
+    const reach = manaRate(state, getStats(state)).times(INSTANT_RESERVE_SECONDS);
+    const instants = known
+        .filter((s) => s.kind === "instant")
+        .map((s) => instantCost(s))
+        .filter((c) => c.lte(reach))
+        .reduce((sum, c) => sum.plus(c), ZERO);
+    return (pending ?? ZERO).max(instants).min(state.run.mana);
 }
 
 /** Every currency troops can cost (summoned units cost mana) */
@@ -458,7 +473,8 @@ function runAutomationSteps(state: GameState, force: boolean, budgeted: boolean)
         const reserve = {
             production: savingFor ? state.run.production.div(2) : ZERO,
             gold: savingFor ? state.run.gold.div(2) : ZERO,
-            mana: on("cast") ? manaReserve(state) : ZERO,
+            // (also without auto-cast, so mana is there when you cast by hand)
+            mana: isWizard(state) ? manaReserve(state) : ZERO,
         };
         const before = { production: state.run.production, gold: state.run.gold, mana: state.run.mana };
         if (budgeted) {

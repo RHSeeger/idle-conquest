@@ -28,6 +28,7 @@ import {
 } from "../engine/magic";
 import { GameState } from "../engine/state";
 import { AutoToggle } from "./AutoToggle";
+import { INSTANT_RESERVE_SECONDS } from "../engine/automation";
 import { BreakdownView, Price, Tip } from "./components";
 import { game } from "./game";
 import { CurrentProfile } from "./AscensionPanel";
@@ -75,9 +76,9 @@ function SpellAction(props: { state: GameState; spell: SpellDef }) {
                     >
                         {cooldown > 0 ? fmtTime(cooldown) : "Cast"}
                     </button>
-                    <Tip tip={`Costs ${fmtTime(spell.manaSeconds ?? 0)} of your mana income, so it rises as your income grows (its siege burst grows with your army too).`}>
-                        <Price amount={instantCost(state, spell)} currency="mana" have={state.run.mana} />
-                        <span class="hint"> ({fmtTime(spell.manaSeconds ?? 0)} of mana)</span>
+                    <Tip tip={`A fixed price: the more mana you make, the more often you can cast it (up to once every ${fmtTime(spell.cooldown ?? 0)}). Its siege burst grows with your army. Auto-recruit leaves mana for instants you can afford within ${fmtTime(INSTANT_RESERVE_SECONDS)} of income.`}>
+                        <Price amount={instantCost(spell)} currency="mana" have={state.run.mana} />
+                        <span class="hint"> (every {fmtTime(spell.cooldown ?? 0)})</span>
                     </Tip>
                 </span>
             );

@@ -9,6 +9,8 @@ import { canBuyBuilding } from "../engine/actions";
 import { isAutomationActive } from "../engine/automation";
 import { canHire, tavernOffers } from "../engine/heroes";
 import { availableSpells, canCastEnchantment, canResearch, isWizard } from "../engine/magic";
+import { MYRRAN_WORK_ORDER } from "../content/myrror";
+import { canBuyMyrranWork } from "../engine/planes";
 import { GameState } from "../engine/state";
 
 function armyAttention(state: GameState): string | null {
@@ -32,10 +34,20 @@ function magicAttention(state: GameState): string | null {
     return reasons.length > 0 ? reasons.join("; ") : null;
 }
 
+function planesAttention(state: GameState): string | null {
+    const m = state.planes.myrror;
+    if (!m) return null;
+    const reasons: string[] = [];
+    if (m.pendingBoons.length > 0) reasons.push("A Myrran boon is waiting for your choice");
+    if (MYRRAN_WORK_ORDER.some((id) => canBuyMyrranWork(state, id))) reasons.push("You can afford a Myrran work");
+    return reasons.length > 0 ? reasons.join("; ") : null;
+}
+
 const CHECKS: Partial<Record<string, (state: GameState) => string | null>> = {
     army: armyAttention,
     buildings: buildingsAttention,
     magic: magicAttention,
+    planes: planesAttention,
 };
 
 /** Why a tab deserves a look, or null */

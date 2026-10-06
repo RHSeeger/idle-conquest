@@ -5,6 +5,7 @@
 import { cityName } from "../content/frontier";
 import { FamiliarChoice } from "../content/familiars";
 import { Realm } from "../content/magic";
+import type { MyrranResource } from "../content/myrror";
 import { MyrranRaceId, RaceId } from "../content/races";
 import { TraitId } from "../content/traits";
 import { D, Decimal } from "./decimal";
@@ -187,6 +188,17 @@ export interface PlanesState {
     bestMyrror: number;
     /** The Myrror campaign of the current Planeshift (null before the first) */
     myrror: MyrrorCampaign | null;
+    /** The boon last chosen for each source ("race:dwarf", "wizard:Merlin"), repeated by automation */
+    boonMemory: Record<string, string>;
+}
+
+/** A boon choice waiting for the player: two boon ids, from a capital or Fortress */
+export interface PendingBoon {
+    /** Memory key: "race:<id>" or "wizard:<name>" */
+    key: string;
+    /** Where it came from (a city name) */
+    from: string;
+    options: [string, string];
 }
 
 export interface MyrrorCampaign {
@@ -200,6 +212,29 @@ export interface MyrrorCampaign {
     /** Cities taken by force this Planeshift (feeds Planar Essence) */
     taken: number;
     wizardsDefeated: string[];
+    /** Myrran resources on hand (fractional with resource boons) */
+    resources: Record<MyrranResource, number>;
+    /** Myrran works bought: id -> level */
+    works: Record<string, number>;
+    /** Boons chosen this Planeshift (a boon may be chosen more than once) */
+    boons: string[];
+    pendingBoons: PendingBoon[];
+}
+
+export function newCampaign(beachhead: MyrranRaceId, links: number): MyrrorCampaign {
+    return {
+        beachhead,
+        index: 0,
+        siege: D(0),
+        links,
+        holdings: {},
+        taken: 0,
+        wizardsDefeated: [],
+        resources: { adamantium: 0, quork: 0, crysx: 0 },
+        works: {},
+        boons: [],
+        pendingBoons: [],
+    };
 }
 
 /** One finished run, for the Statistics tab */
@@ -247,6 +282,8 @@ export interface Automation {
     keepFame: boolean;
     /** How auto-buy picks Fame upgrades: the last Ascension's purchase order, or cheapest first */
     fameMode: "chronicle" | "cheapest";
+    /** Myrror boons: repeat the choice last made for the same race or wizard instead of asking */
+    repeatBoons: boolean;
     /** How auto-recruit picks troops */
     unitMode: "chronicle" | "efficient";
     /** How auto-build orders buildings: the last run's build order, or cheapest first */
@@ -378,6 +415,7 @@ export function newGame(now = Date.now()): GameState {
             wizardsDefeated: [],
             bestMyrror: 0,
             myrror: null,
+            boonMemory: {},
         },
         records: { totalRefounds: 0, fastestToWall: null, history: [] },
         automation: {
@@ -393,6 +431,7 @@ export function newGame(now = Date.now()): GameState {
             fame: true,
             keepFame: true,
             fameMode: "chronicle",
+            repeatBoons: true,
             unitMode: "chronicle",
             buildMode: "chronicle",
             recruitShare: 1,

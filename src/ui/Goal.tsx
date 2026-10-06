@@ -36,6 +36,9 @@ function nextGoal(state: GameState): string | null {
     }
     if (state.planes.myrror) {
         if (myrrorShare(state) <= 0) return "Send part of your army to Myrror with the slider in the Planes tab.";
+        if (state.planes.myrror.pendingBoons.length > 0 && state.planes.myrror.boons.length === 0) {
+            return "A Myrran capital has fallen: choose its boon in the Planes tab, and spend Myrran resources on works there.";
+        }
         return null;
     }
     if (isWizard(state) && planeshiftProgress(state).ready) {

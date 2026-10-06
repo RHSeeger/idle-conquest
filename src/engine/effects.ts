@@ -84,6 +84,10 @@ export const STAT_BASE: Record<string, number> = {
     "insight.mult": 1,
     // planes (Layer 3)
     "myrror.power": 1,
+    /** Multiplies the defense of Myrran region capitals and Fortresses */
+    "myrror.capitalDefense": 1,
+    /** Multiplies the Myrran resources each city taken yields */
+    "myrror.resources": 1,
     // costs
     "cost.building": 1,
     "cost.unit": 1,

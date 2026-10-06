@@ -12,6 +12,8 @@ import { hash, hashFloat, hashPick } from "../engine/rng";
 import { REGION_SIZE, RIVAL_WIZARDS } from "./frontier";
 import { MyrranRaceId, MYRROR_RING, neighborOrder, RACES } from "./races";
 import { TraitId } from "./traits";
+import { Realm, REALM_DEFS } from "./magic";
+import { RIVAL_WIZARD_DEFS } from "./wizards";
 
 /** Mutable so the balance simulator can try alternatives */
 export const MYRROR_TUNING = {
@@ -141,7 +143,6 @@ export function myrrorCity(beachhead: MyrranRaceId, plan: MyrrorRegion[], index:
 
 // --- Holdings ------------------------------------------------------------------
 
-/** What each Myrran race held on Myrror gives: ×(1 + 0.1 × cities) to one stat */
 /** Bridgehead: share of the best Myrror frontier that surrenders at once, per level */
 export const BRIDGEHEAD_PER_LEVEL = 0.2;
 /** Known on Two Worlds: share that surrenders at once; stacks with Bridgehead (see myrrorHeadStartFraction) */
@@ -152,6 +153,7 @@ export function headStartWithRenownPct(level: number): number {
     return Math.round(100 * Math.min(0.9, 1 - (1 - BRIDGEHEAD_PER_LEVEL * level) * (1 - KNOWN_ON_TWO_WORLDS)));
 }
 
+/** What each Myrran race held on Myrror gives: ×(1 + 0.1 × cities) to one stat */
 export const HOLDING_PER_CITY = 0.1;
 export const HOLDING_STAT: Record<MyrranRaceId, { stat: string; text: string }> = {
     beastmen: { stat: "knowledge.mult", text: "knowledge" },
@@ -161,6 +163,237 @@ export const HOLDING_STAT: Record<MyrranRaceId, { stat: string; text: string }> 
     klackon: { stat: "gold.mult", text: "gold" },
     troll: { stat: "myrror.power", text: "siege power on Myrror" },
 };
+
+// --- Myrran resources and works ------------------------------------------------------
+
+/**
+ * Myrror's own riches (from MoM: Adamantium ore, Quork and Crysx crystals).
+ * Every Myrran city taken yields its race's resource; they are spent on Myrran
+ * works. Both last until the next Planeshift, like the campaign.
+ */
+export type MyrranResource = "adamantium" | "quork" | "crysx";
+export const MYRRAN_RESOURCES: MyrranResource[] = ["adamantium", "quork", "crysx"];
+
+export const RESOURCE_DEFS: Record<MyrranResource, { name: string; icon: string }> = {
+    adamantium: { name: "Adamantium", icon: "⬢" },
+    quork: { name: "Quork", icon: "✧" },
+    crysx: { name: "Crysx", icon: "✶" },
+};
+
+export const RESOURCE_OF_RACE: Record<MyrranRaceId, MyrranResource> = {
+    dwarf: "adamantium",
+    troll: "adamantium",
+    beastmen: "quork",
+    klackon: "quork",
+    darkElf: "crysx",
+    draconian: "crysx",
+};
+
+/** Resource yield of a Myrran city taken, and of a region capital or Fortress */
+export const CITY_YIELD = 1;
+export const CAPITAL_YIELD = 3;
+
+export interface MyrranWorkDef {
+    id: string;
+    name: string;
+    resource: MyrranResource;
+    maxLevel: number;
+    cost: (level: number) => number;
+    effects: EffectDef[];
+    text: (level: number) => string;
+}
+
+const workCost = (l: number) => Math.round(2 * Math.pow(1.5, l));
+
+const workList: MyrranWorkDef[] = [
+    {
+        id: "adamantiumArms",
+        name: "Adamantium Arms",
+        resource: "adamantium",
+        maxLevel: 20,
+        cost: workCost,
+        effects: [{ stat: "army.power", op: "mult", value: (l) => Math.pow(1.25, l) }],
+        text: (l) => `×${fmtNum(Math.pow(1.25, l))} army power (both planes)`,
+    },
+    {
+        id: "myrranGarrisons",
+        name: "Myrran Garrisons",
+        resource: "adamantium",
+        maxLevel: 20,
+        cost: workCost,
+        effects: [{ stat: "myrror.power", op: "mult", value: (l) => Math.pow(1.5, l) }],
+        text: (l) => `×${fmtNum(Math.pow(1.5, l))} siege power on Myrror`,
+    },
+    {
+        id: "quorkFoci",
+        name: "Quork Foci",
+        resource: "quork",
+        maxLevel: 20,
+        cost: workCost,
+        effects: [
+            { stat: "mana.mult", op: "mult", value: (l) => Math.pow(1.5, l) },
+            { stat: "knowledge.mult", op: "mult", value: (l) => Math.pow(1.5, l) },
+        ],
+        text: (l) => `×${fmtNum(Math.pow(1.5, l))} mana and knowledge`,
+    },
+    {
+        id: "planarCaravans",
+        name: "Planar Caravans",
+        resource: "quork",
+        maxLevel: 20,
+        cost: workCost,
+        effects: [
+            { stat: "prod.mult", op: "mult", value: (l) => Math.pow(1.5, l) },
+            { stat: "gold.mult", op: "mult", value: (l) => Math.pow(1.5, l) },
+        ],
+        text: (l) => `×${fmtNum(Math.pow(1.5, l))} production and gold`,
+    },
+    {
+        id: "planarGate",
+        name: "Planar Gate",
+        resource: "crysx",
+        maxLevel: 5,
+        cost: (l) => Math.round(3 * Math.pow(2.5, l)),
+        effects: [],
+        text: (l) => (l === 0 ? "No extra planar links" : `+${l} planar link${l === 1 ? "" : "s"} (still at most ${MAX_LINKS})`),
+    },
+    {
+        id: "crysxLenses",
+        name: "Crysx Lenses",
+        resource: "crysx",
+        maxLevel: 20,
+        cost: workCost,
+        effects: [
+            { stat: "fame.mult", op: "mult", value: (l) => Math.pow(1.25, l) },
+            { stat: "insight.mult", op: "mult", value: (l) => Math.pow(1.25, l) },
+        ],
+        text: (l) => `×${fmtNum(Math.pow(1.25, l))} Fame and Insight`,
+    },
+];
+
+export const MYRRAN_WORKS: Record<string, MyrranWorkDef> = Object.fromEntries(workList.map((w) => [w.id, w]));
+export const MYRRAN_WORK_ORDER: string[] = workList.map((w) => w.id);
+
+// --- Boons: choices at Myrran region capitals and Fortresses ------------------------
+
+/**
+ * Taking a Myrran region capital offers a choice of two boons from its race: one
+ * that helps Arcanus, one that pushes Myrror. Banishing a Myrran wizard offers
+ * their vaults (resources now) or their spellbooks (a lasting bonus per realm).
+ * Boons last until the next Planeshift.
+ */
+export interface BoonDef {
+    id: string;
+    name: string;
+    /** Which plane a race boon helps (shown on the choice) */
+    side?: "arcanus" | "myrror";
+    effects: EffectDef[];
+    text: string;
+    /** Resources granted at once */
+    grant?: Partial<Record<MyrranResource, number>>;
+}
+
+const mult = (stat: string, value: number): EffectDef => ({ stat, op: "mult", value });
+
+/** Myrran region capitals and Fortresses defend at this multiple with an Infiltrators/Tunnelers boon */
+export const CAPITAL_DEFENSE_BOON = 0.6;
+
+export const RACE_BOONS: Record<MyrranRaceId, [BoonDef, BoonDef]> = {
+    beastmen: [
+        { id: "beastmen.arcanus", name: "Minotaur Sages", side: "arcanus", effects: [mult("knowledge.mult", 1.5)], text: "×1.5 knowledge" },
+        { id: "beastmen.myrror", name: "Manticore Outriders", side: "myrror", effects: [mult("myrror.power", 1.3)], text: "×1.3 siege power on Myrror" },
+    ],
+    darkElf: [
+        { id: "darkElf.arcanus", name: "Dark Elf Channelers", side: "arcanus", effects: [mult("mana.mult", 1.5)], text: "×1.5 mana" },
+        {
+            id: "darkElf.myrror",
+            name: "Nightblade Infiltrators",
+            side: "myrror",
+            effects: [mult("myrror.capitalDefense", CAPITAL_DEFENSE_BOON)],
+            text: `×${CAPITAL_DEFENSE_BOON} defense of Myrran region capitals and Fortresses`,
+        },
+    ],
+    draconian: [
+        { id: "draconian.arcanus", name: "Draconian Air Legions", side: "arcanus", effects: [mult("army.power", 1.3)], text: "×1.3 army power (both planes)" },
+        { id: "draconian.myrror", name: "Skyborne Couriers", side: "myrror", effects: [mult("myrror.resources", 1.5)], text: "×1.5 resources from Myrran cities" },
+    ],
+    dwarf: [
+        { id: "dwarf.arcanus", name: "Dwarven Forgemasters", side: "arcanus", effects: [mult("prod.mult", 1.5)], text: "×1.5 production" },
+        { id: "dwarf.myrror", name: "Steam Cannon Batteries", side: "myrror", effects: [mult("myrror.power", 1.3)], text: "×1.3 siege power on Myrror" },
+    ],
+    klackon: [
+        { id: "klackon.arcanus", name: "Klackon Hives", side: "arcanus", effects: [mult("gold.mult", 1.5)], text: "×1.5 gold" },
+        {
+            id: "klackon.myrror",
+            name: "Klackon Tunnelers",
+            side: "myrror",
+            effects: [mult("myrror.capitalDefense", CAPITAL_DEFENSE_BOON)],
+            text: `×${CAPITAL_DEFENSE_BOON} defense of Myrran region capitals and Fortresses`,
+        },
+    ],
+    troll: [
+        { id: "troll.arcanus", name: "Troll Chieftains' Tribute", side: "arcanus", effects: [mult("fame.mult", 1.25)], text: "×1.25 Fame from Refounds" },
+        { id: "troll.myrror", name: "War Troll Vanguard", side: "myrror", effects: [mult("myrror.power", 1.4)], text: "×1.4 siege power on Myrror" },
+    ],
+};
+
+/** Resources of each kind in a banished Myrran wizard's vaults */
+export const VAULT_AMOUNT = 10;
+
+/** What studying a banished wizard's spellbooks gives, per realm they know */
+export const REALM_LORE: Record<Realm, { effects: EffectDef[]; text: string }> = {
+    life: {
+        effects: [
+            { stat: "pop.max", op: "add", value: 1 },
+            { stat: "pop.growth", op: "mult", value: 1.5 },
+        ],
+        text: "+1 max population per city and ×1.5 growth",
+    },
+    death: { effects: [mult("army.power", 1.3)], text: "×1.3 army power" },
+    chaos: { effects: [mult("myrror.power", 1.5)], text: "×1.5 siege power on Myrror" },
+    nature: { effects: [mult("prod.mult", 1.5)], text: "×1.5 production" },
+    sorcery: {
+        effects: [mult("mana.mult", 1.5), mult("knowledge.mult", 1.5)],
+        text: "×1.5 mana and knowledge",
+    },
+};
+
+/** A banished Myrran wizard's two boons: their vaults, or their spellbooks */
+export function wizardBoons(wizard: string): [BoonDef, BoonDef] {
+    const realms = RIVAL_WIZARD_DEFS[wizard]?.realms ?? [];
+    // a wizard of a single realm knows it twice as well
+    const lore = realms.length === 1 ? [realms[0], realms[0]] : realms;
+    const grant = Object.fromEntries(MYRRAN_RESOURCES.map((r) => [r, VAULT_AMOUNT])) as Record<MyrranResource, number>;
+    return [
+        {
+            id: `vault:${wizard}`,
+            name: `${wizard}'s Vaults`,
+            effects: [],
+            grant,
+            text: `+${VAULT_AMOUNT} of each Myrran resource now`,
+        },
+        {
+            id: `lore:${wizard}`,
+            name: `${wizard}'s Spellbooks`,
+            effects: lore.flatMap((r) => REALM_LORE[r].effects),
+            text:
+                realms.length === 1
+                    ? `${REALM_LORE[realms[0]].text}, twice over (${wizard} knows only ${REALM_DEFS[realms[0]].name})`
+                    : realms.map((r) => REALM_LORE[r].text).join("; "),
+        },
+    ];
+}
+
+/** Looks up any boon by id (race boons, or a wizard's vault or spellbooks) */
+export function boonDef(id: string): BoonDef | null {
+    const [race, side] = id.split(".");
+    if (side) {
+        const pair = RACE_BOONS[race as MyrranRaceId];
+        return pair?.find((b) => b.id === id) ?? null;
+    }
+    const wizard = id.slice(id.indexOf(":") + 1);
+    return wizardBoons(wizard).find((b) => b.id === id) ?? null;
+}
 
 // --- Planar Essence upgrades -------------------------------------------------------
 

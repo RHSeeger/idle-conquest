@@ -6,7 +6,8 @@
  * are filled from a fresh game so adding new state never breaks old saves.
  */
 import { Decimal } from "./decimal";
-import { GameState, newGame, SAVE_VERSION } from "./state";
+import { backfillCampaign } from "./planes";
+import { GameState, newCampaign, newGame, SAVE_VERSION } from "./state";
 
 const STORAGE_KEY = "idle-conquest-save";
 
@@ -109,6 +110,13 @@ export function serialize(state: GameState): string {
 export function deserialize(json: string): GameState {
     const raw = migrate(decode(JSON.parse(json)));
     const state = fillDefaults(raw, newGame()) as GameState;
+    // the Myrror campaign defaults to null, so its own new fields are filled here
+    const m = state.planes.myrror;
+    if (m) {
+        const backfill = !raw.planes.myrror.resources;
+        state.planes.myrror = fillDefaults(m, newCampaign(m.beachhead, m.links));
+        if (backfill) backfillCampaign(state);
+    }
     state.rev++; // force derived data to recompute
     return state;
 }

@@ -12,23 +12,31 @@
  * Essence for the Myrran cities taken.
  */
 import {
+    boonDef,
     BRIDGEHEAD_PER_LEVEL,
+    CAPITAL_YIELD,
+    CITY_YIELD,
     ESSENCE_UPGRADES,
     HOLDING_PER_CITY,
     HOLDING_STAT,
     KNOWN_ON_TWO_WORLDS,
     MAX_LINKS,
+    MYRRAN_WORKS,
+    MyrranResource,
     myrrorCity,
     MyrrorCity,
     myrrorPlan,
     PLANESHIFT_MILESTONES,
     PlaneshiftMilestoneId,
+    RACE_BOONS,
+    RESOURCE_OF_RACE,
+    wizardBoons,
 } from "../content/myrror";
 import { REALMS } from "../content/magic";
 import { MyrranRaceId, RACES, RaceId } from "../content/races";
 import { RETORTS } from "../content/retorts";
 import { BASE_PICKS } from "../content/wizards";
-import { myrrorShare, powerByRole } from "./army";
+import { myrrorShare, planarLinks, powerByRole } from "./army";
 import { planeshiftProgress } from "./ascension";
 import { getStats, registerCollector } from "./collect";
 import { D, Decimal, ZERO } from "./decimal";
@@ -36,7 +44,7 @@ import { Stats } from "./effects";
 import { fmtInt } from "./format";
 import { effectiveTraits } from "./magic";
 import { applyRunStart, closeFameChronicle } from "./prestige";
-import { bump, GameState, log, MyrrorCampaign, newRun, recordRun } from "./state";
+import { bump, GameState, log, newCampaign, newRun, recordRun } from "./state";
 import { traitRoleMult, ROLES } from "../content/traits";
 
 export function hasPlaneshiftMilestone(state: GameState, id: PlaneshiftMilestoneId): boolean {
@@ -53,7 +61,13 @@ export function isMyrrorOpen(state: GameState): boolean {
 export function myrrorTarget(state: GameState): MyrrorCity | null {
     const m = state.planes.myrror;
     if (!m) return null;
-    return myrrorCity(m.beachhead, myrrorPlan(m.beachhead), m.index);
+    const city = myrrorCity(m.beachhead, myrrorPlan(m.beachhead), m.index);
+    // Infiltrators and Tunnelers (boons) weaken region capitals and Fortresses
+    if (city?.isRegionCapital) {
+        const mult = getStats(state).get("myrror.capitalDefense");
+        if (mult.neq(1)) return { ...city, defense: city.defense.times(mult) };
+    }
+    return city;
 }
 
 /** Siege power per second on Myrror against a city with the given traits */
@@ -101,6 +115,8 @@ export function conquerMyrror(state: GameState, city: MyrrorCity, surrendered: b
     if (!surrendered) m.taken++;
     state.planes.bestMyrror = Math.max(state.planes.bestMyrror, m.index);
     const firstOfRace = m.holdings[city.race] === 1;
+    const resource = RESOURCE_OF_RACE[city.race];
+    m.resources[resource] += cityYield(city) * getStats(state).num("myrror.resources");
     if (city.fortressOf) {
         const w = city.fortressOf;
         if (!m.wizardsDefeated.includes(w)) m.wizardsDefeated.push(w);
@@ -115,6 +131,118 @@ export function conquerMyrror(state: GameState, city: MyrrorCity, surrendered: b
                 (firstOfRace ? ` ${RACES[city.race].plural} now serve you: ${RACES[city.race].realmEffectText}.` : ""),
         );
     }
+    if (city.isRegionCapital) offerBoon(state, city);
+    bump(state);
+}
+
+function cityYield(city: MyrrorCity): number {
+    return city.isRegionCapital ? CAPITAL_YIELD : CITY_YIELD;
+}
+
+// --- Boons ---
+
+function boonSource(city: MyrrorCity): { key: string; options: [string, string] } {
+    if (city.fortressOf) {
+        const [a, b] = wizardBoons(city.fortressOf);
+        return { key: `wizard:${city.fortressOf}`, options: [a.id, b.id] };
+    }
+    const [a, b] = RACE_BOONS[city.race];
+    return { key: `race:${city.race}`, options: [a.id, b.id] };
+}
+
+/** A capital or Fortress was taken: repeat the remembered boon, or ask the player */
+function offerBoon(state: GameState, city: MyrrorCity): void {
+    const m = state.planes.myrror!;
+    const { key, options } = boonSource(city);
+    const remembered = state.planes.boonMemory[key];
+    if (state.automation.repeatBoons && remembered && options.includes(remembered)) {
+        grantBoon(state, remembered, `${city.name} (as before)`);
+        return;
+    }
+    m.pendingBoons.push({ key, from: city.name, options });
+    log(state, "milestone", `Myrror: ${city.name} offers a choice of boons (Planes tab).`);
+}
+
+function grantBoon(state: GameState, id: string, from: string): void {
+    const m = state.planes.myrror!;
+    const boon = boonDef(id);
+    if (!boon) return;
+    m.boons.push(id);
+    for (const [r, n] of Object.entries(boon.grant ?? {}) as [MyrranResource, number][]) {
+        m.resources[r] += n;
+    }
+    log(state, "milestone", `Myrror boon from ${from}: ${boon.name} (${boon.text}).`);
+    bump(state);
+}
+
+/** Resolves a pending boon choice (index into pendingBoons, option 0 or 1) */
+export function chooseBoon(state: GameState, pending: number, option: 0 | 1): boolean {
+    const m = state.planes.myrror;
+    const p = m?.pendingBoons[pending];
+    if (!m || !p) return false;
+    const id = p.options[option];
+    m.pendingBoons.splice(pending, 1);
+    state.planes.boonMemory[p.key] = id;
+    grantBoon(state, id, p.from);
+    return true;
+}
+
+/** How many times each boon has been chosen this Planeshift */
+export function boonCounts(state: GameState): Record<string, number> {
+    const counts: Record<string, number> = {};
+    for (const id of state.planes.myrror?.boons ?? []) counts[id] = (counts[id] ?? 0) + 1;
+    return counts;
+}
+
+// --- Myrran works ---
+
+export function myrranWorkLevel(state: GameState, id: string): number {
+    return state.planes.myrror?.works[id] ?? 0;
+}
+
+export function myrranWorkCost(state: GameState, id: string): number {
+    return MYRRAN_WORKS[id].cost(myrranWorkLevel(state, id));
+}
+
+export function canBuyMyrranWork(state: GameState, id: string): boolean {
+    const m = state.planes.myrror;
+    const w = MYRRAN_WORKS[id];
+    if (!m || !w || myrranWorkLevel(state, id) >= w.maxLevel) return false;
+    return m.resources[w.resource] >= myrranWorkCost(state, id);
+}
+
+export function buyMyrranWork(state: GameState, id: string): boolean {
+    if (!canBuyMyrranWork(state, id)) return false;
+    const m = state.planes.myrror!;
+    const w = MYRRAN_WORKS[id];
+    m.resources[w.resource] -= myrranWorkCost(state, id);
+    m.works[id] = myrranWorkLevel(state, id) + 1;
+    bump(state);
+    return true;
+}
+
+/**
+ * For a campaign begun before Myrran resources and boons existed: grants the
+ * resources of the cities already held and offers the boons of the capitals
+ * already taken. Called once, when such a save is loaded.
+ */
+export function backfillCampaign(state: GameState): void {
+    const m = state.planes.myrror;
+    if (!m) return;
+    const plan = myrrorPlan(m.beachhead);
+    let capitals = 0;
+    for (let i = 0; i < m.index; i++) {
+        const city = myrrorCity(m.beachhead, plan, i);
+        if (!city) break;
+        m.resources[RESOURCE_OF_RACE[city.race]] += cityYield(city);
+        if (city.isRegionCapital) {
+            m.pendingBoons.push({ from: city.name, ...boonSource(city) });
+            capitals++;
+        }
+    }
+    if (m.index > 0) {
+        log(state, "milestone", `Myrror's riches: the ${m.index} cities you hold yield their resources, and ${capitals} capitals offer boons (Planes tab).`);
+    }
     bump(state);
 }
 
@@ -125,7 +253,7 @@ export function addPlanarLink(state: GameState): void {
     const m = state.planes.myrror;
     if (!m || m.links >= MAX_LINKS) return;
     m.links++;
-    log(state, "milestone", `The Tower becomes a planar link (${m.links} of ${MAX_LINKS}): more of your army can reach Myrror.`);
+    log(state, "milestone", `The Tower becomes a planar link (${planarLinks(state)} of ${MAX_LINKS}): more of your army can reach Myrror.`);
     bump(state);
 }
 
@@ -232,16 +360,8 @@ export function planeshift(state: GameState, beachhead: MyrranRaceId, startRace:
     if (!p.annals.includes(startRace)) p.annals.push(startRace);
 
     // a fresh Myrror campaign
-    const campaign: MyrrorCampaign = {
-        beachhead,
-        index: 0,
-        siege: D(0),
-        links: hasPlaneshiftMilestone(state, "twinTowers") ? 2 : 1,
-        holdings: {},
-        taken: 0,
-        wizardsDefeated: [],
-    };
-    pl.myrror = campaign;
+    // (Myrran resources, works and boons go with it)
+    pl.myrror = newCampaign(beachhead, hasPlaneshiftMilestone(state, "twinTowers") ? 2 : 1);
     applyMyrrorHeadStart(state);
 
     log(
@@ -316,6 +436,20 @@ registerCollector((state, stats) => {
         if (n <= 0) continue;
         const { stat } = HOLDING_STAT[r];
         stats.addModifier(stat, { source: `${RACES[r].plural} on Myrror ×${n}`, op: "mult", value: D(1 + HOLDING_PER_CITY * n) });
+    }
+});
+
+registerCollector((state, stats) => {
+    const m = state.planes.myrror;
+    if (!m) return;
+    for (const [id, level] of Object.entries(m.works)) {
+        const w = MYRRAN_WORKS[id];
+        if (w && level > 0) stats.applyEffects(`Myrran works: ${w.name} ${level}`, w.effects, level);
+    }
+    for (const [id, n] of Object.entries(boonCounts(state))) {
+        const b = boonDef(id);
+        if (!b) continue;
+        for (let i = 0; i < n; i++) stats.applyEffects(`Myrror boon: ${b.name}${n > 1 ? ` (${i + 1})` : ""}`, b.effects);
     }
 });
 

@@ -949,6 +949,55 @@ tr.current td {
     border-color: var(--essence);
 }
 
+/* Myrran resources, works and boons */
+:root {
+    --adamantium: #5a6e8c;
+    --quork: #b0457a;
+    --crysx: #b06a1f;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --adamantium: #9fb4d6;
+        --quork: #e48ab8;
+        --crysx: #e8a860;
+    }
+}
+
+.myrran.adamantium {
+    color: var(--adamantium);
+}
+.myrran.quork {
+    color: var(--quork);
+}
+.myrran.crysx {
+    color: var(--crysx);
+}
+
+.myrran-resources {
+    font-size: 14px;
+    font-weight: normal;
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-left: 8px;
+}
+
+.boon-choice {
+    border: 1px solid var(--essence);
+    border-radius: 6px;
+    padding: 8px 10px;
+    margin: 8px 0;
+}
+.boon-choice .cards {
+    margin-top: 6px;
+}
+
+ul.boons {
+    margin: 4px 0;
+    padding-left: 20px;
+}
+
 .auto-prestige {
     margin-top: 8px;
 }

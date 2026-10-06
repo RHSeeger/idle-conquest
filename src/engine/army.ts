@@ -19,7 +19,7 @@ import { RACES } from "../content/races";
 import { Role, ROLES, TraitId, traitRoleMult } from "../content/traits";
 import { DRILL_STEP, UNITS, UNIT_ORDER } from "../content/units";
 import { RIVAL_WIZARD_DEFS } from "../content/wizards";
-import { SHARE_PER_LINK } from "../content/myrror";
+import { MAX_LINKS, SHARE_PER_LINK } from "../content/myrror";
 import { XP_PER_CONQUEST } from "../content/heroes";
 import { grantHeroXp } from "./heroes";
 import { racesInRealm } from "./collect";
@@ -109,7 +109,14 @@ export function maxMyrrorShare(state: GameState): number {
     const m = state.planes.myrror;
     if (!m) return 0;
     const anchor = state.planes.upgrades["planarAnchor"] ?? 0;
-    return Math.min(0.9, SHARE_PER_LINK * (m.links + anchor));
+    return Math.min(0.9, SHARE_PER_LINK * (planarLinks(state) + anchor));
+}
+
+/** Planar links in use: Towers cleared this Planeshift plus Planar Gates (Myrran work), at most MAX_LINKS */
+export function planarLinks(state: GameState): number {
+    const m = state.planes.myrror;
+    if (!m) return 0;
+    return Math.min(MAX_LINKS, m.links + (m.works.planarGate ?? 0));
 }
 
 export function myrrorShare(state: GameState): number {

@@ -250,6 +250,16 @@ Exploration in L2 can reveal **Towers of Wizardry**. These are heavy lairs, and 
 | Klackons | gold | Stag Beetles (melee) |
 | Trolls | Myrror siege power | War Trolls (melee) |
 
+**Myrran resources and works** (built for "Planes feels thin"):
+- Every Myrran city taken (or surrendered) yields 1 of its race's resource; region capitals and Fortresses yield 3. **Adamantium** comes from Dwarves and Trolls, **Quork** from Beastmen and Klackons, **Crysx** from Dark Elves and Draconians.
+- They are spent on six **Myrran works**, two per resource: Adamantium Arms (army power), Myrran Garrisons (Myrror siege), Quork Foci (mana and knowledge), Planar Caravans (production and gold), Planar Gate (+1 planar link) and Crysx Lenses (Fame and Insight).
+- Resources and works last until the next Planeshift, as the campaign does.
+
+**Boons:**
+- Each Myrran region capital offers a choice of two boons of its race: one that helps Arcanus, one that pushes Myrror (siege power, weaker capitals, more resources).
+- A banished Myrran wizard offers their **Vaults** (resources now) or their **Spellbooks** (a lasting bonus for each realm they know).
+- Boons last the Planeshift and stack. **Repeat boon choices** (on by default) reuses the last choice for the same race or wizard, so each is asked once.
+
 **Planar Essence on Planeshift** = (Myrran cities taken ÷ 4)^1.3 × (1 + 0.25 per Myrran race held) × (1 + Myrran wizards banished this Planeshift).
 
 **Parallel choice:** the Myrran **beachhead race**, which decides the order you meet Myrror's races and wizards, plus the wizard profile you start with.
@@ -269,7 +279,6 @@ Exploration in L2 can reveal **Towers of Wizardry**. These are heavy lairs, and 
 
 **Deferred:**
 - Choosing which plane holds your Fortress.
-- Myrror-only resources (Adamantium, Crysx, Quork).
 - Planar Seal and other plane-specific enchantments.
 
 These are good candidates once the core loop has been played.

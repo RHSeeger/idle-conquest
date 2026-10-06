@@ -1,14 +1,29 @@
 import { describe, expect, it } from "vitest";
 import { LAIRS } from "../src/content/exploration";
 import { REGION_SIZE } from "../src/content/frontier";
-import { headStartWithRenownPct, MAX_LINKS, myrrorCity, myrrorPlan } from "../src/content/myrror";
-import { currentTarget, isUnitAvailable, maxMyrrorShare, myrrorShare, siegePower } from "../src/engine/army";
+import {
+    boonDef,
+    CAPITAL_DEFENSE_BOON,
+    CAPITAL_YIELD,
+    CITY_YIELD,
+    headStartWithRenownPct,
+    MAX_LINKS,
+    MYRRAN_RESOURCES,
+    myrrorCity,
+    myrrorPlan,
+    VAULT_AMOUNT,
+    wizardBoons,
+} from "../src/content/myrror";
+import { currentTarget, isUnitAvailable, maxMyrrorShare, myrrorShare, planarLinks, siegePower } from "../src/engine/army";
+import { deserialize, serialize } from "../src/engine/save";
 import { getStats } from "../src/engine/collect";
 import { D } from "../src/engine/decimal";
 import { isWizard } from "../src/engine/magic";
 import {
     addPlanarLink,
+    buyMyrranWork,
     canPlaneshift,
+    chooseBoon,
     conquerMyrror,
     essenceOnPlaneshift,
     fitProfile,
@@ -143,6 +158,139 @@ describe("Myrror", () => {
         state.planes.planeshifts = 4; // Known on Two Worlds
         expect(withLevels()).toEqual([50, 60, 70, 80, 90]);
         expect([0, 1, 2, 3, 4].map(headStartWithRenownPct)).toEqual([50, 60, 70, 80, 90]);
+    });
+
+    /** Takes Myrror cities until the next one is a region capital, then that one too */
+    function takeRegion(state: GameState) {
+        let city = myrrorTarget(state)!;
+        while (!city.isRegionCapital) {
+            conquerMyrror(state, city, false);
+            city = myrrorTarget(state)!;
+        }
+        conquerMyrror(state, city, false);
+        return city;
+    }
+
+    it("cities yield their race's resource, capitals more", () => {
+        const state = opened(); // a Troll beachhead: Adamantium
+        conquerMyrror(state, myrrorTarget(state)!, false);
+        expect(state.planes.myrror!.resources.adamantium).toBe(CITY_YIELD);
+        takeRegion(state);
+        expect(state.planes.myrror!.resources.adamantium).toBe((REGION_SIZE - 1) * CITY_YIELD + CAPITAL_YIELD);
+        expect(state.planes.myrror!.resources.quork).toBe(0);
+    });
+
+    it("Myrran works cost resources and take effect", () => {
+        const state = opened();
+        const m = state.planes.myrror!;
+        expect(buyMyrranWork(state, "adamantiumArms")).toBe(false);
+        m.resources.adamantium = 5;
+        const before = getStats(state).num("army.power");
+        expect(buyMyrranWork(state, "adamantiumArms")).toBe(true);
+        expect(m.resources.adamantium).toBe(3);
+        expect(getStats(state).num("army.power")).toBeCloseTo(before * 1.25);
+    });
+
+    it("Planar Gates add links, still at most six", () => {
+        const state = opened();
+        const m = state.planes.myrror!;
+        m.works.planarGate = 2;
+        expect(planarLinks(state)).toBe(m.links + 2);
+        expect(maxMyrrorShare(state)).toBeCloseTo(0.1 * (m.links + 2));
+        m.links = MAX_LINKS;
+        expect(planarLinks(state)).toBe(MAX_LINKS);
+    });
+
+    it("a region capital offers a choice of two boons, remembered for next time", () => {
+        const state = opened();
+        state.automation.repeatBoons = true;
+        const capital = takeRegion(state);
+        const m = state.planes.myrror!;
+        expect(m.pendingBoons).toHaveLength(1);
+        expect(m.pendingBoons[0].from).toBe(capital.name);
+        expect(m.pendingBoons[0].options).toEqual(["troll.arcanus", "troll.myrror"]);
+
+        const before = getStats(state).num("myrror.power");
+        expect(chooseBoon(state, 0, 1)).toBe(true);
+        expect(m.pendingBoons).toHaveLength(0);
+        expect(m.boons).toEqual(["troll.myrror"]);
+        expect(getStats(state).num("myrror.power")).toBeCloseTo(before * 1.4);
+        expect(state.planes.boonMemory["race:troll"]).toBe("troll.myrror");
+
+        // the same race's next capital repeats the choice; with repeat off it asks
+        // (taking the Troll Borderlands again stands in for another Troll capital)
+        m.index = 0;
+        takeRegion(state);
+        expect(m.pendingBoons).toHaveLength(0);
+        expect(m.boons).toEqual(["troll.myrror", "troll.myrror"]);
+        state.automation.repeatBoons = false;
+        m.index = 0;
+        takeRegion(state);
+        expect(m.pendingBoons).toHaveLength(1);
+    });
+
+    it("capital-defense boons weaken region capitals only", () => {
+        const state = opened();
+        const m = state.planes.myrror!;
+        m.index = REGION_SIZE - 1; // the Borderlands capital
+        const full = myrrorTarget(state)!.defense;
+        m.boons.push("klackon.myrror");
+        state.rev++;
+        expect(myrrorTarget(state)!.defense.toNumber()).toBeCloseTo(full.toNumber() * CAPITAL_DEFENSE_BOON);
+        m.index = 0;
+        expect(myrrorTarget(state)!.defense.eq(myrrorCity("troll", myrrorPlan("troll"), 0)!.defense)).toBe(true);
+    });
+
+    it("a banished wizard offers their vaults or their spellbooks", () => {
+        const [vault, lore] = wizardBoons("Jafar"); // Sorcery only: twice over
+        expect(vault.grant).toEqual({ adamantium: VAULT_AMOUNT, quork: VAULT_AMOUNT, crysx: VAULT_AMOUNT });
+        expect(lore.effects).toHaveLength(4);
+        expect(boonDef(lore.id)).toEqual(lore);
+        expect(boonDef("dwarf.arcanus")?.name).toBe("Dwarven Forgemasters");
+
+        const state = opened();
+        const m = state.planes.myrror!;
+        const plan = myrrorPlan("troll");
+        m.index = (plan.findIndex((r) => r.kind === "wizard") + 1) * REGION_SIZE - 1;
+        const fortress = myrrorTarget(state)!;
+        expect(fortress.fortressOf).toBeTruthy();
+        conquerMyrror(state, fortress, false);
+        expect(m.pendingBoons[0].key).toBe(`wizard:${fortress.fortressOf}`);
+        const quork = m.resources.quork;
+        chooseBoon(state, 0, 0);
+        expect(m.resources.quork).toBe(quork + VAULT_AMOUNT);
+    });
+
+    it("resources, works and boons reset on Planeshift; the boon memory stays", () => {
+        const state = opened();
+        takeRegion(state);
+        chooseBoon(state, 0, 0);
+        state.planes.myrror!.works.adamantiumArms = 3;
+        state.run.sites.push({ index: 9, kind: "lair", type: "towerOfWizardry", traits: [], defense: D(1), cleared: true });
+        state.ascension.spellsKnown = ["riteOfTheTower"];
+        expect(planeshift(state, "dwarf", "highMen")).toBe(true);
+        const m = state.planes.myrror!;
+        expect(m.works).toEqual({});
+        expect(m.boons).toEqual([]);
+        expect(state.planes.boonMemory["race:troll"]).toBe("troll.arcanus");
+    });
+
+    it("an older save's campaign gets the resources and boons of what it already holds", () => {
+        const state = opened();
+        state.planes.myrror!.index = REGION_SIZE * 2;
+        const raw = JSON.parse(serialize(state));
+        delete raw.planes.myrror.resources;
+        delete raw.planes.myrror.works;
+        delete raw.planes.myrror.boons;
+        delete raw.planes.myrror.pendingBoons;
+        const loaded = deserialize(JSON.stringify(raw));
+        const m = loaded.planes.myrror!;
+        expect(m.pendingBoons).toHaveLength(2);
+        const total = MYRRAN_RESOURCES.reduce((s, r) => s + m.resources[r], 0);
+        expect(total).toBe(2 * ((REGION_SIZE - 1) * CITY_YIELD + CAPITAL_YIELD));
+        expect(m.works).toEqual({});
+        // a current save is left alone
+        expect(deserialize(serialize(loaded)).planes.myrror!.pendingBoons).toHaveLength(2);
     });
 
     it("advances its siege over time", () => {

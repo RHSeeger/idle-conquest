@@ -4,24 +4,39 @@
 import { useState } from "preact/hooks";
 import { REGION_SIZE } from "../content/frontier";
 import {
+    boonDef,
+    CAPITAL_YIELD,
+    CITY_YIELD,
     ESSENCE_UPGRADES,
     ESSENCE_UPGRADE_ORDER,
     HOLDING_PER_CITY,
     HOLDING_STAT,
     MAX_LINKS,
+    MYRRAN_RESOURCES,
+    MYRRAN_WORK_ORDER,
+    MYRRAN_WORKS,
+    MyrranResource,
     myrrorEnd,
     myrrorPlan,
     PLANESHIFT_MILESTONES,
+    RESOURCE_DEFS,
+    RESOURCE_OF_RACE,
     SHARE_PER_LINK,
 } from "../content/myrror";
 import { MyrranRaceId, MYRROR_RING, RACES, RaceId } from "../content/races";
-import { maxMyrrorShare, myrrorShare } from "../engine/army";
+import { maxMyrrorShare, myrrorShare, planarLinks } from "../engine/army";
 import { planeshiftProgress } from "../engine/ascension";
 import { getStats } from "../engine/collect";
 import { fmt, fmtInt, fmtTime } from "../engine/format";
 import {
+    boonCounts,
     buyEssenceUpgrade,
+    buyMyrranWork,
     canBuyEssenceUpgrade,
+    canBuyMyrranWork,
+    chooseBoon,
+    myrranWorkCost,
+    myrranWorkLevel,
     canPlaneshift,
     essenceOnPlaneshift,
     essenceUpgradeCost,
@@ -53,7 +68,7 @@ function PlaneshiftSection() {
     const doShift = () => {
         const text = [
             `Planeshift, opening Myrror among the ${RACES[beachhead].plural}?`,
-            `Your realm, Fame, refounds, Insight, Insight upgrades, Ascensions and spells reset${pl.myrror ? ", and so does this Myrror campaign" : ""}.`,
+            `Your realm, Fame, refounds, Insight, Insight upgrades, Ascensions and spells reset${pl.myrror ? ", and so does this Myrror campaign (with its resources, works and boons)" : ""}.`,
             `You stay a Wizard (${profileText(profile.books, profile.retorts)}) and gain ${fmtInt(essence)} Planar Essence.`,
         ].join("\n\n");
         if (confirm(text)) planeshift(state, beachhead, startRace);
@@ -112,12 +127,14 @@ function MyrrorSection() {
     const regionIdx = Math.floor(m.index / REGION_SIZE);
     const max = maxMyrrorShare(state);
     const share = myrrorShare(state);
+    const links = planarLinks(state);
 
     return (
         <section>
             <h2>
                 Myrror <span class="count">· city {m.index + 1} of {myrrorEnd(plan)}</span>
             </h2>
+            <PendingBoons />
             <div class="slider-row">
                 <span>Arcanus {Math.round((1 - share) * 100)}%</span>
                 <input
@@ -131,8 +148,9 @@ function MyrrorSection() {
                 <span>Myrror {Math.round(share * 100)}%</span>
             </div>
             <p class="hint">
-                Planar links: <b>{m.links}</b> of {MAX_LINKS} (each Tower of Wizardry cleared this Planeshift adds one).
-                Each link lets {SHARE_PER_LINK * 100}% of your army fight on Myrror{max > SHARE_PER_LINK * m.links && ", plus Planar Anchor"}:
+                Planar links: <b>{links}</b> of {MAX_LINKS} (each Tower of Wizardry cleared this Planeshift adds one
+                {myrranWorkLevel(state, "planarGate") > 0 && ", and so does each Planar Gate"}).
+                Each link lets {SHARE_PER_LINK * 100}% of your army fight on Myrror{max > SHARE_PER_LINK * links && ", plus Planar Anchor"}:
                 at most {Math.round(max * 100)}% now. The rest besieges Arcanus and raids its lairs.
             </p>
             {target ? (
@@ -206,6 +224,137 @@ function MyrrorSection() {
     );
 }
 
+/** Boon choices waiting at taken capitals and Fortresses */
+function PendingBoons() {
+    const state = game();
+    const pending = state.planes.myrror?.pendingBoons ?? [];
+    if (pending.length === 0) return null;
+    const p = pending[0];
+    return (
+        <div class="boon-choice">
+            <div>
+                <b>{p.from}</b> offers a boon. Choose one{" "}
+                <span class="hint">
+                    (lasts until the next Planeshift{pending.length > 1 ? ` · ${pending.length - 1} more waiting` : ""})
+                </span>
+            </div>
+            <div class="cards">
+                {p.options.map((id, i) => {
+                    const b = boonDef(id);
+                    if (!b) return null;
+                    return (
+                        <button key={id} class="card" onClick={() => chooseBoon(state, 0, i as 0 | 1)}>
+                            <div class="card-title">
+                                {b.name} <span class="count">{b.grant ? "now" : b.side ? `for ${b.side === "arcanus" ? "Arcanus" : "Myrror"}` : "lasting"}</span>
+                            </div>
+                            <div class="card-text">{b.text}</div>
+                        </button>
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
+
+function Resources() {
+    const state = game();
+    const m = state.planes.myrror!;
+    return (
+        <span class="myrran-resources">
+            {MYRRAN_RESOURCES.map((r) => (
+                <span key={r} class={"myrran " + r}>
+                    {RESOURCE_DEFS[r].icon} {RESOURCE_DEFS[r].name} <b>{Math.floor(m.resources[r])}</b>
+                </span>
+            ))}
+        </span>
+    );
+}
+
+const RESOURCE_RACES = (r: MyrranResource) =>
+    MYRROR_RING.filter((race) => RESOURCE_OF_RACE[race] === r)
+        .map((race) => RACES[race].plural)
+        .join(" and ");
+
+/** Myrran resources, the works they buy, and the boons chosen this Planeshift */
+function MyrranRiches() {
+    const state = game();
+    const m = state.planes.myrror!;
+    const counts = boonCounts(state);
+    const repeat = state.automation.repeatBoons;
+    return (
+        <section>
+            <h2>
+                Myrran works <Resources />
+            </h2>
+            <p class="hint">
+                Every Myrran city taken yields {CITY_YIELD} of its race's resource, region capitals and Fortresses{" "}
+                {CAPITAL_YIELD}: Adamantium from {RESOURCE_RACES("adamantium")}, Quork from {RESOURCE_RACES("quork")},
+                Crysx from {RESOURCE_RACES("crysx")}. Works last until the next Planeshift, as the campaign does.
+            </p>
+            <div class="cards">
+                {MYRRAN_WORK_ORDER.map((id) => {
+                    const w = MYRRAN_WORKS[id];
+                    const level = myrranWorkLevel(state, id);
+                    const maxed = level >= w.maxLevel;
+                    return (
+                        <button key={id} class="card" disabled={!canBuyMyrranWork(state, id)} onClick={() => buyMyrranWork(state, id)}>
+                            <div class="card-title">
+                                {w.name}{" "}
+                                <span class="count">
+                                    {level}/{w.maxLevel}
+                                </span>
+                            </div>
+                            <div class="card-text">
+                                {w.text(level)}
+                                {!maxed && <> → {w.text(level + 1)}</>}
+                            </div>
+                            <div class="card-cost">
+                                {maxed ? (
+                                    <span class="hint">maxed</span>
+                                ) : (
+                                    <span class={"price myrran " + w.resource}>
+                                        {RESOURCE_DEFS[w.resource].icon} {myrranWorkCost(state, id)}
+                                    </span>
+                                )}
+                            </div>
+                        </button>
+                    );
+                })}
+            </div>
+            <h3>Boons</h3>
+            <p class="hint">
+                Each region capital you take offers two boons of its race: one for Arcanus, one for Myrror. A banished
+                Myrran wizard offers their vaults or their spellbooks.
+            </p>
+            {m.boons.length > 0 && (
+                <ul class="boons">
+                    {Object.entries(counts).map(([id, n]) => {
+                        const b = boonDef(id);
+                        return (
+                            b && (
+                                <li key={id}>
+                                    <b>{b.name}</b>
+                                    {n > 1 && ` ×${n}`}: {b.text}
+                                </li>
+                            )
+                        );
+                    })}
+                </ul>
+            )}
+            <div class="row auto-prestige">
+                <button class={"toggle auto" + (repeat ? " on" : "")} onClick={() => (state.automation.repeatBoons = !repeat)}>
+                    Repeat boon choices: {repeat ? "on" : "off"}
+                </button>
+                <span class="hint">
+                    {repeat
+                        ? "A capital or Fortress you've chosen for before gets the same boon again (also in later Planeshifts). New ones still ask."
+                        : "Every capital and Fortress asks you to choose."}
+                </span>
+            </div>
+        </section>
+    );
+}
+
 const MYRRAN_UNIT: Record<MyrranRaceId, string> = {
     beastmen: "Manticore Riders (needs Stables)",
     darkElf: "Nightblades",
@@ -274,6 +423,7 @@ export function PlanesPanel() {
     return (
         <div class="panel">
             {isMyrrorOpen(state) && <MyrrorSection />}
+            {isMyrrorOpen(state) && <MyrranRiches />}
             <PlaneshiftSection />
             {state.planes.planeshifts > 0 && <EssenceSection />}
         </div>

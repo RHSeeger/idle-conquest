@@ -89,6 +89,29 @@ describe("Ascension", () => {
         }
     });
 
+    it("Eternal Companions also keeps heroes through the Refounds after an Ascension", () => {
+        const state = readyToAscend();
+        state.ascension.upgrades = { eternalCompanions: 2 };
+        state.prestige.upgrades = { hallOfHeroes: 1 };
+        state.run.heroes = [
+            { id: "brax", xp: 5 },
+            { id: "zaldron", xp: 40 },
+            { id: "valana", xp: 20 },
+        ];
+        expect(ascend(state, { life: 3, chaos: 2 }, "highMen")).toBe(true);
+        expect(state.prestige.upgrades.hallOfHeroes).toBeUndefined(); // reset by the Ascension
+        // the next Refound, before Hall of Heroes is bought again
+        state.run.racesConquered = ["halfling"];
+        expect(refound(state, "highMen")).toBe(true);
+        expect(state.run.heroes.map((h) => h.id)).toEqual(["zaldron", "valana"]);
+        // Hall of Heroes still counts when it keeps more
+        state.prestige.upgrades = { hallOfHeroes: 3 };
+        state.run.heroes.push({ id: "brax", xp: 1 });
+        state.run.racesConquered = ["halfling"];
+        refound(state, "highMen");
+        expect(state.run.heroes.map((h) => h.id)).toEqual(["zaldron", "valana", "brax"]);
+    });
+
     it("rejects an invalid profile", () => {
         const state = readyToAscend();
         expect(ascend(state, { sorcery: 2 }, "highMen")).toBe(false);

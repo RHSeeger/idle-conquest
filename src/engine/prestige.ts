@@ -49,9 +49,24 @@ export function earnsMastery(state: GameState): boolean {
     return state.run.conqueredPop > 0;
 }
 
-/** The heroes Hall of Heroes would carry into the next run: the most experienced, one per level */
+/**
+ * What keeps heroes through a Refound: Hall of Heroes (Fame) or Eternal
+ * Companions (Insight, which also covers Refounds), whichever keeps more.
+ * Eternal Companions counts here so heroes it carried through an Ascension
+ * aren't lost at the next Refound, before Hall of Heroes is bought again.
+ */
+export function refoundHeroKeeper(state: GameState): { name: string; slots: number } {
+    const hall = fameUpgradeLevel(state, "hallOfHeroes");
+    // read directly: ascension.ts imports this module
+    const companions = state.ascension.upgrades.eternalCompanions ?? 0;
+    return companions > 0 && companions >= hall
+        ? { name: "Eternal Companions", slots: companions }
+        : { name: "Hall of Heroes", slots: hall };
+}
+
+/** The heroes that would follow you into the next run on a Refound: the most experienced, one per slot */
 export function heroesKeptOnRefound(state: GameState): Hero[] {
-    return mostExperienced(state, fameUpgradeLevel(state, "hallOfHeroes"));
+    return mostExperienced(state, refoundHeroKeeper(state).slots);
 }
 
 /** How much of the surrendered cities' tribute has built up (0..TRIBUTE_SHARE) */
@@ -126,7 +141,7 @@ export function refound(state: GameState, nextRace: RaceId): boolean {
     );
 
     const kept = heroesKeptOnRefound(state);
-    heroCarryLog(state, kept, "Hall of Heroes");
+    heroCarryLog(state, kept, refoundHeroKeeper(state).name);
 
     state.run = newRun(nextRace);
     state.run.heroes = kept.map((h) => ({ ...h }));
@@ -243,8 +258,19 @@ export function buyFameUpgrade(state: GameState, id: string): boolean {
     }
     state.prestige.fame = state.prestige.fame.minus(fameUpgradeCost(state, id));
     state.prestige.upgrades[id] = fameUpgradeLevel(state, id) + 1;
+    state.prestige.fameOrder.push(id);
     bump(state);
     return true;
+}
+
+/**
+ * Called when the Fame tree resets (Ascension, Planeshift): this Ascension's
+ * purchase order becomes the Fame Chronicle that auto-buy can replay.
+ */
+export function closeFameChronicle(state: GameState): void {
+    const p = state.prestige;
+    if (p.fameOrder.length > 0) state.ascension.fameChronicle = [...p.fameOrder];
+    p.fameOrder = [];
 }
 
 // --- Effect sources ---

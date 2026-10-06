@@ -26,7 +26,8 @@ import {
     tributeShare,
 } from "../engine/prestige";
 import { game } from "./game";
-import { AutoPrestige } from "./AutoToggle";
+import { AutoMode, AutoPrestige, AutoToggle, ModeOption } from "./AutoToggle";
+import { isAutomationUnlocked, nextFameChronicleStep } from "../engine/automation";
 import { heroRefoundText } from "./HeroesSection";
 
 function RefoundSection() {
@@ -125,6 +126,37 @@ function RefoundSection() {
     );
 }
 
+const FAME_MODES: ModeOption<"chronicle" | "cheapest">[] = [
+    { value: "chronicle", label: "Chronicle", tip: "Replay the order you bought Fame upgrades in during your last Ascension, then cheapest first" },
+    { value: "cheapest", label: "Cheapest", tip: "Always buy the cheapest affordable Fame upgrade" },
+];
+
+/** Auto-buy for Fame upgrades (Royal Stewards): toggle, mode, and what it will buy next */
+function FameAutoBuy() {
+    const state = game();
+    if (!isAutomationUnlocked(state, "fame")) return null;
+    const auto = state.automation;
+    const chronicle = state.ascension.fameChronicle;
+    const next = auto.fameMode === "chronicle" ? nextFameChronicleStep(state) : null;
+    let status: string;
+    if (auto.fameMode === "cheapest") {
+        status = "Buys the cheapest affordable upgrade whenever it can.";
+    } else if (chronicle.length === 0) {
+        status = "No Fame Chronicle yet (it's recorded when you Ascend), so it buys the cheapest first for now.";
+    } else if (next === null) {
+        status = `Last Ascension's ${chronicle.length} purchases are all bought again; now buying the cheapest first.`;
+    } else {
+        status = `Replaying last Ascension's ${chronicle.length} purchases. Next: ${FAME_UPGRADES[next].name} (✦ ${fameUpgradeCost(state, next)}).`;
+    }
+    return (
+        <div class="row auto-prestige">
+            <AutoToggle kind="fame" label="Auto-buy" />
+            <AutoMode kind="fame" value={auto.fameMode} options={FAME_MODES} onChange={(m) => (auto.fameMode = m)} />
+            <span class="hint">{status}</span>
+        </div>
+    );
+}
+
 function FameTree() {
     const state = game();
     const p = state.prestige;
@@ -138,6 +170,7 @@ function FameTree() {
                     gold, knowledge and army power
                 </span>
             </h2>
+            <FameAutoBuy />
             <div class="fame-branches">
                 {branches.map((branch) => (
                     <div key={branch} class="fame-branch">

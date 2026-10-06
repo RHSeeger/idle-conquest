@@ -35,7 +35,7 @@ import { D, Decimal, ZERO } from "./decimal";
 import { Stats } from "./effects";
 import { fmtInt } from "./format";
 import { effectiveTraits } from "./magic";
-import { applyRunStart } from "./prestige";
+import { applyRunStart, closeFameChronicle } from "./prestige";
 import { bump, GameState, log, MyrrorCampaign, newRun, recordRun } from "./state";
 import { traitRoleMult, ROLES } from "../content/traits";
 
@@ -222,6 +222,7 @@ export function planeshift(state: GameState, beachhead: MyrranRaceId, startRace:
     // Layer 1 resets (the Annals are kept: Planewalker counts as 3 Ascensions)
     p.fame = D(0);
     p.fameTotal = D(0);
+    closeFameChronicle(state);
     p.upgrades = {};
     p.refounds = 0;
     p.ascensionBestFrontier = 0;

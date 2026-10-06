@@ -85,6 +85,17 @@ const insightList: InsightUpgradeDef[] = [
         text: (l) => `×${Math.pow(1.5, l).toFixed(2)} Fame from Refounds`,
     },
     {
+        id: "royalStewards",
+        name: "Royal Stewards",
+        maxLevel: 1,
+        cost: () => 15,
+        effects: [],
+        text: (l) =>
+            l === 0
+                ? "You buy Fame upgrades yourself"
+                : "Unlocks auto-buy for Fame upgrades: replay your last Ascension's purchase order, or buy the cheapest first",
+    },
+    {
         id: "eternalCompanions",
         name: "Eternal Companions",
         maxLevel: MAX_HEROES,
@@ -94,8 +105,8 @@ const insightList: InsightUpgradeDef[] = [
             l === 0
                 ? "Heroes stay behind when you Ascend"
                 : l >= MAX_HEROES
-                  ? "When you Ascend, all your heroes follow you"
-                  : `When you Ascend, your ${l === 1 ? "most experienced hero follows" : `${l} most experienced heroes follow`} you`,
+                  ? "All your heroes follow you through Ascensions and Refounds"
+                  : `Your ${l === 1 ? "most experienced hero follows" : `${l} most experienced heroes follow`} you through Ascensions and Refounds`,
     },
 ];
 

@@ -1,7 +1,7 @@
 import { HEROES, HERO_RANKS, HERO_XP, heroLevel, MAX_HEROES } from "../content/heroes";
 import { heroesKeptOnAscend, insightUpgradeLevel } from "../engine/ascension";
 import { canHire, Hero, heroList, hireCost, hireHero, isTavernOpen, tavernOffers } from "../engine/heroes";
-import { fameUpgradeLevel, heroesKeptOnRefound } from "../engine/prestige";
+import { heroesKeptOnRefound, refoundHeroKeeper } from "../engine/prestige";
 import { GameState } from "../engine/state";
 import { Price, ProgressBar } from "./components";
 import { game } from "./game";
@@ -23,8 +23,9 @@ function carrySentence(state: GameState, event: string, upgrade: string, where: 
 }
 
 export function heroRefoundText(state: GameState): string {
-    return carrySentence(state, "Refound", "Hall of Heroes", "Fame → Legacy → Hall of Heroes",
-        fameUpgradeLevel(state, "hallOfHeroes"), heroesKeptOnRefound(state));
+    const keeper = refoundHeroKeeper(state);
+    return carrySentence(state, "Refound", keeper.name, "Fame → Legacy → Hall of Heroes",
+        keeper.slots, heroesKeptOnRefound(state));
 }
 
 export function heroAscendText(state: GameState): string {

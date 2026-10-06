@@ -109,6 +109,8 @@ export interface PrestigeState {
     annals: RaceId[];
     /** Fame tree purchases: id -> level */
     upgrades: Record<string, number>;
+    /** Fame upgrades bought this Ascension, in order (becomes the Fame Chronicle when you Ascend) */
+    fameOrder: string[];
     /** Completed runs as each starting race */
     raceMastery: Partial<Record<RaceId, number>>;
     /** Furthest frontier ever reached, and furthest during this Ascension (Renown uses the latter) */
@@ -146,6 +148,8 @@ export interface AscensionState {
     planRetorts: string[];
     /** Spells researched during this Ascension */
     spellsKnown: string[];
+    /** Fame upgrades bought during the last Ascension, in order (auto-buy's Chronicle mode) */
+    fameChronicle: string[];
     /** Fame earned from Refounds during this Ascension (feeds Insight) */
     fameEarned: Decimal;
     /** Fame earned during the previous Ascension */
@@ -223,6 +227,10 @@ export interface Automation {
     cast: boolean;
     refound: boolean;
     ascend: boolean;
+    /** Auto-buy Fame upgrades (Royal Stewards, Insight) */
+    fame: boolean;
+    /** How auto-buy picks Fame upgrades: the last Ascension's purchase order, or cheapest first */
+    fameMode: "chronicle" | "cheapest";
     /** How auto-recruit picks troops */
     unitMode: "chronicle" | "efficient";
     /** How auto-build orders buildings: the last run's build order, or cheapest first */
@@ -316,6 +324,7 @@ export function newGame(now = Date.now()): GameState {
             refounds: 0,
             annals: ["highMen"],
             upgrades: {},
+            fameOrder: [],
             raceMastery: {},
             bestFrontier: 0,
             ascensionBestFrontier: 0,
@@ -334,6 +343,7 @@ export function newGame(now = Date.now()): GameState {
             planBooks: {},
             planRetorts: [],
             spellsKnown: [],
+            fameChronicle: [],
             fameEarned: D(0),
             lastFameEarned: D(0),
             wizardsDefeated: [],
@@ -360,6 +370,8 @@ export function newGame(now = Date.now()): GameState {
             cast: true,
             refound: true,
             ascend: true,
+            fame: true,
+            fameMode: "chronicle",
             unitMode: "chronicle",
             buildMode: "chronicle",
             recruitShare: 1,

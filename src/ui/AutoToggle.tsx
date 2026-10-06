@@ -125,7 +125,7 @@ export function AutoToggle(props: { kind: AutomationKind; label: string }) {
     return (
         <button
             class={"toggle auto" + (on ? " on" : "")}
-            title="Automation unlocked by a Refound milestone"
+            title="Automation: click to switch it on or off"
             onClick={() => (state.automation[props.kind] = !on)}
         >
             {props.label}: {on ? "on" : "off"}

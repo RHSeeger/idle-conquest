@@ -21,7 +21,7 @@ import { fmtInt } from "./format";
 import { spellbookCount, spellbookRealmCount } from "./exploration";
 import { Hero, heroCarryLog, mostExperienced } from "./heroes";
 import { knowsSpell, towerCleared, validateBooks } from "./magic";
-import { applyRunStart, effectiveAscensions, fameOnRefound } from "./prestige";
+import { applyRunStart, closeFameChronicle, effectiveAscensions, fameOnRefound } from "./prestige";
 import { bump, GameState, log, newRun, recordRun } from "./state";
 
 export const ASCENSION_BOOKS = 6;
@@ -129,6 +129,7 @@ export function ascend(
     const annals = keepAnnals ? ascensionRaceOptions(state) : [...new Set<RaceId>(["highMen", startRace])];
     p.fame = hasAscensionMilestone(state, "fameEcho") ? a.lastFameEarned.times(0.25).floor() : D(0);
     p.fameTotal = D(0);
+    closeFameChronicle(state);
     p.upgrades = {};
     p.refounds = 0;
     p.annals = annals;

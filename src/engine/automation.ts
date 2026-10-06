@@ -27,8 +27,25 @@ import { getStats } from "./collect";
 import { buildingPrice, lorePrice, unitAffordableWith, unitPrice, wallet } from "./costs";
 import { Decimal, ZERO } from "./decimal";
 import { realmEconomy } from "./economy";
-import { canRefound, fameOnRefound, hasMilestone, refound } from "./prestige";
-import { ascend, ascensionRaceOptions, canAscend, hasAscensionMilestone, insightOnAscend } from "./ascension";
+import {
+    buyFameUpgrade,
+    canBuyFameUpgrade,
+    canRefound,
+    fameOnRefound,
+    fameUpgradeCost,
+    fameUpgradeLevel,
+    hasMilestone,
+    refound,
+} from "./prestige";
+import {
+    ascend,
+    ascensionRaceOptions,
+    canAscend,
+    hasAscensionMilestone,
+    insightOnAscend,
+    insightUpgradeLevel,
+} from "./ascension";
+import { FAME_UPGRADE_ORDER, FAME_UPGRADES } from "../content/fame";
 import { hasPlaneshiftMilestone } from "./planes";
 import { RaceId } from "../content/races";
 import {
@@ -62,7 +79,8 @@ export type AutomationKind =
     | "research"
     | "cast"
     | "refound"
-    | "ascend";
+    | "ascend"
+    | "fame";
 
 /** Auto-Refound/Ascend also fire when no Arcanus city has fallen for this long (seconds) */
 export const AUTO_PRESTIGE_STALL_SECONDS = 600;
@@ -89,6 +107,44 @@ export function isAutomationUnlocked(state: GameState, kind: AutomationKind): bo
             return hasPlaneshiftMilestone(state, "planewalker");
         case "ascend":
             return hasPlaneshiftMilestone(state, "autoAscend");
+        case "fame":
+            return insightUpgradeLevel(state, "royalStewards") > 0;
+    }
+}
+
+// --- Fame upgrades (Royal Stewards) ---
+
+/**
+ * The next purchase in the Fame Chronicle (the last Ascension's order) that
+ * hasn't been matched yet this Ascension, or null once it's all been bought.
+ * An entry is matched once the upgrade's level reaches how often it appears so far.
+ */
+export function nextFameChronicleStep(state: GameState): string | null {
+    const seen: Record<string, number> = {};
+    for (const id of state.ascension.fameChronicle) {
+        const u = FAME_UPGRADES[id];
+        if (!u) continue;
+        seen[id] = (seen[id] ?? 0) + 1;
+        if (fameUpgradeLevel(state, id) < Math.min(seen[id], u.maxLevel)) return id;
+    }
+    return null;
+}
+
+function cheapestFameUpgrade(state: GameState): string | null {
+    const affordable = FAME_UPGRADE_ORDER.filter((id) => canBuyFameUpgrade(state, id));
+    affordable.sort((a, b) => fameUpgradeCost(state, a) - fameUpgradeCost(state, b));
+    return affordable[0] ?? null;
+}
+
+/**
+ * Auto-buy Fame upgrades. Chronicle mode replays the last Ascension's order,
+ * waiting for each purchase in turn, then buys cheapest-first once it's done.
+ */
+export function autoFame(state: GameState): void {
+    for (let guard = 0; guard < 200; guard++) {
+        const step = state.automation.fameMode === "chronicle" ? nextFameChronicleStep(state) : null;
+        const id = step ?? cheapestFameUpgrade(state);
+        if (id === null || !buyFameUpgrade(state, id)) return;
     }
 }
 
@@ -377,6 +433,8 @@ export function runAutomation(state: GameState, force = false): void {
     if (!force) {
         if (isAutomationActive(state,"ascend") && autoAscend(state)) return;
         if (isAutomationActive(state,"refound") && autoRefound(state)) return;
+        // Fame upgrades: the bot buys its own
+        if (isAutomationActive(state, "fame")) autoFame(state);
     }
     // measure gains before anything spends; remember what's left afterwards
     const budgeted = !force && isAutomationActive(state,"units") && isRecruitBudgeted(state);

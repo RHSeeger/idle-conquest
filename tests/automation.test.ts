@@ -3,7 +3,8 @@ import { canBuyBuilding, canRushBuilding, rushPrice } from "../src/engine/action
 import { frontierCity, REGION_SIZE } from "../src/content/frontier";
 import { conquer, currentPlan } from "../src/engine/army";
 import { canAscend } from "../src/engine/ascension";
-import { autoBuild, buildQueue, runAutomation, stallAction } from "../src/engine/automation";
+import { autoBuild, buildQueue, nextFameChronicleStep, runAutomation, stallAction } from "../src/engine/automation";
+import { buyFameUpgrade, closeFameChronicle } from "../src/engine/prestige";
 import { D } from "../src/engine/decimal";
 import { newGame } from "../src/engine/state";
 
@@ -53,6 +54,53 @@ describe("Army budget", () => {
         state.run.gold = D(10000);
         runAutomation(state);
         expect(state.run.production.plus(state.run.gold).toNumber()).toBeLessThan(15000);
+    });
+});
+
+describe("Fame auto-buy (Royal Stewards)", () => {
+    function stewarded() {
+        const state = newGame(0);
+        state.ascension.upgrades.royalStewards = 1;
+        state.automation = { ...state.automation, buildings: false, units: false, lore: false, settlers: false, lairs: false };
+        return state;
+    }
+
+    it("records the purchase order and hands it to the next Ascension", () => {
+        const state = stewarded();
+        state.prestige.fame = D(1000);
+        buyFameUpgrade(state, "warChest");
+        buyFameUpgrade(state, "veteranOfficers");
+        buyFameUpgrade(state, "warChest");
+        expect(state.prestige.fameOrder).toEqual(["warChest", "veteranOfficers", "warChest"]);
+        closeFameChronicle(state);
+        expect(state.ascension.fameChronicle).toEqual(["warChest", "veteranOfficers", "warChest"]);
+        expect(state.prestige.fameOrder).toEqual([]);
+    });
+
+    it("in Chronicle mode, waits for each recorded purchase in turn", () => {
+        const state = stewarded();
+        state.ascension.fameChronicle = ["warChest", "veteranOfficers", "warChest"];
+        state.prestige.fame = D(3); // not enough for War Chest (4): must not buy anything cheaper
+        runAutomation(state);
+        expect(state.prestige.upgrades).toEqual({});
+        expect(nextFameChronicleStep(state)).toBe("warChest");
+        state.prestige.fame = D(1000);
+        runAutomation(state);
+        expect(state.prestige.fameOrder.slice(0, 3)).toEqual(["warChest", "veteranOfficers", "warChest"]);
+        expect(nextFameChronicleStep(state)).toBe(null);
+    });
+
+    it("in Cheapest mode, buys cheapest first and does nothing when locked", () => {
+        const state = stewarded();
+        state.automation.fameMode = "cheapest";
+        state.prestige.fame = D(2);
+        runAutomation(state);
+        expect(state.prestige.fameOrder.length).toBe(1); // one of the 2-Fame upgrades
+        expect(state.prestige.fame.toNumber()).toBe(0);
+        const locked = newGame(0);
+        locked.prestige.fame = D(1000);
+        runAutomation(locked);
+        expect(locked.prestige.fameOrder).toEqual([]);
     });
 });
 

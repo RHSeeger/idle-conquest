@@ -118,10 +118,17 @@ const list: FameUpgradeDef[] = [
         id: "royalArchitects",
         name: "Royal Architects",
         branch: "legacy",
-        maxLevel: 3,
-        cost: (l) => [3, 15, 60][l] ?? Infinity,
+        maxLevel: 4,
+        cost: (l) => [3, 15, 60, 250][l] ?? Infinity,
         effects: [],
-        text: (l) => ["Nothing yet", "Start with a Smithy and Granary", "…and a Sawmill, Library, Marketplace", "…and Stables, Shrine, Fighters' Guild"][l],
+        text: (l) =>
+            [
+                "Nothing yet",
+                "Start with a Smithy, Granary, Sawmill and Library (Knowledge from the start)",
+                "…and a Marketplace, Stables, Shrine and Explorers' Guild",
+                "…and a Fighters' Guild and Adventurers' Guild (exploration and heroes from the start)",
+                "…and a Sages' Guild, Temple, Miners' Guild and Bank",
+            ][l],
     },
     {
         id: "warChest",
@@ -167,11 +174,17 @@ export const FAME_BRANCH_NAMES: Record<FameBranch, string> = {
 };
 
 /** Buildings granted at the start of a run by Royal Architects, by level */
+/**
+ * Royal Architects: buildings each level starts you with. Early levels give the
+ * quick buildings that unlock something (Library: Knowledge); later ones skip
+ * the long waits (Adventurers' Guild: exploration and heroes).
+ */
 export const ARCHITECT_BUILDINGS: string[][] = [
     [],
-    ["smithy", "granary"],
-    ["sawmill", "library", "marketplace"],
-    ["stables", "shrine", "fightersGuild"],
+    ["smithy", "granary", "sawmill", "library"],
+    ["marketplace", "stables", "shrine", "explorersGuild"],
+    ["fightersGuild", "adventurersGuild"],
+    ["sagesGuild", "temple", "minersGuild", "bank"],
 ];
 
 export function warChestAmount(level: number): number {

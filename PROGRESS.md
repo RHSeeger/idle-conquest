@@ -31,7 +31,7 @@ Items you've flagged as needing work. They're recorded here and picked up only w
 | 6 | ~~**Bug: Myrror conquests don't log to the Chronicle.**~~ Done: Myrror logged only the first city of each race and region capitals. It now logs every city taken by force, as Arcanus does (tested). | 2026-10-05 |
 | 7 | ~~**Bug: Hall of Heroes didn't keep heroes.**~~ Done: not a code bug. Both manual and auto-Refound keep the single most experienced hero (now tested), and an Ascension resets Hall of Heroes along with the other Fame upgrades. Both cases are now visible, and Hall of Heroes now has 6 levels (one hero each). See Decisions. | 2026-10-05 |
 | 8 | **Perk that lowers troop cost scaling.** Reduce the per-unit cost growth slightly. Keep the reduction small, because it compounds with every unit bought. | 2026-10-05 |
-| 9 | **Bridgehead (Essence) vs "4 Planeshifts: Known on Two Worlds".** Bridgehead looks useless once that milestone is earned. If they stack, the milestone (or Bridgehead) should say so. If they don't, Bridgehead needs rethinking. | 2026-10-05 |
+| 9 | ~~**Bridgehead (Essence) vs "4 Planeshifts: Known on Two Worlds".**~~ Done: they now stack (see Decisions). Original note: Bridgehead looks useless once that milestone is earned. If they stack, the milestone (or Bridgehead) should say so. If they don't, Bridgehead needs rethinking. | 2026-10-05 |
 | 10 | **Auto-Refound and auto-Ascend share a confusing "no city has fallen for 10 minutes" rule.** Both toggles show the same text, so it's unclear which one fires. How it works now (`runAutomation`): auto-Ascend is checked first each tick. It fires if the Ascension gate is met, the planned profile is valid, and either Insight ≥ the threshold or the run has stalled. Only if it doesn't fire is auto-Refound checked. On a stall, then, Ascend wins whenever it's possible; otherwise Refound happens. The UI should explain this, or the rule should be redesigned (for example, separate stall timers, or saying which one a stall triggers). | 2026-10-05 |
 
 ---
@@ -250,6 +250,7 @@ The city table is now grouped by race; "Show every city" brings back the full li
 
 | Decision | Why | Easy to change? |
 |---|---|---|
+| Bridgehead and Known on Two Worlds stack: the milestone covers half of what Bridgehead leaves, giving 50% → 60/70/80/90% with Bridgehead 1–4 (80% max with Bridgehead alone). Both texts say so. | They used to take the maximum, which made Bridgehead 1–2 worthless after the milestone | Yes (`BRIDGEHEAD_PER_LEVEL`, `KNOWN_ON_TWO_WORLDS`) |
 | Hall of Heroes has 6 levels (one per hero slot), keeping your N most experienced heroes on Refound. Cost 25 × 2.5^level (25, 63, 156, 391, 977, 2,441 Fame). Kept heroes are tagged "kept on Refound" in the Heroes section. A hint there and in the Refound section names who follows and who stays behind, and the Chronicle logs it. Heroes never follow you through an Ascension, and the Ascension log says so. | You asked to keep all heroes. Losing heroes looked like a bug, because only one was kept and Ascension resets Hall of Heroes | Yes (`hallOfHeroes` in `content/fame.ts`) |
 | Vite + Preact + TypeScript (replacing webpack/babel) | Faster dev loop; a declarative UI suits a text-heavy game | Yes |
 | Old code moved to `legacy/`, not deleted | Kept for reference | Yes |

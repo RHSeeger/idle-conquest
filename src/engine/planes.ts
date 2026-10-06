@@ -12,9 +12,11 @@
  * Essence for the Myrran cities taken.
  */
 import {
+    BRIDGEHEAD_PER_LEVEL,
     ESSENCE_UPGRADES,
     HOLDING_PER_CITY,
     HOLDING_STAT,
+    KNOWN_ON_TWO_WORLDS,
     MAX_LINKS,
     myrrorCity,
     MyrrorCity,
@@ -252,11 +254,15 @@ export function planeshift(state: GameState, beachhead: MyrranRaceId, startRace:
     return true;
 }
 
-/** Bridgehead (Essence upgrade) and Known on Two Worlds (milestone): Myrran cities that surrender at once */
+/**
+ * Bridgehead (Essence upgrade) and Known on Two Worlds (milestone): the share of
+ * the best Myrror frontier that surrenders at once. They stack: the milestone
+ * covers half of what Bridgehead leaves (50% → 60/70/80/90% with Bridgehead 1–4).
+ */
 export function myrrorHeadStartFraction(state: GameState): number {
-    let f = 0.2 * essenceUpgradeLevel(state, "bridgehead");
-    if (hasPlaneshiftMilestone(state, "myrrorRenown")) f = Math.max(f, 0.5);
-    return Math.min(0.9, f);
+    const bridgehead = BRIDGEHEAD_PER_LEVEL * essenceUpgradeLevel(state, "bridgehead");
+    const renown = hasPlaneshiftMilestone(state, "myrrorRenown") ? KNOWN_ON_TWO_WORLDS : 0;
+    return Math.min(0.9, 1 - (1 - bridgehead) * (1 - renown));
 }
 
 function applyMyrrorHeadStart(state: GameState): void {

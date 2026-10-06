@@ -142,6 +142,16 @@ export function myrrorCity(beachhead: MyrranRaceId, plan: MyrrorRegion[], index:
 // --- Holdings ------------------------------------------------------------------
 
 /** What each Myrran race held on Myrror gives: ×(1 + 0.1 × cities) to one stat */
+/** Bridgehead: share of the best Myrror frontier that surrenders at once, per level */
+export const BRIDGEHEAD_PER_LEVEL = 0.2;
+/** Known on Two Worlds: share that surrenders at once; stacks with Bridgehead (see myrrorHeadStartFraction) */
+export const KNOWN_ON_TWO_WORLDS = 0.5;
+
+/** Combined head start, in whole percent, for a Bridgehead level with Known on Two Worlds */
+export function headStartWithRenownPct(level: number): number {
+    return Math.round(100 * Math.min(0.9, 1 - (1 - BRIDGEHEAD_PER_LEVEL * level) * (1 - KNOWN_ON_TWO_WORLDS)));
+}
+
 export const HOLDING_PER_CITY = 0.1;
 export const HOLDING_STAT: Record<MyrranRaceId, { stat: string; text: string }> = {
     beastmen: { stat: "knowledge.mult", text: "knowledge" },
@@ -206,7 +216,10 @@ const essenceList: EssenceUpgradeDef[] = [
         maxLevel: 4,
         cost: (l) => Math.round(10 * Math.pow(3, l)),
         effects: [],
-        text: (l) => (l === 0 ? "Myrror starts from scratch" : `Myrror cities below ${l * 20}% of your best Myrror frontier surrender at once`),
+        text: (l) =>
+            l === 0
+                ? "Myrror starts from scratch"
+                : `Myrror cities below ${Math.round(l * BRIDGEHEAD_PER_LEVEL * 100)}% of your best Myrror frontier surrender at once (${headStartWithRenownPct(l)}% with Known on Two Worlds)`,
     },
 ];
 
@@ -247,7 +260,7 @@ export const PLANESHIFT_MILESTONES: PlaneshiftMilestoneDef[] = [
         id: "myrrorRenown",
         planeshifts: 4,
         name: "Known on Two Worlds",
-        text: "Myrror cities below half your best Myrror frontier surrender at once.",
+        text: "Myrror cities below half your best Myrror frontier surrender at once. Stacks with Bridgehead: each Bridgehead level adds 10% more (up to 90%).",
     },
 ];
 

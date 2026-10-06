@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { LAIRS } from "../src/content/exploration";
 import { REGION_SIZE } from "../src/content/frontier";
-import { MAX_LINKS, myrrorCity, myrrorPlan } from "../src/content/myrror";
+import { headStartWithRenownPct, MAX_LINKS, myrrorCity, myrrorPlan } from "../src/content/myrror";
 import { currentTarget, isUnitAvailable, maxMyrrorShare, myrrorShare, siegePower } from "../src/engine/army";
 import { getStats } from "../src/engine/collect";
 import { D } from "../src/engine/decimal";
@@ -12,6 +12,7 @@ import {
     conquerMyrror,
     essenceOnPlaneshift,
     fitProfile,
+    myrrorHeadStartFraction,
     myrrorPower,
     myrrorTarget,
     planeshift,
@@ -132,6 +133,16 @@ describe("Myrror", () => {
             conquerMyrror(state, city, false);
             expect(state.log.some((e) => e.text.includes(city.name))).toBe(true);
         }
+    });
+
+    it("Bridgehead stacks with Known on Two Worlds", () => {
+        const state = newGame(0);
+        const pct = () => Math.round(myrrorHeadStartFraction(state) * 100);
+        const withLevels = () => [0, 1, 2, 3, 4].map((l) => ((state.planes.upgrades.bridgehead = l), pct()));
+        expect(withLevels()).toEqual([0, 20, 40, 60, 80]);
+        state.planes.planeshifts = 4; // Known on Two Worlds
+        expect(withLevels()).toEqual([50, 60, 70, 80, 90]);
+        expect([0, 1, 2, 3, 4].map(headStartWithRenownPct)).toEqual([50, 60, 70, 80, 90]);
     });
 
     it("advances its siege over time", () => {

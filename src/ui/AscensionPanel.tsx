@@ -23,6 +23,7 @@ import { RETORTS, RETORT_ORDER } from "../content/retorts";
 import { fmtInt } from "../engine/format";
 import { game } from "./game";
 import { AutoPrestige } from "./AutoToggle";
+import { heroAscendText } from "./HeroesSection";
 
 function Gate() {
     const state = game();
@@ -234,6 +235,7 @@ export function AscensionPanel() {
                         </button>
                     ))}
                 </div>
+                {state.run.heroes.length > 0 && <p class="hint">{heroAscendText(state)}</p>}
                 <button class="prestige-button ascend" disabled={!ok} onClick={doAscend}>
                     Ascend (+{fmtInt(insight)} Insight)
                 </button>

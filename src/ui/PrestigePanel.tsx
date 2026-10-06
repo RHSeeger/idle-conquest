@@ -27,7 +27,7 @@ import {
 } from "../engine/prestige";
 import { game } from "./game";
 import { AutoPrestige } from "./AutoToggle";
-import { heroCarryText } from "./HeroesSection";
+import { heroRefoundText } from "./HeroesSection";
 
 function RefoundSection() {
     const state = game();
@@ -97,7 +97,7 @@ function RefoundSection() {
                     follows).
                 </p>
             )}
-            {run.heroes.length > 0 && <p class="hint">{heroCarryText(state)}</p>}
+            {run.heroes.length > 0 && <p class="hint">{heroRefoundText(state)}</p>}
             {ok && fullTribute.lte(0) && (
                 <p class="bad">
                     This run would give no Fame: take cities by force first. You can still Refound, for example to

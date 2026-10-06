@@ -10,7 +10,7 @@
  * Annals unless kept by a milestone) and gives Insight. The player chooses a
  * wizard profile (spellbook picks) and a starting race. Kept: Insight and its
  * upgrades, race Mastery, the Chronicle, best frontier, realms seen, wizards
- * ever defeated.
+ * ever defeated, and heroes kept by Eternal Companions.
  */
 import { REALMS, Realm } from "../content/magic";
 import { RaceId, RACES } from "../content/races";
@@ -19,6 +19,7 @@ import { getStats } from "./collect";
 import { D, Decimal } from "./decimal";
 import { fmtInt } from "./format";
 import { spellbookCount, spellbookRealmCount } from "./exploration";
+import { Hero, heroCarryLog, mostExperienced } from "./heroes";
 import { knowsSpell, towerCleared, validateBooks } from "./magic";
 import { applyRunStart, effectiveAscensions, fameOnRefound } from "./prestige";
 import { bump, GameState, log, newRun, recordRun } from "./state";
@@ -136,10 +137,12 @@ export function ascend(
     log(
         state,
         "prestige",
-        `You Ascend as a Wizard (+${fmtInt(insight)} Insight). Your new realm is founded by ${RACES[startRace].plural}.` +
-            (state.run.heroes.length > 0 ? " Your heroes stay behind: Ascension resets the Fame upgrades, Hall of Heroes too." : ""),
+        `You Ascend as a Wizard (+${fmtInt(insight)} Insight). Your new realm is founded by ${RACES[startRace].plural}.`,
     );
+    const kept = heroesKeptOnAscend(state);
+    heroCarryLog(state, kept, "Eternal Companions");
     state.run = newRun(startRace);
+    state.run.heroes = kept.map((h) => ({ ...h }));
     applyRunStart(state);
     bump(state);
     for (const m of ASCENSION_MILESTONES) {
@@ -172,6 +175,11 @@ export function planeshiftProgress(state: GameState): PlaneshiftProgress {
 
 export function insightUpgradeLevel(state: GameState, id: string): number {
     return state.ascension.upgrades[id] ?? 0;
+}
+
+/** The heroes Eternal Companions would carry through an Ascension: the most experienced, one per level */
+export function heroesKeptOnAscend(state: GameState): Hero[] {
+    return mostExperienced(state, insightUpgradeLevel(state, "eternalCompanions"));
 }
 
 export function insightUpgradeCost(state: GameState, id: string): number {

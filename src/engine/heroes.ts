@@ -50,6 +50,35 @@ export function hireHero(state: GameState, id: string): boolean {
     return true;
 }
 
+export type Hero = { id: string; xp: number };
+
+/** The `n` most experienced heroes (who follow you through a Refound or Ascension) */
+export function mostExperienced(state: GameState, n: number): Hero[] {
+    return [...state.run.heroes].sort((a, b) => b.xp - a.xp).slice(0, n);
+}
+
+export function heroName(id: string): string {
+    return `${HEROES[id].name} ${HEROES[id].title}`;
+}
+
+/** "A", "A and B", "A, B and C" */
+export function heroList(heroes: Hero[]): string {
+    const names = heroes.map((h) => heroName(h.id));
+    return names.length <= 1 ? names.join("") : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+}
+
+/** Chronicle line for heroes on a reset: who follows (and thanks to what), who stays behind */
+export function heroCarryLog(state: GameState, kept: Hero[], source: string): void {
+    const heroes = state.run.heroes;
+    if (heroes.length === 0) return;
+    const left = heroes.filter((h) => !kept.includes(h));
+    const parts = [
+        kept.length > 0 ? `${heroList(kept)} follow${kept.length === 1 ? "s" : ""} you (${source}).` : "",
+        left.length > 0 ? `${heroList(left)} stay${left.length === 1 ? "s" : ""} behind.` : "",
+    ];
+    log(state, "prestige", parts.filter((s) => s).join(" "));
+}
+
 /** Gives every hero experience; bumps stats only if someone levels up */
 export function grantHeroXp(state: GameState, xp: number): void {
     let levelled = false;

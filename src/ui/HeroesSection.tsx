@@ -1,27 +1,40 @@
 import { HEROES, HERO_RANKS, HERO_XP, heroLevel, MAX_HEROES } from "../content/heroes";
-import { canHire, hireCost, hireHero, isTavernOpen, tavernOffers } from "../engine/heroes";
-import { fameUpgradeLevel, heroesKeptOnRefound, heroList } from "../engine/prestige";
+import { heroesKeptOnAscend, insightUpgradeLevel } from "../engine/ascension";
+import { canHire, Hero, heroList, hireCost, hireHero, isTavernOpen, tavernOffers } from "../engine/heroes";
+import { fameUpgradeLevel, heroesKeptOnRefound } from "../engine/prestige";
 import { GameState } from "../engine/state";
 import { Price, ProgressBar } from "./components";
 import { game } from "./game";
 
-/** What happens to the current heroes on Refound (Hall of Heroes) and on Ascension */
-export function heroCarryText(state: GameState): string {
-    const slots = fameUpgradeLevel(state, "hallOfHeroes");
+/** One reset's effect on the current heroes, e.g. "Hall of Heroes keeps your 2 most experienced heroes when you Refound: …" */
+function carrySentence(state: GameState, event: string, upgrade: string, where: string, slots: number, kept: Hero[]): string {
     const heroes = state.run.heroes;
-    const kept = heroesKeptOnRefound(state);
     const left = heroes.filter((h) => !kept.includes(h));
-    let text: string;
     if (slots === 0) {
-        text = "When you Refound, your heroes stay behind (Fame → Legacy → Hall of Heroes keeps one more hero per level).";
-    } else if (left.length === 0) {
-        text = `Hall of Heroes (keeps ${slots} of ${MAX_HEROES}): when you Refound, ${heroes.length === 1 ? "your hero follows" : `all ${heroes.length} of your heroes follow`} you.`;
-    } else {
-        text =
-            `Hall of Heroes keeps your ${slots === 1 ? "most experienced hero" : `${slots} most experienced heroes`} when you Refound: ` +
-            `${heroList(kept)} would follow you; ${heroList(left)} would stay behind.`;
+        return `When you ${event}, your heroes stay behind (${where} keeps one more hero per level).`;
     }
-    return text + " Heroes never follow you through an Ascension.";
+    if (left.length === 0) {
+        return `${upgrade} (keeps ${slots} of ${MAX_HEROES}): when you ${event}, ${heroes.length === 1 ? "your hero follows" : `all ${heroes.length} of your heroes follow`} you.`;
+    }
+    return (
+        `${upgrade} keeps your ${slots === 1 ? "most experienced hero" : `${slots} most experienced heroes`} when you ${event}: ` +
+        `${heroList(kept)} would follow you; ${heroList(left)} would stay behind.`
+    );
+}
+
+export function heroRefoundText(state: GameState): string {
+    return carrySentence(state, "Refound", "Hall of Heroes", "Fame → Legacy → Hall of Heroes",
+        fameUpgradeLevel(state, "hallOfHeroes"), heroesKeptOnRefound(state));
+}
+
+export function heroAscendText(state: GameState): string {
+    return carrySentence(state, "Ascend", "Eternal Companions", "Insight → Eternal Companions",
+        insightUpgradeLevel(state, "eternalCompanions"), heroesKeptOnAscend(state));
+}
+
+/** What happens to the current heroes on Refound and, once you have Ascended, on Ascension */
+export function heroCarryText(state: GameState): string {
+    return state.ascension.ascensions === 0 ? heroRefoundText(state) : `${heroRefoundText(state)} ${heroAscendText(state)}`;
 }
 
 export function HeroesSection() {
@@ -31,7 +44,12 @@ export function HeroesSection() {
     }
     const cost = hireCost(state);
     const full = state.run.heroes.length >= MAX_HEROES;
-    const kept = heroesKeptOnRefound(state);
+    const keptRefound = heroesKeptOnRefound(state);
+    const keptAscend = heroesKeptOnAscend(state);
+    const keptTag = (h: Hero) => {
+        const on = [keptRefound.includes(h) && "Refound", keptAscend.includes(h) && "Ascension"].filter((s) => s);
+        return on.length > 0 ? `kept on ${on.join(" & ")}` : null;
+    };
     return (
         <section>
             <h2>
@@ -51,9 +69,9 @@ export function HeroesSection() {
                             <div key={h.id} class="card panel-card">
                                 <div class="card-title">
                                     {def.name} <span class="count">{def.title}</span>
-                                    {kept.includes(h) && (
-                                        <span class="tag" title="Hall of Heroes: follows you when you Refound">
-                                            kept on Refound
+                                    {keptTag(h) && (
+                                        <span class="tag" title="Follows you through this reset (Hall of Heroes / Eternal Companions)">
+                                            {keptTag(h)}
                                         </span>
                                     )}
                                 </div>

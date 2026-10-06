@@ -74,6 +74,21 @@ describe("Ascension", () => {
         expect(state.ascension.books).toEqual({ life: 3, chaos: 2 });
     });
 
+    it("keeps heroes only with Eternal Companions, one per level, most experienced first", () => {
+        for (const [level, expected] of [[0, []], [2, ["zaldron", "valana"]]] as Array<[number, string[]]>) {
+            const state = readyToAscend();
+            state.ascension.upgrades = { eternalCompanions: level };
+            state.prestige.upgrades = { hallOfHeroes: 6 }; // a Refound upgrade: no help on Ascension
+            state.run.heroes = [
+                { id: "brax", xp: 5 },
+                { id: "zaldron", xp: 40 },
+                { id: "valana", xp: 20 },
+            ];
+            expect(ascend(state, { life: 3, chaos: 2 }, "highMen")).toBe(true);
+            expect(state.run.heroes.map((h) => h.id)).toEqual(expected);
+        }
+    });
+
     it("rejects an invalid profile", () => {
         const state = readyToAscend();
         expect(ascend(state, { sorcery: 2 }, "highMen")).toBe(false);

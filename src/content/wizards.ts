@@ -7,6 +7,7 @@
  * (they become pickable even if you never found a book of that realm).
  */
 import { EffectDef } from "../engine/effects";
+import { MAX_HEROES } from "./heroes";
 import { Realm } from "./magic";
 
 export interface RivalWizardDef {
@@ -82,6 +83,19 @@ const insightList: InsightUpgradeDef[] = [
         cost: (l) => Math.round(3 * Math.pow(2, l)),
         effects: [{ stat: "fame.mult", op: "mult", value: (l) => Math.pow(1.5, l) }],
         text: (l) => `×${Math.pow(1.5, l).toFixed(2)} Fame from Refounds`,
+    },
+    {
+        id: "eternalCompanions",
+        name: "Eternal Companions",
+        maxLevel: MAX_HEROES,
+        cost: (l) => Math.round(5 * Math.pow(2.5, l)),
+        effects: [],
+        text: (l) =>
+            l === 0
+                ? "Heroes stay behind when you Ascend"
+                : l >= MAX_HEROES
+                  ? "When you Ascend, all your heroes follow you"
+                  : `When you Ascend, your ${l === 1 ? "most experienced hero follows" : `${l} most experienced heroes follow`} you`,
     },
 ];
 

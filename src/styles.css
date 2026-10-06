@@ -346,6 +346,16 @@ td.buy button {
     align-items: baseline;
     gap: 6px;
 }
+.hero-rank {
+    font-size: 12px;
+    cursor: help;
+}
+.hero-stars {
+    letter-spacing: 1px;
+}
+.hero-stars-empty {
+    color: var(--muted);
+}
 .hero-kept {
     display: inline-flex;
     gap: 3px;

@@ -89,9 +89,21 @@ export function HeroesSection() {
                                     </span>
                                     {keptBadges(h)}
                                 </div>
-                                <div class="card-text">
-                                    {HERO_RANKS[level - 1]} (level {level}): {def.text(level)}
+                                <div
+                                    class="hero-rank"
+                                    title={
+                                        next !== undefined
+                                            ? `Level ${level} of ${HERO_RANKS.length}. Next: ${HERO_RANKS[level]} at ${next} xp`
+                                            : `Level ${level} of ${HERO_RANKS.length}: the highest rank`
+                                    }
+                                >
+                                    {HERO_RANKS[level - 1]}{" "}
+                                    <span class="hero-stars">
+                                        {"★".repeat(level)}
+                                        <span class="hero-stars-empty">{"☆".repeat(HERO_RANKS.length - level)}</span>
+                                    </span>
                                 </div>
+                                <div class="card-text">{def.text(level)}</div>
                                 {next !== undefined ? (
                                     <ProgressBar
                                         class="xp"

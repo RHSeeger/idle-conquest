@@ -104,6 +104,20 @@ export function blockedByOpposed(books: Partial<Record<Realm, number>>, realm: R
 }
 
 /** Checks a proposed wizard profile (book picks + retorts); returns an error message or null */
+/** Whether a profile's books meet a retort's book requirement (always true if it has none) */
+export function hasBooksForRetort(books: Partial<Record<Realm, number>>, id: string): boolean {
+    const need = RETORTS[id]?.requiresBooks;
+    return !need || (books[need.realm] ?? 0) >= need.count;
+}
+
+/** Chosen retorts that would lose their required books if one book of `realm` were removed */
+export function retortsHoldingBooks(books: Partial<Record<Realm, number>>, retorts: readonly string[], realm: Realm): string[] {
+    return retorts.filter((id) => {
+        const need = RETORTS[id]?.requiresBooks;
+        return need?.realm === realm && (books[realm] ?? 0) <= need.count;
+    });
+}
+
 export function validateBooks(
     state: GameState,
     books: Partial<Record<Realm, number>>,
@@ -117,7 +131,7 @@ export function validateBooks(
         if (!r || !isRetortUnlocked(state, id)) {
             return `${r?.name ?? id} is not unlocked yet`;
         }
-        if (r.requiresBooks && (books[r.requiresBooks.realm] ?? 0) < r.requiresBooks.count) {
+        if (r.requiresBooks && !hasBooksForRetort(books, id)) {
             return `${r.name} needs ${r.requiresBooks.count} ${REALM_DEFS[r.requiresBooks.realm].name} books`;
         }
     }

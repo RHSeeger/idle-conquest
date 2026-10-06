@@ -6,6 +6,7 @@ import {
     stallAction,
 } from "../engine/automation";
 import { fmtTime } from "../engine/format";
+import { validateBooks } from "../engine/magic";
 import { game } from "./game";
 
 const THRESHOLDS = [0.5, 1, 2, 5, 10];
@@ -52,8 +53,16 @@ export function AutoPrestige(props: { kind: "refound" | "ascend" }) {
                         : " Auto-Ascend is checked first, so a stall Ascends whenever it can, and auto-Refound handles it otherwise.")}
             </p>
             {state.automation[props.kind] && <StallStatus kind={props.kind} />}
+            {!refound && state.automation.ascend && <PlanBlocked />}
         </div>
     );
+}
+
+/** Auto-Ascend can't use an invalid planned profile: say so loudly */
+function PlanBlocked() {
+    const a = game().ascension;
+    const error = validateBooks(game(), a.planBooks, a.planRetorts);
+    return error ? <p class="bad">Auto-Ascend is blocked: {error}. Fix the next profile above.</p> : null;
 }
 
 /** "No city has fallen for 3m 12s: a stall in 6m 48s would Ascend" */

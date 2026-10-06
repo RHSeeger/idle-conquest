@@ -16,8 +16,10 @@ import {
     rememberKnownSpells,
     restoreRememberedSpells,
     freeRetorts,
+    hasBooksForRetort,
     resolveFamiliar,
     retortPicks,
+    retortsHoldingBooks,
     isWizard,
     knowsSpell,
     manaRate,
@@ -330,6 +332,17 @@ describe("Retorts", () => {
         expect(validateBooks(state, { life: 3 }, ["warlord"])).toMatch(/not unlocked/);
         state.ascension.unlockedRetorts.push("divinePower");
         expect(validateBooks(state, { life: 2 }, ["divinePower"])).toMatch(/needs 4 Life/);
+    });
+
+    it("a chosen retort keeps the books it needs (the planner blocks removing them)", () => {
+        expect(hasBooksForRetort({ life: 4 }, "divinePower")).toBe(true);
+        expect(hasBooksForRetort({ life: 3 }, "divinePower")).toBe(false);
+        expect(hasBooksForRetort({}, "alchemy")).toBe(true);
+        // at exactly 4 Life books, removing one would break Divine Power
+        expect(retortsHoldingBooks({ life: 4 }, ["divinePower", "alchemy"], "life")).toEqual(["divinePower"]);
+        expect(retortsHoldingBooks({ life: 5 }, ["divinePower"], "life")).toEqual([]);
+        expect(retortsHoldingBooks({ life: 4, chaos: 1 }, ["divinePower"], "chaos")).toEqual([]);
+        expect(retortsHoldingBooks({ life: 4 }, [], "life")).toEqual([]);
     });
 
     it("Retort Mastery makes the most expensive retorts free", () => {

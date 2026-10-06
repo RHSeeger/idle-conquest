@@ -23,12 +23,14 @@ import {
     familiarLevel,
     freeRetorts,
     freeRetortSlots,
+    hasBooksForRetort,
     isRetortUnlocked,
     isWizard,
     pickableRealms,
     picksUsed,
     resolveFamiliar,
     retortPicks,
+    retortsHoldingBooks,
     spellMemoryLevel,
     totalPicks,
     validateBooks,
@@ -228,11 +230,17 @@ function ProfilePicker() {
                     const ok = pickable.includes(r);
                     const now = a.books[r] ?? 0;
                     const opposed = blockedByOpposed(books, r);
+                    // retorts that need these books keep them (remove the retort first)
+                    const holding = retortsHoldingBooks(books, retorts, r).map((id) => RETORTS[id].name);
                     return (
                         <div key={r} class={"book realm-" + r + (ok ? "" : " none")}>
                             <b>{REALM_DEFS[r].name}</b>
                             <div class="row">
-                                <button disabled={!ok || (books[r] ?? 0) <= 0} onClick={() => change(r, -1)}>
+                                <button
+                                    disabled={!ok || (books[r] ?? 0) <= 0 || holding.length > 0}
+                                    title={holding.length > 0 ? `Needed by ${holding.join(" and ")}: remove the retort first` : undefined}
+                                    onClick={() => change(r, -1)}
+                                >
                                     −
                                 </button>
                                 <span class="pick-count">{books[r] ?? 0}</span>
@@ -246,6 +254,7 @@ function ProfilePicker() {
                             </div>
                             {!ok && <div class="hint">never found</div>}
                             {ok && opposed && <div class="hint">not with {REALM_DEFS[opposed].name}</div>}
+                            {holding.length > 0 && <div class="hint">kept for {holding.join(" and ")}</div>}
                             {wizard && now !== (books[r] ?? 0) && <div class="hint insight">changed · this Ascension: {now}</div>}
                         </div>
                     );
@@ -265,11 +274,13 @@ function ProfilePicker() {
                     const current = a.retorts.includes(id);
                     // would adding it still fit? (it may push another retort out of the free slots)
                     const fits = picksUsed(books, [...retorts, id], free) <= picks;
+                    const need = r.requiresBooks;
+                    const booksOk = hasBooksForRetort(books, id);
                     return (
                         <button
                             key={id}
                             class={"card" + (chosen ? " chosen" : "")}
-                            disabled={!unlocked || (!chosen && !fits)}
+                            disabled={!unlocked || (!chosen && (!fits || !booksOk))}
                             onClick={() => toggleRetort(id)}
                         >
                             <div class="card-title">
@@ -281,6 +292,12 @@ function ProfilePicker() {
                             </div>
                             <div class="card-text">{r.text}</div>
                             {!unlocked && r.unlock && <div class="card-text bad">🔒 {r.unlock.text}</div>}
+                            {unlocked && need && !booksOk && (
+                                <div class="card-text bad">
+                                    Needs {need.count} {REALM_DEFS[need.realm].name} books in this profile
+                                    {chosen ? ": add books, or remove this retort" : ""}
+                                </div>
+                            )}
                         </button>
                     );
                 })}
@@ -324,7 +341,8 @@ export function AscensionPanel() {
     const [race, setRace] = useState<RaceId>(state.run.startingRace);
     const chosenRace = races.includes(race) ? race : races[0];
     const insight = insightOnAscend(state);
-    const ok = canAscend(state) && validateBooks(state, books, retorts) === null;
+    const planError = validateBooks(state, books, retorts);
+    const ok = canAscend(state) && planError === null;
     const unspent = totalPicks(state) - picksUsed(books, retorts, freeRetortSlots(state));
     const changes = isWizard(state) ? profileChanges(state) : [];
 
@@ -385,6 +403,7 @@ export function AscensionPanel() {
                 <button class="prestige-button ascend" disabled={!ok} onClick={doAscend}>
                     Ascend (+{fmtInt(insight)} Insight)
                 </button>
+                {planError && <span class="bad"> Can't Ascend with this profile: {planError}.</span>}
                 {unspent > 0 && (
                     <span class="bad">
                         {" "}

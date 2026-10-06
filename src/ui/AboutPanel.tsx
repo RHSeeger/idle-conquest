@@ -1,7 +1,10 @@
 /**
  * About: credit and thanks to Master of Magic, which this game is built on.
  * The same write-up is in README.md; keep the two in step.
+ * Also the player-facing To do and Changes lists, from content/changelog.ts.
  */
+
+import { CHANGES, PLANNED } from "../content/changelog";
 
 function Ext(props: { href: string; children: string }) {
     return (
@@ -124,6 +127,32 @@ export function AboutPanel() {
                     Idle Conquest is an unofficial fan project. It is not affiliated with or endorsed by SimTex,
                     MicroProse, Slitherine or MuHa Games. Master of Magic and its names belong to their respective owners.
                 </p>
+            </section>
+
+            <hr class="about-divider" />
+            <p class="about-part">Idle Conquest's development</p>
+
+            <section>
+                <h2>To do</h2>
+                <ul>
+                    {PLANNED.map((p) => (
+                        <li key={p}>{p}</li>
+                    ))}
+                </ul>
+            </section>
+
+            <section>
+                <h2>Changes</h2>
+                {CHANGES.map((c) => (
+                    <div key={c.date}>
+                        <h3>{c.date}</h3>
+                        <ul>
+                            {c.items.map((i) => (
+                                <li key={i}>{i}</li>
+                            ))}
+                        </ul>
+                    </div>
+                ))}
             </section>
         </div>
     );

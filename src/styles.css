@@ -339,6 +339,29 @@ td.buy button {
     font-size: 11px;
 }
 
+/* hero cards: name on the left, R/A "kept on Refound/Ascension" badges on the right */
+.hero-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 6px;
+}
+.hero-kept {
+    display: inline-flex;
+    gap: 3px;
+}
+.kept-badge {
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 14px;
+    min-width: 14px;
+    text-align: center;
+    border-radius: 7px;
+    border: 1px solid currentColor;
+    background: color-mix(in srgb, currentColor 15%, transparent);
+    cursor: help;
+}
+
 .tag {
     margin-left: 6px;
     font-size: 11px;

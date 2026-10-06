@@ -47,10 +47,25 @@ export function HeroesSection() {
     const full = state.run.heroes.length >= MAX_HEROES;
     const keptRefound = heroesKeptOnRefound(state);
     const keptAscend = heroesKeptOnAscend(state);
-    const keptTag = (h: Hero) => {
-        const on = [keptRefound.includes(h) && "Refound", keptAscend.includes(h) && "Ascension"].filter((s) => s);
-        return on.length > 0 ? `kept on ${on.join(" & ")}` : null;
-    };
+    const refoundKeeper = refoundHeroKeeper(state).name;
+    // R/A badges, coloured by the currency of the upgrade doing the keeping
+    const keptBadges = (h: Hero) => (
+        <span class="hero-kept">
+            {keptRefound.includes(h) && (
+                <span
+                    class={"kept-badge " + (refoundKeeper === "Hall of Heroes" ? "fame" : "insight")}
+                    title={`Follows you when you Refound (${refoundKeeper})`}
+                >
+                    R
+                </span>
+            )}
+            {keptAscend.includes(h) && (
+                <span class="kept-badge insight" title="Follows you when you Ascend (Eternal Companions)">
+                    A
+                </span>
+            )}
+        </span>
+    );
     return (
         <section>
             <h2>
@@ -68,13 +83,11 @@ export function HeroesSection() {
                         const prev = HERO_XP[level - 1];
                         return (
                             <div key={h.id} class="card panel-card">
-                                <div class="card-title">
-                                    {def.name} <span class="count">{def.title}</span>
-                                    {keptTag(h) && (
-                                        <span class="tag" title="Follows you through this reset (Hall of Heroes / Eternal Companions)">
-                                            {keptTag(h)}
-                                        </span>
-                                    )}
+                                <div class="card-title hero-title">
+                                    <span>
+                                        {def.name} <span class="count">{def.title}</span>
+                                    </span>
+                                    {keptBadges(h)}
                                 </div>
                                 <div class="card-text">
                                     {HERO_RANKS[level - 1]} (level {level}): {def.text(level)}

@@ -32,6 +32,7 @@ Items you've flagged as needing work. They're recorded here and picked up only w
 | 7 | **Bug: Hall of Heroes didn't keep heroes.** After an auto-Refound, heroes were lost even though Hall of Heroes is owned. (To check: auto vs manual Refound, and how many levels or heroes it keeps.) | 2026-10-05 |
 | 8 | **Perk that lowers troop cost scaling.** Reduce the per-unit cost growth slightly. Keep the reduction small, because it compounds with every unit bought. | 2026-10-05 |
 | 9 | **Bridgehead (Essence) vs "4 Planeshifts: Known on Two Worlds".** Bridgehead looks useless once that milestone is earned. If they stack, the milestone (or Bridgehead) should say so. If they don't, Bridgehead needs rethinking. | 2026-10-05 |
+| 10 | **Auto-Refound and auto-Ascend share a confusing "no city has fallen for 10 minutes" rule.** Both toggles show the same text, so it's unclear which one fires. How it works now (`runAutomation`): auto-Ascend is checked first each tick. It fires if the Ascension gate is met, the planned profile is valid, and either Insight ≥ the threshold or the run has stalled. Only if it doesn't fire is auto-Refound checked. On a stall, then, Ascend wins whenever it's possible; otherwise Refound happens. The UI should explain this, or the rule should be redesigned (for example, separate stall timers, or saying which one a stall triggers). | 2026-10-05 |
 
 ---
 

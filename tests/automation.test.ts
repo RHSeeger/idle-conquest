@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { canBuyBuilding, canRushBuilding, rushPrice } from "../src/engine/actions";
-import { autoBuild, buildQueue, runAutomation } from "../src/engine/automation";
+import { frontierCity, REGION_SIZE } from "../src/content/frontier";
+import { conquer, currentPlan } from "../src/engine/army";
+import { canAscend } from "../src/engine/ascension";
+import { autoBuild, buildQueue, runAutomation, stallAction } from "../src/engine/automation";
 import { D } from "../src/engine/decimal";
 import { newGame } from "../src/engine/state";
 
@@ -50,6 +53,26 @@ describe("Army budget", () => {
         state.run.gold = D(10000);
         runAutomation(state);
         expect(state.run.production.plus(state.run.gold).toNumber()).toBeLessThan(15000);
+    });
+});
+
+describe("Stall rule", () => {
+    it("reports what a stall would trigger: Ascend first, else Refound, else nothing", () => {
+        const state = newGame(0);
+        state.planes.planeshifts = 10; // both automations unlocked
+        const plan = currentPlan(state);
+        while (state.run.frontier.index < REGION_SIZE + 1) {
+            conquer(state, frontierCity(state.run.startingRace, plan, state.run.frontier.index)!, true);
+        }
+        state.automation.refound = false;
+        state.automation.ascend = false;
+        expect(stallAction(state)).toBe(null);
+        state.automation.refound = true;
+        expect(stallAction(state)).toBe("refound");
+        // auto-Ascend on, but Ascending isn't possible: Refound still handles the stall
+        state.automation.ascend = true;
+        expect(canAscend(state)).toBe(false);
+        expect(stallAction(state)).toBe("refound");
     });
 });
 

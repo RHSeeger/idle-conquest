@@ -102,15 +102,40 @@ function runStalled(state: GameState): boolean {
     return state.run.time - state.run.lastConquestAt > AUTO_PRESTIGE_STALL_SECONDS;
 }
 
+/** Seconds since the last Arcanus city fell (auto-Refound/Ascend's stall clock) */
+export function secondsSinceConquest(state: GameState): number {
+    return Math.max(0, state.run.time - state.run.lastConquestAt);
+}
+
+/** Whether Ascending is possible now with the planned profile (ignoring the Insight threshold) */
+function ascendPossible(state: GameState): boolean {
+    const a = state.ascension;
+    return canAscend(state) && validateBooks(state, a.planBooks, a.planRetorts) === null;
+}
+
+/** Whether Refounding is possible now and gives Fame (ignoring the Fame threshold) */
+function refoundPossible(state: GameState): boolean {
+    return canRefound(state) && fameOnRefound(state).gt(0);
+}
+
+/**
+ * What a stall would trigger right now, given which automations are on.
+ * Auto-Ascend is checked first, so it wins whenever it's possible.
+ */
+export function stallAction(state: GameState): "ascend" | "refound" | null {
+    if (isAutomationActive(state, "ascend") && ascendPossible(state)) return "ascend";
+    if (isAutomationActive(state, "refound") && refoundPossible(state)) return "refound";
+    return null;
+}
+
 /**
  * Auto-Ascend: once the gate is met and Insight on Ascending reaches
  * `ascendAt` × all Insight earned so far (or the run has stalled).
  * Uses the planned wizard profile (Ascension tab).
  */
 export function autoAscend(state: GameState): boolean {
-    if (state.run.time < AUTO_PRESTIGE_MIN_RUN || !canAscend(state)) return false;
+    if (state.run.time < AUTO_PRESTIGE_MIN_RUN || !ascendPossible(state)) return false;
     const a = state.ascension;
-    if (validateBooks(state, a.planBooks, a.planRetorts) !== null) return false;
     const target = a.insightTotal.times(state.automation.ascendAt).max(1);
     if (insightOnAscend(state).lt(target) && !runStalled(state)) return false;
     return ascend(state, a.planBooks, leastMastered(state, ascensionRaceOptions(state)), a.planRetorts);
@@ -121,9 +146,8 @@ export function autoAscend(state: GameState): boolean {
  * far (or the run has stalled), as the least-mastered race in the Annals.
  */
 export function autoRefound(state: GameState): boolean {
-    if (state.run.time < AUTO_PRESTIGE_MIN_RUN || !canRefound(state)) return false;
+    if (state.run.time < AUTO_PRESTIGE_MIN_RUN || !refoundPossible(state)) return false;
     const fame = fameOnRefound(state);
-    if (fame.lte(0)) return false;
     const target = state.prestige.fameTotal.times(state.automation.refoundAt).max(1);
     if (fame.lt(target) && !runStalled(state)) return false;
     const options = [...new Set([...state.prestige.annals, ...state.run.racesConquered])];

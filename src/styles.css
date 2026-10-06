@@ -918,6 +918,11 @@ tr.current td {
 
 .auto-prestige {
     margin-top: 8px;
+}
+.auto-prestige .row {
     flex-wrap: wrap;
     gap: 6px;
+}
+.auto-prestige p.hint {
+    margin: 4px 0 0;
 }

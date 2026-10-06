@@ -6,6 +6,7 @@ import { RETORTS, RETORT_ORDER } from "../src/content/retorts";
 import { getStats } from "../src/engine/collect";
 import { D } from "../src/engine/decimal";
 import {
+    blockedByOpposed,
     castEnchantment,
     castInstant,
     checkRetortUnlocks,
@@ -221,6 +222,15 @@ describe("Magic", () => {
         }
         refound(state, "highMen");
         expect(knowsSpell(state, "heroism")).toBe(true);
+    });
+});
+
+describe("Life and Death", () => {
+    it("block each other in a profile", () => {
+        expect(blockedByOpposed({ life: 2 }, "death")).toBe("life");
+        expect(blockedByOpposed({ death: 1 }, "life")).toBe("death");
+        expect(blockedByOpposed({ life: 2 }, "chaos")).toBe(null);
+        expect(blockedByOpposed({ life: 0 }, "death")).toBe(null);
     });
 });
 

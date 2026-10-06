@@ -92,6 +92,17 @@ registerCollector((state, stats) => {
     if (realm) stats.applyEffects(FAMILIARS[realm].name, FAMILIARS[realm].effects, familiarLevel(state));
 });
 
+/** Realms that can't share a profile with `realm` (Life and Death are opposed) */
+export function opposedRealm(realm: Realm): Realm | null {
+    return realm === "life" ? "death" : realm === "death" ? "life" : null;
+}
+
+/** Whether a profile already has books in the realm opposed to `realm` (so `realm` can't be added) */
+export function blockedByOpposed(books: Partial<Record<Realm, number>>, realm: Realm): Realm | null {
+    const other = opposedRealm(realm);
+    return other && (books[other] ?? 0) > 0 ? other : null;
+}
+
 /** Checks a proposed wizard profile (book picks + retorts); returns an error message or null */
 export function validateBooks(
     state: GameState,
@@ -115,7 +126,7 @@ export function validateBooks(
             return `You have never found a ${REALM_DEFS[r].name} book`;
         }
     }
-    if ((books.life ?? 0) > 0 && (books.death ?? 0) > 0) {
+    if ((books.life ?? 0) > 0 && blockedByOpposed(books, "life")) {
         return "Life and Death magic cannot be combined";
     }
     return null;

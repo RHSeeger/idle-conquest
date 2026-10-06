@@ -18,6 +18,7 @@ import {
     planeshiftProgress,
 } from "../engine/ascension";
 import {
+    blockedByOpposed,
     currentFamiliar,
     familiarLevel,
     freeRetorts,
@@ -186,7 +187,7 @@ function ProfilePicker() {
     const gained = wizard ? Math.max(0, Math.min(picks - used, picks - picksUsed(a.books, a.retorts, free))) : 0;
     const pickable = pickableRealms(state);
     const change = (r: Realm, delta: number) => {
-        if (delta > 0 && used >= picks) return;
+        if (delta > 0 && (used >= picks || blockedByOpposed(books, r))) return;
         a.planBooks = { ...books, [r]: Math.max(0, (books[r] ?? 0) + delta) };
     };
     const toggleRetort = (id: string) => {
@@ -217,6 +218,7 @@ function ProfilePicker() {
                 {REALMS.map((r) => {
                     const ok = pickable.includes(r);
                     const now = a.books[r] ?? 0;
+                    const opposed = blockedByOpposed(books, r);
                     return (
                         <div key={r} class={"book realm-" + r + (ok ? "" : " none")}>
                             <b>{REALM_DEFS[r].name}</b>
@@ -225,11 +227,16 @@ function ProfilePicker() {
                                     −
                                 </button>
                                 <span class="pick-count">{books[r] ?? 0}</span>
-                                <button disabled={!ok || used >= picks} onClick={() => change(r, 1)}>
+                                <button
+                                    disabled={!ok || used >= picks || opposed !== null}
+                                    title={opposed ? `Can't be combined with ${REALM_DEFS[opposed].name}` : undefined}
+                                    onClick={() => change(r, 1)}
+                                >
                                     +
                                 </button>
                             </div>
                             {!ok && <div class="hint">never found</div>}
+                            {ok && opposed && <div class="hint">not with {REALM_DEFS[opposed].name}</div>}
                             {wizard && now !== (books[r] ?? 0) && <div class="hint insight">changed · this Ascension: {now}</div>}
                         </div>
                     );

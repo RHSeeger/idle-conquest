@@ -225,7 +225,14 @@ function Campaign() {
 
     return (
         <section>
-            <h2>Campaign</h2>
+            <h2>
+                Campaign{" "}
+                {target && (
+                    <span class="count">
+                        · city {target.index + 1} of {frontierEnd(plan, isWizard(state))}
+                    </span>
+                )}
+            </h2>
             <CurrentOrders />
             <div class="regions">
                 {plan.map((r) => (
@@ -233,12 +240,6 @@ function Campaign() {
                         {r.name}
                     </span>
                 ))}
-                {target && (
-                    <span class="hint">
-                        {" "}
-                        · city {target.index + 1} of {frontierEnd(plan, isWizard(state))}
-                    </span>
-                )}
             </div>
             {upcoming.length > 0 && (
                 <div class="upcoming">

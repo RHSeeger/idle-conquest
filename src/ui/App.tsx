@@ -13,6 +13,7 @@ import { game, useTicker } from "./game";
 import { LorePanel } from "./LorePanel";
 import { OfflineSummary, OfflineReport } from "./OfflineReport";
 import { OptionsPanel } from "./OptionsPanel";
+import { AboutPanel } from "./AboutPanel";
 import { PrestigePanel } from "./PrestigePanel";
 import { canRefound, fameOnRefound } from "../engine/prestige";
 import { isExplorationUnlocked } from "../engine/exploration";
@@ -39,7 +40,8 @@ type TabId =
     | "ascension"
     | "planes"
     | "stats"
-    | "options";
+    | "options"
+    | "about";
 
 interface TabDef {
     id: TabId;
@@ -97,6 +99,7 @@ const TABS: TabDef[] = [
         render: () => <StatsPanel />,
     },
     { id: "options", label: "Options", visible: () => true, render: () => <OptionsPanel /> },
+    { id: "about", label: "About", visible: () => true, render: () => <AboutPanel /> },
 ];
 
 function Resource(props: { icon: string; name: string; amount: Decimal; rate: Decimal; tip?: ComponentChildren; cls: string }) {
@@ -233,6 +236,9 @@ export function App(props: { offline: OfflineSummary | null; initialTab?: string
                 <span class="hint">
                     Run {fmtTime(state.run.time)} · Total {fmtTime(state.meta.playtime)}
                 </span>
+                <button class="link tribute" onClick={() => setTab("about")}>
+                    A tribute to Master of Magic (1994)
+                </button>
             </header>
             <ResourceBar />
             <nav class="tabs">

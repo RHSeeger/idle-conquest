@@ -104,7 +104,8 @@ export function conquerMyrror(state: GameState, city: MyrrorCity, surrendered: b
         if (!m.wizardsDefeated.includes(w)) m.wizardsDefeated.push(w);
         if (!state.planes.wizardsDefeated.includes(w)) state.planes.wizardsDefeated.push(w);
         log(state, "prestige", `${w} is banished from Myrror!`);
-    } else if (!surrendered && (firstOfRace || city.isRegionCapital)) {
+    } else if (!surrendered) {
+        // every city taken by force is logged, as on Arcanus
         log(
             state,
             "conquest",

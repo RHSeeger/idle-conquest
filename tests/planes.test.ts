@@ -125,6 +125,15 @@ describe("Myrror", () => {
         expect(state.planes.myrror!.holdings.troll).toBe(1);
     });
 
+    it("logs every Myrran city taken by force, not just the first of each race", () => {
+        const state = opened();
+        for (let i = 0; i < 3; i++) {
+            const city = myrrorTarget(state)!;
+            conquerMyrror(state, city, false);
+            expect(state.log.some((e) => e.text.includes(city.name))).toBe(true);
+        }
+    });
+
     it("advances its siege over time", () => {
         const state = opened();
         setArmyShare(state, 1);

@@ -18,10 +18,11 @@ import { RIVAL_WIZARD_DEFS } from "./wizards";
 /** Knowledge and mana costs of the Spell of Mastery (mutable for the balance simulator) */
 export const MASTERY_TUNING = {
     /**
-     * Mana channelled into the Spell to complete it. Tuned with the sim: the gate
-     * is met at ~9h, and late mana income (~2e11–7e11/s) makes this a few hours.
+     * Mana channelled into the Spell to complete it. Play-test: 8e15 left a real
+     * player with everything conquered looking at "1d 6h" (~7e10 mana/s), so it's
+     * tuned to about an hour at that income (the bot, with more mana, needs less).
      */
-    mana: 8e15,
+    mana: 3e14,
     /** Each Mastery already claimed multiplies the next Spell's mana by this (each Mastery doubles income) */
     growth: 10,
 };

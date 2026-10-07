@@ -301,7 +301,7 @@ Then **research the Spell of Mastery** (Arcane, 1e18 Knowledge). It only becomes
 
 **Casting is a channel**, as in MoM, where it takes many turns:
 - Start it in the Mastery tab. From then on all mana income flows into the Spell instead of the mana pool, so enchantments, instants and summons wait. It can be paused and resumed; progress is kept, also through Refounds, Ascensions and Planeshifts.
-- It needs 4e15 mana (`MASTERY_TUNING.mana`): a few hours at the income you have once the gate is met.
+- It needs 3e14 mana (`MASTERY_TUNING.mana`), ×10 for each Mastery already claimed: about an hour at the income a player has once the gate is met (play-tested; 8e15 showed over a day).
 - When it completes: **you have won.** A victory screen sums up the journey (time played, Refounds, Ascensions and Planeshifts of all time, wizards banished on each plane).
 
 **Claim it now or later.** The victory screen offers:
@@ -351,7 +351,7 @@ Changes from the draft: Rjak's rule was first written around troop upkeep, which
 
 ### Pacing
 
-- First Spell of Mastery: target 12–15 hours of play. The bot meets the gate at about 9h (it holds all of Myrror and clears Arcanus in seconds by then); the channel fills the rest.
+- First Spell of Mastery: about an hour of channelling once the gate is met. The bot meets the gate at about 9h (it holds all of Myrror and clears Arcanus in seconds by then). The original 12–15h target was dropped after play-testing: padding it with a long channel felt too slow.
 - All 14 challenges: target another 10–20 hours.
 - See PROGRESS.md for the sim's current numbers.
 

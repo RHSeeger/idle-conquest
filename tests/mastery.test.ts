@@ -13,6 +13,7 @@ import {
     canChannel,
     canStartChallenge,
     claimMastery,
+    completeChallenge,
     keepPlaying,
     masteryCost,
     setChannelling,
@@ -178,13 +179,28 @@ describe("Challenge Wizards", () => {
         state.run.fortressesTaken = 3;
         conquer(state, { ...currentTarget(state)!, fortressOf: "Kali" });
         expect(state.mastery.challengeDone).toBe(true);
+        // it waits to be completed by hand (no auto-Ascend here)
+        state.automation.ascend = false;
         tick(state, 0.1);
+        expect(state.mastery.challenge).toBe("Raven");
+        expect(completeChallenge(state)).toBe(true);
         expect(state.mastery.challenge).toBeNull();
         expect(state.mastery.completed).toEqual(["Raven"]);
         expect(state.mastery.notice).toContain("Raven");
         // back to your own profile, with the reward (the rule's ×2 is gone, the reward's ×1.5 stays)
         expect(state.ascension.retorts).not.toContain("runemaster");
         expect(getStats(state).num("explore.speed")).toBeCloseTo((before / 2) * 1.5);
+    });
+
+    it("can't be completed before the goal is met; auto-Ascend completes a won one", () => {
+        const state = master();
+        startChallenge(state, "Raven");
+        expect(completeChallenge(state)).toBe(false);
+        state.mastery.challengeDone = true;
+        state.automation.ascend = true;
+        state.ascension.ascensions = 3; // auto-Ascend is unlocked by Ascension milestones
+        tick(state, 0.1);
+        expect(state.mastery.completed).toEqual(["Raven"]);
     });
 
     it("can be abandoned", () => {

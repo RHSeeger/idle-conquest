@@ -15,6 +15,7 @@ export const CHANGES: ChangeEntry[] = [
             "Layer 4: the Spell of Mastery. Defeat every rival wizard on both planes, channel the Spell, and win. Then claim a Mastery to start the worlds anew, stronger.",
             "The 14 Challenge Wizards: one Ascension as a rival wizard, under their own rule, for a reward that lasts forever.",
             "Playable on GitHub Pages, with a Tower of Wizardry icon in the browser tab.",
+            "A won challenge waits for you: complete it with the new button on the Mastery tab (auto-Ascend does it for you).",
         ],
     },
     {

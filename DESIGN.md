@@ -324,7 +324,7 @@ Then **research the Spell of Mastery** (Arcane, 1e18 Knowledge). It only becomes
   - Your own planned profile is kept for afterwards.
 - **Goal:** take all 4 rival Fortresses of Arcanus in one run. Refounds within the challenge are allowed; Ascending and Planeshifting aren't (and auto-Ascend waits).
 - **Myrror pauses.** Entering a challenge is an Ascension, and Ascensions don't touch Layer 3, so a Myrror campaign you have stays. During the challenge no army is sent there, so it doesn't advance; its holdings, works and boons still count. (Before your next Planeshift after a Mastery, there's simply no Myrror to pause.)
-- **Leaving:** reaching the goal, or abandoning, ends the challenge with an Ascension back to your own planned profile (with Insight if the Ascension gate is met). A completed challenge shows a short message.
+- **Leaving:** completing the challenge, or abandoning it, is an Ascension back to your own planned profile (with Insight if the Ascension gate is met). Reaching the goal doesn't end it by itself: the challenge is then won (it stays won through Refounds), and the Mastery tab's "Complete the challenge" button (shown disabled until then, with why) ends it, so you can keep playing the run first. Auto-Ascend completes a won challenge. A completed challenge shows a short message.
 - **Reward:** a permanent, milder version of the rule's upside. Challenges can be played again, but the reward is given once.
 - **Length:** target 30–90 minutes each.
 

@@ -46,6 +46,7 @@ import {
     insightUpgradeLevel,
 } from "./ascension";
 import { FAME_UPGRADE_ORDER, FAME_UPGRADES } from "../content/fame";
+import { completeChallenge } from "./mastery";
 import { autoWorks, hasPlaneshiftMilestone } from "./planes";
 import { RaceId } from "../content/races";
 import {
@@ -448,6 +449,8 @@ function accrueRecruitBudget(state: GameState): void {
 export function runAutomation(state: GameState, force = false): void {
     // prestige automation first (never forced: the bot decides those itself)
     if (!force) {
+        // a won challenge ends with its own Ascension, so auto-Ascend completes it
+        if (isAutomationActive(state, "ascend") && completeChallenge(state)) return;
         if (isAutomationActive(state,"ascend") && autoAscend(state)) return;
         if (isAutomationActive(state,"refound") && autoRefound(state)) return;
         // Fame upgrades: the bot buys its own

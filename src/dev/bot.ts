@@ -9,7 +9,7 @@
 import { CHALLENGE_ORDER } from "../content/challenges";
 import { ARCANUS_WIZARDS } from "../content/frontier";
 import { FAME_UPGRADE_ORDER } from "../content/fame";
-import { abandonChallenge, canChannel, claimMastery, setChannelling, startChallenge } from "../engine/mastery";
+import { abandonChallenge, canChannel, claimMastery, completeChallenge, setChannelling, startChallenge } from "../engine/mastery";
 import { RaceId } from "../content/races";
 import { runAutomation } from "../engine/automation";
 import { hireHero, tavernOffers } from "../engine/heroes";
@@ -59,6 +59,8 @@ export function botAct(state: GameState): void {
     botMyrror(state);
     // the Spell of Mastery: channel it as soon as it's known
     if (!state.mastery.channelling && canChannel(state)) setChannelling(state, true);
+    // a won challenge: complete it at once
+    completeChallenge(state);
 }
 
 /** A challenge the bot gives up on after this much play (it tries the next one later) */

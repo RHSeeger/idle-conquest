@@ -406,7 +406,10 @@ export function AscensionPanel() {
                 {state.mastery.challenge && (
                     <span class="hint">
                         {" "}
-                        Not during {state.mastery.challenge}'s challenge: it ends with its own Ascension (Mastery tab).
+                        Not during {state.mastery.challenge}'s challenge.{" "}
+                        {state.mastery.challengeDone
+                            ? "It's won: complete it on the Mastery tab, which Ascends you back to your own profile."
+                            : "Completing it (Mastery tab, once every rival Fortress of Arcanus has fallen) Ascends you instead, or you can abandon it there."}
                     </span>
                 )}
                 {planError && <span class="bad"> Can't Ascend with this profile: {planError}.</span>}

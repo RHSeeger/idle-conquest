@@ -9,6 +9,7 @@ import { REALM_DEFS } from "../content/magic";
 import { MYRROR_WIZARDS } from "../content/myrror";
 import { RETORTS } from "../content/retorts";
 import { SPELLS } from "../content/spells";
+import { insightOnAscend } from "../engine/ascension";
 import { getStats } from "../engine/collect";
 import { fmt, fmtInt, fmtTime } from "../engine/format";
 import { canResearch, knowsSpell, masteryGate, research, researchCost } from "../engine/magic";
@@ -16,9 +17,11 @@ import {
     abandonChallenge,
     canChannel,
     canClaimMastery,
+    canCompleteChallenge,
     canStartChallenge,
     challengeProfile,
     claimMastery,
+    completeChallenge,
     dismissNotice,
     keepPlaying,
     masteryBonus,
@@ -227,6 +230,9 @@ function CurrentChallenge() {
             abandonChallenge(state);
         }
     };
+    const won = canCompleteChallenge(state);
+    const insight = insightOnAscend(state);
+    const doComplete = () => completeChallenge(state);
     return (
         <div class="challenge-current">
             <p>
@@ -236,6 +242,18 @@ function CurrentChallenge() {
                 </b>
             </p>
             <p class="hint">Rule: {c.rule}.</p>
+            <p>
+                <button class="prestige-button mastery" disabled={!won} onClick={doComplete}>
+                    Complete the challenge
+                </button>{" "}
+                <span class={won ? "good" : "hint"}>
+                    {won
+                        ? `Won! Completing it gives the reward (${c.reward}) and Ascends you back to your own profile` +
+                          (insight.gt(0) ? ` (+${fmtInt(insight)} Insight)` : "") +
+                          "."
+                        : `Once all ${ARCANUS_WIZARDS} rival Fortresses of Arcanus have fallen in one run. Completing it gives the reward and Ascends you back to your own profile (auto-Ascend does it for you).`}
+                </span>
+            </p>
             <button class="toggle" onClick={doAbandon}>
                 Abandon the challenge
             </button>
@@ -260,7 +278,14 @@ export function ChallengeBanner(props: { onOpen: () => void }) {
     if (!c) return null;
     return (
         <div class="challenge-banner">
-            <b>{c.wizard}'s challenge:</b> {c.rule}. Fortresses this run: {state.run.fortressesTaken} of {ARCANUS_WIZARDS}.{" "}
+            <b>{c.wizard}'s challenge:</b> {c.rule}.{" "}
+            {state.mastery.challengeDone ? (
+                <span class="good">Won: complete it on the Mastery tab.</span>
+            ) : (
+                <>
+                    Fortresses this run: {state.run.fortressesTaken} of {ARCANUS_WIZARDS}.
+                </>
+            )}{" "}
             <button class="link" onClick={props.onOpen}>
                 Details
             </button>

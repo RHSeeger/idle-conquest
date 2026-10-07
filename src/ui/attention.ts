@@ -47,6 +47,7 @@ function planesAttention(state: GameState): string | null {
 function masteryAttention(state: GameState): string | null {
     const m = state.mastery;
     if (m.cast) return "Your Mastery waits to be claimed";
+    if (m.challenge && m.challengeDone) return "Your challenge is won: complete it";
     if (!m.channelling && canChannel(state)) return "The Spell of Mastery can be channelled";
     if (!isAutomationActive(state, "research") && canResearch(state, SPELL_OF_MASTERY)) return "You can research the Spell of Mastery";
     return null;

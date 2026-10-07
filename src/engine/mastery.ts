@@ -60,13 +60,9 @@ export function masterySecondsLeft(state: GameState, stats: Stats): number {
     return masteryCost(state).minus(state.mastery.progress).max(0).div(rate).toNumber();
 }
 
-/** Called from tick(): the channel, and a finished challenge */
+/** Called from tick(): the channel */
 export function tickMastery(state: GameState, stats: Stats, dt: number): void {
     const m = state.mastery;
-    if (m.challengeDone && m.challenge) {
-        endChallenge(state, true);
-        return;
-    }
     if (!m.channelling || m.cast) return;
     m.progress = m.progress.plus(manaRate(state, stats).times(dt));
     if (m.progress.gte(masteryCost(state))) completeSpell(state);
@@ -184,6 +180,22 @@ export function startChallenge(state: GameState, wizard: string): boolean {
         if (!state.ascension.spellsKnown.includes(id)) state.ascension.spellsKnown.push(id);
     }
     bump(state);
+    return true;
+}
+
+/** Whether the challenge's goal is met (all rival Fortresses of Arcanus in one run), so it can be completed */
+export function canCompleteChallenge(state: GameState): boolean {
+    return !!state.mastery.challenge && state.mastery.challengeDone;
+}
+
+/**
+ * Completes a won challenge: the reward, and an Ascension back to your own
+ * profile. Done by hand (Mastery tab), or by auto-Ascend, so a player can
+ * keep playing the run first.
+ */
+export function completeChallenge(state: GameState): boolean {
+    if (!canCompleteChallenge(state)) return false;
+    endChallenge(state, true);
     return true;
 }
 

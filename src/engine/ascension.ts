@@ -102,7 +102,7 @@ export function hasAscensionMilestone(state: GameState, id: AscensionMilestoneId
     return !!m && effectiveAscensions(state) >= m.ascensions;
 }
 
-/** Not during a challenge: it ends with its own Ascension (Mastery tab) */
+/** Not during a challenge: completing or abandoning it is its own Ascension (Mastery tab) */
 export function canAscend(state: GameState): boolean {
     return !state.mastery.challenge && ascensionProgress(state).ready && insightOnAscend(state).gt(0);
 }

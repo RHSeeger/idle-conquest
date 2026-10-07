@@ -245,7 +245,7 @@ export function conquer(state: GameState, target: FrontierCity, quiet = false, s
     if (target.fortressOf) {
         defeatWizard(state, target.fortressOf);
         run.fortressesTaken++;
-        // a challenge's goal: every rival Fortress of Arcanus in one run (it ends at the next tick)
+        // a challenge's goal: every rival Fortress of Arcanus in one run (then it can be completed, Mastery tab; it stays won through Refounds)
         if (state.mastery.challenge && run.fortressesTaken >= ARCANUS_WIZARDS) state.mastery.challengeDone = true;
     }
     bump(state);

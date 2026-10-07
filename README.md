@@ -1,5 +1,7 @@
 # Idle Conquest
 
+**[Play Idle Conquest in your browser](https://rhseeger.github.io/idle-conquest/)**
+
 An incremental (idle) fantasy strategy game, written in TypeScript and Preact: grow a settlement into a realm, become a wizard, fight rival wizards across two worlds. It is a tribute to **Master of Magic** (1994); see below.
 
 ## A tribute to Master of Magic
@@ -59,5 +61,7 @@ npm run dev      # dev server
 npm test         # unit tests
 npm run build    # typecheck and build to dist/
 ```
+
+Publishing: every push to `master` is tested, built and published to GitHub Pages by `.github/workflows/deploy-pages.yml` (if the tests or the typecheck fail, nothing is published). It can also be run by hand from the Actions tab. One-time setup: Settings > Pages > Source: "GitHub Actions".
 
 More commands (the balance simulator, dev URL modes) are in [PROGRESS.md](PROGRESS.md#how-to-run). The design is in [DESIGN.md](DESIGN.md), and the running record of work and decisions in [PROGRESS.md](PROGRESS.md).

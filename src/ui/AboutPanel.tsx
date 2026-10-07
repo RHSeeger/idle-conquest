@@ -1,13 +1,21 @@
 /**
- * About: How to play, then credit and thanks to Master of Magic, which this game is built on.
- * The same write-up is in README.md; keep the two in step.
- * Also the player-facing To do and Changes lists, from content/changelog.ts.
+ * About, in four sections: How to play; the tribute to Master of Magic, which
+ * this game is built on (the same write-up is in README.md; keep the two in
+ * step); To do & changes (content/changelog.ts); Credits & links (AI
+ * disclosure, the code, support; README.md has the same disclosure). Plus
+ * the page footer.
  */
 
+import { ComponentChildren } from "preact";
 import { CHANGES, PLANNED } from "../content/changelog";
 import { HowToPlay } from "./Intro";
 
-function Ext(props: { href: string; children: string }) {
+const GITHUB_URL = "https://github.com/RHSeeger/idle-conquest";
+
+/** Set once the Patreon page exists; its links stay hidden until then */
+const PATREON_URL: string | null = null;
+
+function Ext(props: { href: string; children: ComponentChildren }) {
     return (
         <a href={props.href} target="_blank" rel="noopener noreferrer">
             {props.children}
@@ -15,13 +23,9 @@ function Ext(props: { href: string; children: string }) {
     );
 }
 
-export function AboutPanel() {
+function Tribute() {
     return (
-        <div class="panel about">
-            <HowToPlay />
-
-            <hr class="about-divider" />
-
+        <>
             <section>
                 <h2>A tribute to Master of Magic</h2>
                 <p>
@@ -133,10 +137,13 @@ export function AboutPanel() {
                     MicroProse, Slitherine or MuHa Games. Master of Magic and its names belong to their respective owners.
                 </p>
             </section>
+        </>
+    );
+}
 
-            <hr class="about-divider" />
-            <p class="about-part">Idle Conquest's development</p>
-
+function Updates() {
+    return (
+        <>
             <section>
                 <h2>To do</h2>
                 <ul>
@@ -159,6 +166,102 @@ export function AboutPanel() {
                     </div>
                 ))}
             </section>
+        </>
+    );
+}
+
+function Credits() {
+    return (
+        <>
+            <section>
+                <h2>AI Disclosure</h2>
+                <p>
+                    Idle Conquest started manually implemented, before AI was really available to help with coding. I 
+                    worked on it for a good while and the result was... something that didn't feel like an 
+                    idle/incremental game at all. It was coming out to feel like a text based 4X game, which was not
+                    what I was aiming for at all.
+                </p>
+                <p>
+                    So then I started over - manually crafting the game, using TypeScript. And... after another good,
+                    long while it started feeling like I was building a text based 4X game - again.
+                </p>
+                <p>
+                    Eventually, when I had Claude Code available, I had it help me come up with a design the 
+                    had many of the elements of Master of Magic, but the feel of an incremental/idle. And it did
+                    a fantastic job (at least in my opinion). Since then, I've been using Claude Code to help me 
+                    design the game and write pretty much all the code. I've been heavily involved in the design,
+                    balance, and flow of everything - but Claude Code has written all the actual code. There's still 
+                    some remnants of my original code (especially the ones with the names of things, etc), but it is
+                    it very much the minority.
+                </p>
+                <p>
+                    For all real considerations, the code and the in-game text should be considered to have been written by
+                    Claude, Anthropic's AI model, using Claude Code. And it had significant input into the design
+                    of the UI.
+                </p>
+                <p>
+                    The game's direction is human: what to build, how it should play and feel, the design decisions, and
+                    the play-testing that shapes various changes. The AI works from that direction, proposing designs and
+                    writing them up, and the results are reviewed and played before they stay.
+                </p>
+                <p>There is no AI-generated art: the game uses only text and symbols.</p>
+            </section>
+            <section>
+                <h2>The code</h2>
+                <p>
+                    Idle Conquest is source available: <Ext href={GITHUB_URL}>the code is on GitHub</Ext>.
+                </p>
+            </section>
+            {PATREON_URL && (
+                <section>
+                    <h2>Support</h2>
+                    <p>
+                        If you enjoy the game, you can <Ext href={PATREON_URL}>support it on Patreon</Ext>.
+                    </p>
+                </section>
+            )}
+        </>
+    );
+}
+
+export type AboutSection = "howto" | "tribute" | "updates" | "credits";
+
+const SECTIONS: { id: AboutSection; label: string; render: () => ComponentChildren }[] = [
+    { id: "howto", label: "How to play", render: () => <HowToPlay /> },
+    { id: "tribute", label: "Master of Magic", render: () => <Tribute /> },
+    { id: "updates", label: "To do & changes", render: () => <Updates /> },
+    { id: "credits", label: "Credits & links", render: () => <Credits /> },
+];
+
+export function AboutPanel(props: { section: AboutSection; onSection: (s: AboutSection) => void }) {
+    const active = SECTIONS.find((s) => s.id === props.section) ?? SECTIONS[0];
+    return (
+        <div class="panel about">
+            <nav class="subtabs">
+                {SECTIONS.map((s) => (
+                    <button key={s.id} class={"toggle" + (s.id === active.id ? " on" : "")} onClick={() => props.onSection(s.id)}>
+                        {s.label}
+                    </button>
+                ))}
+            </nav>
+            {active.render()}
         </div>
+    );
+}
+
+/** A slim footer on every page: the code, support, and the About sections */
+export function Footer(props: { onAbout: (s: AboutSection) => void }) {
+    return (
+        <footer class="site-footer">
+            <span>Idle Conquest</span>
+            <Ext href={GITHUB_URL}>Code on GitHub</Ext>
+            {PATREON_URL && <Ext href={PATREON_URL}>Support on Patreon</Ext>}
+            <button class="link" onClick={() => props.onAbout("credits")}>
+                AI disclosure
+            </button>
+            <button class="link" onClick={() => props.onAbout("tribute")}>
+                Inspired by Master of Magic
+            </button>
+        </footer>
     );
 }

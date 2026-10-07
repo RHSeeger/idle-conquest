@@ -41,6 +41,16 @@ Idle Conquest is an unofficial fan project. It is not affiliated with or endorse
 
 The same write-up is in the game's **About** tab (`src/ui/AboutPanel.tsx`); keep the two in step.
 
+## AI disclosure
+
+Idle Conquest is made with the help of AI. Most of the code and the in-game text were written by Claude, Anthropic's AI model, using Claude Code.
+
+The game's direction is human: what to build, how it should play and feel, the design decisions, and the play-testing that shapes every change. The AI works from that direction, proposing designs and writing them up, and the results are reviewed and played before they stay.
+
+There is no AI-generated art: the game uses only text and symbols.
+
+The same text is in the game (About → Credits & links, in `src/ui/AboutPanel.tsx`); keep the two in step.
+
 ## Running it
 
 ```

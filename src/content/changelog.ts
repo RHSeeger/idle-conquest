@@ -12,6 +12,7 @@ export const CHANGES: ChangeEntry[] = [
     {
         date: "2026-10-06",
         items: [
+            "The About tab is split into sections (How to play, Master of Magic, To do & changes, Credits & links), with an AI disclosure and a link to the code. A footer links to them from every page.",
             "Troop buy amounts (×10, ×100, Next ×2) buy as many as you can afford, up to that amount. The button is green when it can buy them all.",
             "Auto-buy for Myrran works, unlocked by Eternal Return (2 Planeshifts).",
             "An introduction for new players: a welcome, a short card the first time you open each tab, and How to play in the About tab.",

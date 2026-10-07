@@ -13,7 +13,7 @@ import { game, useTicker } from "./game";
 import { LorePanel } from "./LorePanel";
 import { OfflineSummary, OfflineReport } from "./OfflineReport";
 import { OptionsPanel } from "./OptionsPanel";
-import { AboutPanel } from "./AboutPanel";
+import { AboutPanel, AboutSection, Footer } from "./AboutPanel";
 import { PrestigePanel } from "./PrestigePanel";
 import { canRefound, fameOnRefound } from "../engine/prestige";
 import { isExplorationUnlocked } from "../engine/exploration";
@@ -100,7 +100,8 @@ const TABS: TabDef[] = [
         render: () => <StatsPanel />,
     },
     { id: "options", label: "Options", visible: () => true, render: () => <OptionsPanel /> },
-    { id: "about", label: "About", visible: () => true, render: () => <AboutPanel /> },
+    // rendered by App itself, which keeps the About section
+    { id: "about", label: "About", visible: () => true, render: () => null },
 ];
 
 function Resource(props: { icon: string; name: string; amount: Decimal; rate: Decimal; tip?: ComponentChildren; cls: string }) {
@@ -226,9 +227,14 @@ export function App(props: { offline: OfflineSummary | null; initialTab?: string
     useTicker(10);
     const [tab, setTab] = useState<TabId>((props.initialTab as TabId) ?? "realm");
     const [offline, setOffline] = useState(props.offline);
+    const [aboutSection, setAboutSection] = useState<AboutSection>("howto");
     const state = game();
     const visible = TABS.filter((t) => t.visible());
     const active = visible.find((t) => t.id === tab) ?? visible[0];
+    const openAbout = (s: AboutSection) => {
+        setAboutSection(s);
+        setTab("about");
+    };
 
     return (
         <div class="app">
@@ -237,7 +243,7 @@ export function App(props: { offline: OfflineSummary | null; initialTab?: string
                 <span class="hint">
                     Run {fmtTime(state.run.time)} · Total {fmtTime(state.meta.playtime)}
                 </span>
-                <button class="link tribute" onClick={() => setTab("about")}>
+                <button class="link tribute" onClick={() => openAbout("tribute")}>
                     A tribute to Master of Magic (1994)
                 </button>
             </header>
@@ -266,10 +272,11 @@ export function App(props: { offline: OfflineSummary | null; initialTab?: string
             <div class="main">
                 <main>
                     <TabIntro tab={active.id} />
-                    {active.render()}
+                    {active.id === "about" ? <AboutPanel section={aboutSection} onSection={setAboutSection} /> : active.render()}
                 </main>
                 <Log />
             </div>
+            <Footer onAbout={openAbout} />
             {offline && <OfflineReport summary={offline} onClose={() => setOffline(null)} />}
             {!offline && <Welcome />}
         </div>

@@ -251,7 +251,7 @@ function CurrentChallenge() {
                         ? `Won! Completing it gives the reward (${c.reward}) and Ascends you back to your own profile` +
                           (insight.gt(0) ? ` (+${fmtInt(insight)} Insight)` : "") +
                           "."
-                        : `Once all ${ARCANUS_WIZARDS} rival Fortresses of Arcanus have fallen in one run. Completing it gives the reward and Ascends you back to your own profile (auto-Ascend does it for you).`}
+                        : `Once all ${ARCANUS_WIZARDS} rival Fortresses of Arcanus have fallen in one run. You can Refound as often as you like to get there (a Refound starts the count again), but you can't Ascend until it's complete. Completing it gives the reward and Ascends you back to your own profile (auto-Ascend does it for you).`}
                 </span>
             </p>
             <button class="toggle" onClick={doAbandon}>

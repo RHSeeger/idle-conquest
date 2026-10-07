@@ -68,3 +68,25 @@ export function ProgressBar(props: { fraction: number; label?: ComponentChildren
         </div>
     );
 }
+
+/** A campaign's regions in order (Army and Planes tabs); rival wizards' domains stand out */
+export function RegionList(props: { plan: { index: number; name: string; kind: string }[]; current: number }) {
+    return (
+        <div class="regions">
+            {props.plan.map((r) => {
+                const wizard = r.kind === "wizard";
+                const status = r.index < props.current ? " done" : r.index === props.current ? " current" : "";
+                return (
+                    <span
+                        key={r.index}
+                        class={"region" + status + (wizard ? " wizard" : "")}
+                        title={wizard ? "A rival wizard's domain, ending at their Fortress" : undefined}
+                    >
+                        {wizard && "♜ "}
+                        {r.name}
+                    </span>
+                );
+            })}
+        </div>
+    );
+}

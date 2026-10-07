@@ -558,6 +558,25 @@ td.buy-button button.full:not(:disabled) {
     color: var(--accent);
 }
 
+/* rival wizards' domains: the campaign's landmarks */
+.region.wizard {
+    font-weight: 600;
+    color: var(--text);
+    border-color: var(--gold);
+    background: color-mix(in srgb, var(--gold) 14%, transparent);
+}
+
+.region.wizard.current {
+    color: var(--accent);
+    border-color: var(--accent);
+    border-width: 2px;
+    padding: 0 5px;
+}
+
+.region.wizard.done {
+    opacity: 0.7;
+}
+
 .upcoming {
     font-size: 12px;
 }

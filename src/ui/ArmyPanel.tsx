@@ -17,7 +17,7 @@ import { isExplorationUnlocked, lairPower, lairTarget, setArmyTarget, siteName }
 import { isWizard } from "../engine/magic";
 import { AutoMode, AutoToggle } from "./AutoToggle";
 import { HeroesSection } from "./HeroesSection";
-import { BreakdownView, Price, ProgressBar, Tip } from "./components";
+import { BreakdownView, Price, ProgressBar, RegionList, Tip } from "./components";
 import { game } from "./game";
 
 const BUY_AMOUNTS: Settings["buyAmount"][] = [1, 10, 100, "next", "max"];
@@ -234,13 +234,7 @@ function Campaign() {
                 )}
             </h2>
             <CurrentOrders />
-            <div class="regions">
-                {plan.map((r) => (
-                    <span key={r.index} class={"region " + (r.index < regionIdx ? "done" : r.index === regionIdx ? "current" : "")}>
-                        {r.name}
-                    </span>
-                ))}
-            </div>
+            <RegionList plan={plan} current={regionIdx} />
             {upcoming.length > 0 && (
                 <div class="upcoming">
                     <span class="hint">Next on the frontier: </span>

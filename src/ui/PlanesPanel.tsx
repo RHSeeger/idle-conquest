@@ -51,7 +51,7 @@ import {
     setArmyShare,
 } from "../engine/planes";
 import { profileText } from "./AscensionPanel";
-import { ProgressBar, Tip } from "./components";
+import { ProgressBar, RegionList, Tip } from "./components";
 import { game } from "./game";
 import { TRAITS } from "../content/traits";
 
@@ -191,13 +191,7 @@ function MyrrorSection() {
             ) : (
                 <div class="wall">You hold all of Myrror.</div>
             )}
-            <div class="regions">
-                {plan.map((r) => (
-                    <span key={r.index} class={"region " + (r.index < regionIdx ? "done" : r.index === regionIdx ? "current" : "")}>
-                        {r.name}
-                    </span>
-                ))}
-            </div>
+            <RegionList plan={plan} current={regionIdx} />
             <h3>Holdings</h3>
             {Object.keys(m.holdings).length === 0 ? (
                 <p class="hint">No Myrran cities yet. Each one you take is held until the next Planeshift.</p>

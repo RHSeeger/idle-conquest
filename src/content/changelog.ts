@@ -16,6 +16,7 @@ export const CHANGES: ChangeEntry[] = [
             "The 14 Challenge Wizards: one Ascension as a rival wizard, under their own rule, for a reward that lasts forever.",
             "Playable on GitHub Pages, with a Tower of Wizardry icon in the browser tab.",
             "A won challenge waits for you: complete it with the new button on the Mastery tab (auto-Ascend does it for you).",
+            "Rival wizards' domains stand out in the campaign's region list (Army and Planes tabs).",
         ],
     },
     {

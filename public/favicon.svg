@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- A Tower of Wizardry: stone tower and spire, with a glowing gold tip, on the game's purple -->
+  <rect width="32" height="32" rx="7" fill="#4a2d78"/>
+  <circle cx="16" cy="5.5" r="4.5" fill="#f0c845" opacity="0.3"/>
+  <path d="M10.5 12 L16 4.5 L21.5 12 Z" fill="#cbb8e8"/>
+  <path d="M12.5 12 H19.5 L20.5 27 H11.5 Z" fill="#ece4f7"/>
+  <rect x="11" y="11" width="10" height="2.5" rx="0.5" fill="#cbb8e8"/>
+  <rect x="8.5" y="26" width="15" height="3" rx="1" fill="#cbb8e8"/>
+  <rect x="15" y="16" width="2" height="3.5" rx="1" fill="#f0c845"/>
+  <circle cx="16" cy="5" r="2.2" fill="#f0c845"/>
+</svg>

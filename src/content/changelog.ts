@@ -10,6 +10,10 @@ export interface ChangeEntry {
 
 export const CHANGES: ChangeEntry[] = [
     {
+        date: "2026-10-07",
+        items: ["Playable on GitHub Pages, with a Tower of Wizardry icon in the browser tab."],
+    },
+    {
         date: "2026-10-06",
         items: [
             "The About tab is split into sections (How to play, Master of Magic, To do & changes, Credits & links), with an AI disclosure and a link to the code. A footer links to them from every page.",

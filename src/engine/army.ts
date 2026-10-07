@@ -21,16 +21,20 @@ import { DRILL_STEP, UNITS, UNIT_ORDER } from "../content/units";
 import { RIVAL_WIZARD_DEFS } from "../content/wizards";
 import { MAX_LINKS, SHARE_PER_LINK } from "../content/myrror";
 import { XP_PER_CONQUEST } from "../content/heroes";
+import { challengeBans } from "../content/challenges";
 import { grantHeroXp } from "./heroes";
-import { racesInRealm } from "./collect";
+import { getStats, racesInRealm } from "./collect";
 import { D, Decimal, ONE, ZERO } from "./decimal";
 import { roleStat, Stats, unitPowerStat } from "./effects";
 import { effectiveTraits, isWizard, knowsSpell } from "./magic";
-import { renownLimit } from "./prestige";
+import { activeFameLevel, renownLimit } from "./prestige";
 import { bump, GameState, log } from "./state";
 
 export function isUnitAvailable(state: GameState, id: string, races: readonly string[] = racesInRealm(state)): boolean {
     const u = UNITS[id];
+    // Challenge Wizards' rules
+    if (u.role === "siege" && challengeBans(state, "siege")) return false;
+    if (u.spell === undefined && challengeBans(state, "mortalTroops")) return false;
     if (u.spell !== undefined) {
         return knowsSpell(state, u.spell);
     }
@@ -119,12 +123,14 @@ export function planarLinks(state: GameState): number {
     return Math.min(MAX_LINKS, m.links + (m.works.planarGate ?? 0));
 }
 
+/** Myrror pauses during a challenge (Layer 4): the whole army fights on Arcanus */
 export function myrrorShare(state: GameState): number {
+    if (state.mastery.challenge) return 0;
     return Math.min(state.planes.armyShare, maxMyrrorShare(state));
 }
 
 export function raceRegions(state: GameState): number {
-    return BASE_RACE_REGIONS + Math.floor(state.prestige.upgrades["scouting"] ?? 0);
+    return BASE_RACE_REGIONS + Math.floor(activeFameLevel(state, "scouting"));
 }
 
 /** Mortals meet one rival wizard (an impassable wall); wizards can fight through all of Arcanus */
@@ -133,7 +139,13 @@ export function currentPlan(state: GameState): RegionDef[] {
 }
 
 export function cityAt(state: GameState, index: number, plan = currentPlan(state)): FrontierCity | null {
-    return frontierCity(state.run.startingRace, plan, index, isWizard(state));
+    const city = frontierCity(state.run.startingRace, plan, index, isWizard(state));
+    if (!city) return null;
+    // Challenge Wizards' rules and rewards (Ariel, Kali)
+    const stats = getStats(state);
+    const mult =
+        city.region.kind === "wizard" ? stats.get("defense.domain") : city.isRegionCapital ? ONE : stats.get("defense.ordinary");
+    return mult.eq(1) ? city : { ...city, defense: city.defense.times(mult) };
 }
 
 export function currentTarget(state: GameState): FrontierCity | null {
@@ -200,11 +212,14 @@ export function tickFrontier(state: GameState, stats: Stats, dt: number): void {
  */
 export function conquer(state: GameState, target: FrontierCity, quiet = false, surrendered = false): void {
     const run = state.run;
+    const stats = getStats(state);
+    // Oberic's and Rjak's rules change the citizens a city taken by force brings
+    const pop = surrendered ? target.pop : target.pop * stats.num("conquest.pop");
     run.cities.push({
         id: run.nextCityId++,
         name: target.name,
         race: target.race,
-        pop: target.pop,
+        pop,
         origin: "conquered",
     });
     run.frontier.index = target.index + 1;
@@ -212,8 +227,9 @@ export function conquer(state: GameState, target: FrontierCity, quiet = false, s
     if (surrendered) {
         run.surrenderedPop += target.pop;
     } else {
-        run.conqueredPop += target.pop;
+        run.conqueredPop += pop;
         grantHeroXp(state, XP_PER_CONQUEST);
+        addFreeTroops(state, stats.num("conquest.troops"));
     }
     const isNewRace = target.race !== run.startingRace && !run.racesConquered.includes(target.race);
     if (isNewRace) {
@@ -228,6 +244,9 @@ export function conquer(state: GameState, target: FrontierCity, quiet = false, s
     }
     if (target.fortressOf) {
         defeatWizard(state, target.fortressOf);
+        run.fortressesTaken++;
+        // a challenge's goal: every rival Fortress of Arcanus in one run (it ends at the next tick)
+        if (state.mastery.challenge && run.fortressesTaken >= ARCANUS_WIZARDS) state.mastery.challengeDone = true;
     }
     bump(state);
     if (quiet && !isNewRace) {
@@ -239,6 +258,13 @@ export function conquer(state: GameState, target: FrontierCity, quiet = false, s
         `Conquered ${target.name} (${RACES[target.race].adjective}${target.isRegionCapital ? " region capital" : ""}).` +
             (isNewRace ? ` ${RACES[target.race].plural} join your realm!` : ""),
     );
+}
+
+/** Rjak: the fallen rise as troops of the strongest kind you can field */
+function addFreeTroops(state: GameState, n: number): void {
+    if (n <= 0) return;
+    const best = availableUnits(state).sort((a, b) => UNITS[b].power - UNITS[a].power)[0];
+    if (best) state.run.units[best] = (state.run.units[best] ?? 0) + Math.floor(n);
 }
 
 function defeatWizard(state: GameState, wizard: string): void {

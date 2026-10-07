@@ -55,6 +55,10 @@ export interface SpellDef {
     requiresTower?: boolean;
     /** Knowing this other spell multiplies the research cost */
     discountedBy?: { spell: string; mult: number };
+    /** Only researchable once the Mastery gate is met (Layer 4: every rival wizard on both planes) */
+    requiresMastery?: boolean;
+    /** Replaces the rarity's research cost */
+    research?: number;
 }
 
 const list: SpellDef[] = [
@@ -97,6 +101,16 @@ const list: SpellDef[] = [
         requiresTower: true,
         discountedBy: { spell: "planeShift", mult: 0.5 },
         text: "Open a captured Tower of Wizardry onto Myrror.",
+    },
+    {
+        id: "spellOfMastery",
+        name: "Spell of Mastery",
+        realm: "arcane",
+        rarity: "veryRare",
+        kind: "utility",
+        requiresMastery: true,
+        research: 1e18,
+        text: "Become the Master of Magic: channel it in the Mastery tab.",
     },
 
     // --- Life ---

@@ -6,6 +6,7 @@
  *   npm run sim -- runs=6               several runs with Refounds in between
  *   npm run sim -- growth=1.7 base=20   override frontier defense tuning
  *   npm run sim -- verbose              also print 15-minute economy snapshots
+ *   npm run sim -- smana=8e15 cinsight=0.5   Layer 4: Spell of Mastery mana, Insight levels in challenges
  *
  * The greedy bot (src/dev/bot.ts) plays; the report shows when each region
  * was reached, and for multi-run mode how fast each successive run goes.
@@ -26,6 +27,9 @@ import { tick } from "../src/engine/tick";
 import { botAct, botEndRun, botShouldRefound, newTracker } from "../src/dev/bot";
 import { insightOnAscend, planeshiftProgress } from "../src/engine/ascension";
 import { essenceOnPlaneshift } from "../src/engine/planes";
+import { manaRate } from "../src/engine/magic";
+import { masteryCost } from "../src/engine/mastery";
+import { CHALLENGE_TUNING, MASTERY_TUNING } from "../src/content/challenges";
 
 const args = Object.fromEntries(
     process.argv.slice(2).map((a) => {
@@ -46,6 +50,8 @@ if (args.bstep) BUILDING_TUNING.stepMult = Number(args.bstep);
 if (args.bcap) BUILDING_TUNING.stepCap = Number(args.bcap);
 if (args.oindex) FRONTIER_TUNING.openingIndex = Number(args.oindex);
 if (args.ogrowth) FRONTIER_TUNING.openingGrowth = Number(args.ogrowth);
+if (args.smana) MASTERY_TUNING.mana = Number(args.smana);
+if (args.cinsight) CHALLENGE_TUNING.insightLevels = Number(args.cinsight);
 
 const DT = 1;
 const BOT_EVERY = 5;
@@ -171,13 +177,19 @@ if (runs <= 1) {
     console.log(`Sites ${r.sites}, spellbooks ${r.books}, Ascension ready at ${r.ascensionReady === null ? "never" : fmtTime(r.ascensionReady)}`);
 } else {
     console.log(
-        "run | ps | asc | race        | length   | total    | frontier | fame | reg2     wall(40) | gap      | sites books  | spells | wiz | myrror | asc ready | L3 ready  | ended",
+        "run | ps | asc | race        | length   | total    | frontier | fame | reg2     wall(40) | gap      | sites books  | spells | wiz | myrror | asc ready | L3 ready  | mastery           | mana/s   know/s   | ended",
     );
     let totalTime = 0;
     for (let i = 1; i <= runs; i++) {
         const asc = state.ascension.ascensions;
         const ps = state.planes.planeshifts;
         const r = playRun(state, hours * 3600, true);
+        const ms = state.mastery;
+        const stats = getStats(state);
+        const mastery =
+            `${ms.masteries}M ${ms.completed.length}c` +
+            (ms.challenge ? ` @${ms.challenge}` : ms.cast ? " CAST" : ms.channelling ? ` ${Math.round(ms.progress.div(masteryCost(state)).toNumber() * 100)}%` : "");
+        const rates = `${fmt(manaRate(state, stats)).padEnd(8)} ${fmt(realmEconomy(state, stats).knowledge).padEnd(8)}`;
         totalTime += r.time;
         const myrror = state.planes.myrror ? `${state.planes.myrror.index}/${state.planes.myrror.links}L` : "-";
         const reg2 = r.regionTimes[2] !== undefined ? fmtTime(r.regionTimes[2]) : "-";
@@ -188,7 +200,7 @@ if (runs <= 1) {
         const essence = essenceOnPlaneshift(state).toString();
         const ended = i < runs ? botEndRun(state) : "";
         console.log(
-            `${String(i).padStart(3)} | ${String(ps).padStart(2)} | ${String(asc).padStart(3)} | ${RACES[r.race].plural.padEnd(11)} | ${fmtTime(r.time).padEnd(8)} | ${fmtTime(totalTime).padEnd(8)} | ${String(r.frontier).padStart(8)} | ${r.fame.padStart(4)} | ${reg2.padEnd(8)} ${wall.padEnd(8)} | ${fmtTime(r.longestGap).padEnd(8)} | ${String(r.sites).padStart(5)} ${r.books.padEnd(6)} | ${String(spells).padStart(6)} | ${String(wiz).padStart(3)} | ${myrror.padEnd(6)} | ${(r.ascensionReady === null ? "-" : fmtTime(r.ascensionReady)).padEnd(9)} | ${(r.planeshiftReady === null ? "-" : fmtTime(r.planeshiftReady)).padEnd(9)} | ${ended}${ended === "ascend" ? ` (+${insight} Insight)` : ended === "planeshift" ? ` (+${essence} Essence)` : ""}`,
+            `${String(i).padStart(3)} | ${String(ps).padStart(2)} | ${String(asc).padStart(3)} | ${RACES[r.race].plural.padEnd(11)} | ${fmtTime(r.time).padEnd(8)} | ${fmtTime(totalTime).padEnd(8)} | ${String(r.frontier).padStart(8)} | ${r.fame.padStart(4)} | ${reg2.padEnd(8)} ${wall.padEnd(8)} | ${fmtTime(r.longestGap).padEnd(8)} | ${String(r.sites).padStart(5)} ${r.books.padEnd(6)} | ${String(spells).padStart(6)} | ${String(wiz).padStart(3)} | ${myrror.padEnd(6)} | ${(r.ascensionReady === null ? "-" : fmtTime(r.ascensionReady)).padEnd(9)} | ${(r.planeshiftReady === null ? "-" : fmtTime(r.planeshiftReady)).padEnd(9)} | ${mastery.padEnd(17)} | ${rates} | ${ended}${ended === "ascend" ? ` (+${insight} Insight)` : ended === "planeshift" ? ` (+${essence} Essence)` : ""}`,
         );
     }
     const p = state.prestige;

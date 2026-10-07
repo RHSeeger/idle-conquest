@@ -2,7 +2,8 @@
  * Hiring heroes, their experience, and their auras.
  */
 import { HEROES, HERO_ORDER, heroLevel, MAX_HEROES, TAVERN_SIZE } from "../content/heroes";
-import { registerCollector } from "./collect";
+import { challengeBans } from "../content/challenges";
+import { getStats, registerCollector } from "./collect";
 import { D, Decimal } from "./decimal";
 import { hash } from "./rng";
 import { bump, GameState, log } from "./state";
@@ -16,7 +17,12 @@ export function isTavernOpen(state: GameState): boolean {
 
 /** Gold cost of the next hero (grows with heroes hired this run) */
 export function hireCost(state: GameState): Decimal {
-    return D(HIRE_BASE).times(Decimal.pow(HIRE_GROWTH, state.run.heroesHired));
+    return D(HIRE_BASE).times(Decimal.pow(HIRE_GROWTH, state.run.heroesHired)).times(getStats(state).get("cost.hero"));
+}
+
+/** Heroes serve you (not in Kali's challenge) */
+export function heroesAllowed(state: GameState): boolean {
+    return !challengeBans(state, "heroes");
 }
 
 /** The heroes currently offering their services (deterministic per run and hire count) */
@@ -34,6 +40,7 @@ export function tavernOffers(state: GameState): string[] {
 export function canHire(state: GameState, id: string): boolean {
     return (
         isTavernOpen(state) &&
+        heroesAllowed(state) &&
         state.run.heroes.length < MAX_HEROES &&
         tavernOffers(state).includes(id) &&
         state.run.gold.gte(hireCost(state))
@@ -82,9 +89,10 @@ export function heroCarryLog(state: GameState, kept: Hero[], source: string): vo
 /** Gives every hero experience; bumps stats only if someone levels up */
 export function grantHeroXp(state: GameState, xp: number): void {
     let levelled = false;
+    const gained = xp * getStats(state).num("hero.xp");
     for (const h of state.run.heroes) {
         const before = heroLevel(h.xp);
-        h.xp += xp;
+        h.xp += gained;
         if (heroLevel(h.xp) > before) {
             levelled = true;
         }
@@ -93,6 +101,8 @@ export function grantHeroXp(state: GameState, xp: number): void {
 }
 
 registerCollector((state, stats) => {
+    // heroes carried into Kali's challenge sit it out
+    if (!heroesAllowed(state)) return;
     for (const h of state.run.heroes) {
         const def = HEROES[h.id];
         if (def) stats.applyEffects(`${def.name} ${def.title}`, def.effects, heroLevel(h.xp));

@@ -39,7 +39,7 @@ import {
     gainFame,
     keepsFameUpgrades,
 } from "./prestige";
-import { bump, GameState, log, newRun, recordRun } from "./state";
+import { bump, GameState, log, newRun, recordRun, RunRecord } from "./state";
 
 export const ASCENSION_BOOKS = 6;
 export const ASCENSION_REALMS = 3;
@@ -102,8 +102,9 @@ export function hasAscensionMilestone(state: GameState, id: AscensionMilestoneId
     return !!m && effectiveAscensions(state) >= m.ascensions;
 }
 
+/** Not during a challenge: it ends with its own Ascension (Mastery tab) */
 export function canAscend(state: GameState): boolean {
-    return ascensionProgress(state).ready && insightOnAscend(state).gt(0);
+    return !state.mastery.challenge && ascensionProgress(state).ready && insightOnAscend(state).gt(0);
 }
 
 /** Races the player may start the next Ascension as */
@@ -124,12 +125,43 @@ export function ascend(
     ) {
         return false;
     }
+    const insight = insightOnAscend(state);
+    performAscension(state, books, startRace, retorts, {
+        insight,
+        keepPlan: false,
+        ended: "ascend",
+        text: `You Ascend as a Wizard (+${fmtInt(insight)} Insight). Your new realm is founded by ${RACES[startRace].plural}.`,
+    });
+    return true;
+}
+
+export interface AscensionOptions {
+    insight: Decimal;
+    /** Keep the planned profile as it is (a challenge's fixed profile isn't the player's plan) */
+    keepPlan: boolean;
+    ended: RunRecord["ended"];
+    /** The Chronicle line for it */
+    text: string;
+}
+
+/**
+ * The Ascension reset itself, with no checks: Ascending, and entering or
+ * leaving a challenge (Layer 4), which are Ascensions too.
+ */
+export function performAscension(
+    state: GameState,
+    books: Partial<Record<Realm, number>>,
+    startRace: RaceId,
+    retorts: string[],
+    opts: AscensionOptions,
+): void {
     const a = state.ascension;
     const p = state.prestige;
-    const insight = insightOnAscend(state);
-    recordRun(state, "ascend", insight);
+    const insight = opts.insight;
+    recordRun(state, opts.ended, insight);
 
     a.ascensions++;
+    state.records.totalAscensions++;
     a.insight = a.insight.plus(insight);
     a.insightTotal = a.insightTotal.plus(insight);
     a.lastFameEarned = a.fameEarned;
@@ -139,8 +171,10 @@ export function ascend(
     // the planned familiar choice stays as it is ("match" keeps following the books)
     a.familiar = resolveFamiliar(a.planFamiliar, a.books);
     // the next Ascension's plan starts as this one
-    a.planBooks = { ...a.books };
-    a.planRetorts = [...a.retorts];
+    if (!opts.keepPlan) {
+        a.planBooks = { ...a.books };
+        a.planRetorts = [...a.retorts];
+    }
     rememberKnownSpells(state);
     a.spellsKnown = [];
     const restored = restoreRememberedSpells(state);
@@ -165,11 +199,7 @@ export function ascend(
     p.annals = annals;
     p.ascensionBestFrontier = 0;
 
-    log(
-        state,
-        "prestige",
-        `You Ascend as a Wizard (+${fmtInt(insight)} Insight). Your new realm is founded by ${RACES[startRace].plural}.`,
-    );
+    log(state, "prestige", opts.text);
     if (spellMemoryLevel(state) > 0) {
         const dormant = dormantSpells(state).length;
         log(
@@ -190,7 +220,6 @@ export function ascend(
             log(state, "milestone", `Ascension milestone: ${m.name}. ${m.text}`);
         }
     }
-    return true;
 }
 
 // --- Layer 3 gate (Planeshift) ---

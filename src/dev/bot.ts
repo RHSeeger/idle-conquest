@@ -6,7 +6,10 @@
  * Its in-run play is just every automation forced on. On top of that it
  * decides when to Refound, what to spend Fame on and which race to start as.
  */
+import { CHALLENGE_ORDER } from "../content/challenges";
+import { ARCANUS_WIZARDS } from "../content/frontier";
 import { FAME_UPGRADE_ORDER } from "../content/fame";
+import { abandonChallenge, canChannel, claimMastery, setChannelling, startChallenge } from "../engine/mastery";
 import { RaceId } from "../content/races";
 import { runAutomation } from "../engine/automation";
 import { hireHero, tavernOffers } from "../engine/heroes";
@@ -54,7 +57,21 @@ export function botAct(state: GameState): void {
     const offer = tavernOffers(state)[0];
     if (offer) hireHero(state, offer);
     botMyrror(state);
+    // the Spell of Mastery: channel it as soon as it's known
+    if (!state.mastery.channelling && canChannel(state)) setChannelling(state, true);
 }
+
+/** A challenge the bot gives up on after this much play (it tries the next one later) */
+const BOT_CHALLENGE_SECONDS = 2 * 3600;
+
+/** The next Challenge Wizard the bot hasn't beaten (in order, skipping the one just abandoned) */
+function nextChallenge(state: GameState): string | null {
+    const m = state.mastery;
+    const open = CHALLENGE_ORDER.filter((w) => !m.completed.includes(w));
+    return open.find((w) => w !== botLastAbandoned.get(state)) ?? open[0] ?? null;
+}
+
+const botLastAbandoned = new WeakMap<GameState, string>();
 
 /** Myrror: race boons that push Myrror, wizards' spellbooks; Myrran works cheapest first */
 function botMyrror(state: GameState): void {
@@ -105,6 +122,10 @@ export function botShouldRefound(state: GameState, tracker: BotRunTracker): bool
     if (planeshiftWorthwhile(state)) {
         return true;
     }
+    // Layer 4: claim a cast Mastery, or give up a challenge that's taking too long
+    const m = state.mastery;
+    if (m.cast) return true;
+    if (m.challenge && state.meta.playtime - m.challengeStartedAt > BOT_CHALLENGE_SECONDS) return true;
     if (!canRefound(state) || fameOnRefound(state).lte(0)) {
         return false;
     }
@@ -167,11 +188,29 @@ function ascensionInReach(state: GameState): boolean {
  * time, or after at least two Refounds this Ascension (to build Fame first).
  * Otherwise Refounds.
  */
-export function botEndRun(state: GameState): "planeshift" | "ascend" | "refound" {
+export function botEndRun(state: GameState): "mastery" | "challenge" | "abandon" | "planeshift" | "ascend" | "refound" {
+    const m = state.mastery;
+    if (m.cast && claimMastery(state)) {
+        spendFame(state);
+        return "mastery";
+    }
+    if (m.challenge && state.meta.playtime - m.challengeStartedAt > BOT_CHALLENGE_SECONDS) {
+        botLastAbandoned.set(state, m.challenge);
+        abandonChallenge(state);
+        spendFame(state);
+        return "abandon";
+    }
     if (planeshiftWorthwhile(state) && botPlaneshift(state)) {
         return "planeshift";
     }
     const worthwhile = state.prestige.refounds >= 2 || state.ascension.ascensions === 0;
+    // a challenge in place of an Ascension, once this run cleared all of Arcanus (the bot is strong enough)
+    const challenge = nextChallenge(state);
+    const strong = state.run.fortressesTaken >= ARCANUS_WIZARDS;
+    if (canAscend(state) && worthwhile && challenge && strong && startChallenge(state, challenge)) {
+        spendFame(state);
+        return "challenge";
+    }
     if (canAscend(state) && worthwhile && botAscend(state)) {
         return "ascend";
     }

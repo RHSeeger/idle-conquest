@@ -386,7 +386,7 @@ export function autoCast(state: GameState): void {
     const known = state.ascension.spellsKnown.map((id) => SPELLS[id]);
     const enchantments = known
         .filter((s) => s.kind === "enchantment" && !state.run.enchantments.includes(s.id))
-        .sort((a, b) => enchantmentCost(a).cmp(enchantmentCost(b)));
+        .sort((a, b) => enchantmentCost(state, a).cmp(enchantmentCost(state, b)));
     for (const s of enchantments) {
         if (canCastEnchantment(state, s.id)) castEnchantment(state, s.id);
     }
@@ -410,12 +410,12 @@ export function manaReserve(state: GameState): Decimal {
     const known = state.ascension.spellsKnown.map((id) => SPELLS[id]).filter((s) => s);
     const pending = known
         .filter((s) => s.kind === "enchantment" && !state.run.enchantments.includes(s.id))
-        .map((s) => enchantmentCost(s))
+        .map((s) => enchantmentCost(state, s))
         .sort((a, b) => a.cmp(b))[0];
     const reach = manaRate(state, getStats(state)).times(INSTANT_RESERVE_SECONDS);
     const instants = known
         .filter((s) => s.kind === "instant")
-        .map((s) => instantCost(s))
+        .map((s) => instantCost(state, s))
         .filter((c) => c.lte(reach))
         .reduce((sum, c) => sum.plus(c), ZERO);
     return (pending ?? ZERO).max(instants).min(state.run.mana);

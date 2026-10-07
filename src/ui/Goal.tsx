@@ -4,7 +4,10 @@
  */
 import { ascensionProgress, planeshiftProgress } from "../engine/ascension";
 import { currentTarget, myrrorShare } from "../engine/army";
-import { isWizard, knowsSpell } from "../engine/magic";
+import { ARCANUS_WIZARDS } from "../content/frontier";
+import { MYRROR_WIZARDS } from "../content/myrror";
+import { isWizard, knowsSpell, masteryGate } from "../engine/magic";
+import { SPELL_OF_MASTERY } from "../engine/mastery";
 import { canRefound } from "../engine/prestige";
 import { GameState } from "../engine/state";
 import { game } from "./game";
@@ -15,7 +18,8 @@ function nextGoal(state: GameState): string | null {
     const has = (b: string) => run.buildings.includes(b);
     const units = Object.values(run.units).reduce((a, b) => a + b, 0);
 
-    if (p.refounds === 0 && state.ascension.ascensions === 0) {
+    const veteran = state.mastery.masteries > 0 || state.planes.planeshifts > 0;
+    if (p.refounds === 0 && state.ascension.ascensions === 0 && !veteran) {
         if (!has("barracks")) return "Build a Barracks (Buildings tab) so you can train troops.";
         if (units === 0) return "Train some Spearmen (Army tab). Troops besiege the next city on the frontier.";
         if (run.frontier.index === 0) return "Wait for your army to take its first city. Conquered cities add citizens to your realm.";
@@ -23,9 +27,11 @@ function nextGoal(state: GameState): string | null {
         if (!canRefound(state)) return "Push on through the Borderlands: conquer a city of another race to unlock Refound.";
         return "You can Refound (Refound tab) whenever conquests slow down. Fame makes every later run faster.";
     }
-    if (!has("explorersGuild") && p.refounds <= 2 && state.ascension.ascensions === 0) {
+    if (!has("explorersGuild") && p.refounds <= 2 && state.ascension.ascensions === 0 && !veteran) {
         return "Build an Explorers' Guild: expeditions find resource sites, monster lairs and spellbooks.";
     }
+    const mastery = masteryGoal(state);
+    if (mastery !== undefined) return mastery;
     if (state.ascension.ascensions === 0) {
         const asc = ascensionProgress(state);
         if (p.realmsSeen.length > 0 && !asc.ready) {
@@ -56,6 +62,27 @@ function nextGoal(state: GameState): string | null {
         }
     }
     return null;
+}
+
+/** Layer 4 hints; undefined when there's nothing to say (other goals may apply) */
+function masteryGoal(state: GameState): string | null | undefined {
+    const m = state.mastery;
+    // a challenge has its own banner
+    if (m.challenge) return null;
+    if (m.cast) return m.victorySeen ? "Your Mastery waits to be claimed (Mastery tab), whenever you're ready." : null;
+    if (m.channelling) return null;
+    if (knowsSpell(state, SPELL_OF_MASTERY) || m.progress.gt(0)) {
+        return "Channel the Spell of Mastery (Mastery tab): your mana income flows into it until it's cast.";
+    }
+    const gate = masteryGate(state);
+    if (gate.ready) return "Every rival wizard of both worlds has fallen: research the Spell of Mastery (Mastery tab).";
+    if (gate.myrran >= MYRROR_WIZARDS) {
+        return `Myrror's wizards are all banished. Take every rival Fortress of Arcanus in one run (${gate.fortresses} of ${ARCANUS_WIZARDS} this run) to reach the Spell of Mastery.`;
+    }
+    if (m.masteries > 0 && m.completed.length === 0) {
+        return "The Challenge Wizards await (Mastery tab): one Ascension as a rival wizard, under their rule, for a lasting reward.";
+    }
+    return undefined;
 }
 
 export function GoalBar() {

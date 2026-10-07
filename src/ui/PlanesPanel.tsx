@@ -114,6 +114,7 @@ function PlaneshiftSection() {
             <button class="prestige-button planeshift" disabled={!canPlaneshift(state)} onClick={doShift}>
                 Planeshift (+{fmtInt(essence)} Planar Essence)
             </button>
+            {state.mastery.challenge && <span class="hint"> Not during {state.mastery.challenge}'s challenge.</span>}
         </section>
     );
 }
@@ -137,6 +138,9 @@ function MyrrorSection() {
                 Myrror <span class="count">· city {m.index + 1} of {myrrorEnd(plan)}</span>
             </h2>
             <PendingBoons />
+            {state.mastery.challenge && (
+                <p class="hint">Myrror pauses during {state.mastery.challenge}'s challenge: the whole army fights on Arcanus.</p>
+            )}
             <div class="slider-row">
                 <span>Arcanus {Math.round((1 - share) * 100)}%</span>
                 <input

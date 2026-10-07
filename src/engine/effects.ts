@@ -88,6 +88,29 @@ export const STAT_BASE: Record<string, number> = {
     "myrror.capitalDefense": 1,
     /** Multiplies the Myrran resources each city taken yields */
     "myrror.resources": 1,
+    // Challenge Wizards (Layer 4): rules and rewards
+    "cost.hero": 1,
+    "hero.xp": 1,
+    "cost.instant": 1,
+    /** Multiplies instant spells' cooldowns */
+    "instant.cooldown": 1,
+    "cost.enchantment": 1,
+    /** Gold earned per point of mana income (Jafar) */
+    "gold.fromMana": 0,
+    /** Multiplies the citizens a city taken by force brings */
+    "conquest.pop": 1,
+    /** Free troops (of the best kind available) for each city taken by force (Rjak) */
+    "conquest.troops": 0,
+    /** Army power per active enchantment (Horus): ×(1 + this)^enchantments */
+    "enchantment.armyPower": 0,
+    /** Multiplies the defense of ordinary frontier cities (not region capitals or Fortresses) */
+    "defense.ordinary": 1,
+    /** Multiplies the defense of rival wizards' domains, Fortresses included */
+    "defense.domain": 1,
+    /** Added to the share of the frontier that surrenders to Renown */
+    "renown.bonus": 0,
+    /** Multiplies magic nodes' bonuses (read directly by the node collector, see challengeFactor) */
+    "node.power": 1,
     // costs
     "cost.building": 1,
     "cost.unit": 1,

@@ -48,9 +48,10 @@ import { applyRunStart, closeFameChronicle } from "./prestige";
 import { bump, GameState, log, newCampaign, newRun, recordRun } from "./state";
 import { traitRoleMult, ROLES } from "../content/traits";
 
+/** A Master of Magic (any Mastery claimed) keeps every Planeshift milestone */
 export function hasPlaneshiftMilestone(state: GameState, id: PlaneshiftMilestoneId): boolean {
     const m = PLANESHIFT_MILESTONES.find((x) => x.id === id);
-    return !!m && state.planes.planeshifts >= m.planeshifts;
+    return !!m && (state.planes.planeshifts >= m.planeshifts || state.mastery.masteries >= 1);
 }
 
 export function isMyrrorOpen(state: GameState): boolean {
@@ -297,8 +298,9 @@ export function essenceOnPlaneshift(state: GameState): Decimal {
     return D(base * races * wizards).floor();
 }
 
+/** Not during a challenge (Layer 4), which is one Ascension of Arcanus */
 export function canPlaneshift(state: GameState): boolean {
-    return planeshiftProgress(state).ready;
+    return !state.mastery.challenge && planeshiftProgress(state).ready;
 }
 
 /** Fits a planned wizard profile into the picks a fresh Planeshift has (no Insight upgrades) */
@@ -334,15 +336,43 @@ export function fitProfile(
 export function planeshift(state: GameState, beachhead: MyrranRaceId, startRace: RaceId): boolean {
     if (!canPlaneshift(state)) return false;
     const pl = state.planes;
-    const a = state.ascension;
-    const p = state.prestige;
     const essence = essenceOnPlaneshift(state);
     recordRun(state, "planeshift", essence);
 
     pl.planeshifts++;
+    state.records.totalPlaneshifts++;
     pl.essence = pl.essence.plus(essence);
     pl.essenceTotal = pl.essenceTotal.plus(essence);
 
+    resetLayersBelowPlanes(state, startRace);
+
+    // a fresh Myrror campaign
+    // (Myrran resources, works and boons go with it)
+    pl.myrror = newCampaign(beachhead, hasPlaneshiftMilestone(state, "twinTowers") ? 2 : 1);
+    applyMyrrorHeadStart(state);
+
+    log(
+        state,
+        "prestige",
+        `You Planeshift (+${fmtInt(essence)} Planar Essence). Myrror opens before you: your first foothold is among the ${RACES[beachhead].plural}.`,
+    );
+    state.run = newRun(startRace);
+    applyRunStart(state);
+    bump(state);
+    for (const m of PLANESHIFT_MILESTONES) {
+        if (m.planeshifts === pl.planeshifts) log(state, "milestone", `Planeshift milestone: ${m.name}. ${m.text}`);
+    }
+    return true;
+}
+
+/**
+ * Resets Layers 1–2 for a Planeshift or a Mastery: Fame, refounds, Insight,
+ * Ascensions and spells. The wizard profile is re-fitted to a fresh pick
+ * budget. The run itself is replaced by the caller.
+ */
+export function resetLayersBelowPlanes(state: GameState, startRace: RaceId): void {
+    const a = state.ascension;
+    const p = state.prestige;
     // Layer 2 resets (the wizard profile is re-fitted to a fresh pick budget)
     const profile = fitProfile(a.planBooks, a.planRetorts);
     a.ascensions = 0;
@@ -369,24 +399,6 @@ export function planeshift(state: GameState, beachhead: MyrranRaceId, startRace:
     p.refounds = 0;
     p.ascensionBestFrontier = 0;
     if (!p.annals.includes(startRace)) p.annals.push(startRace);
-
-    // a fresh Myrror campaign
-    // (Myrran resources, works and boons go with it)
-    pl.myrror = newCampaign(beachhead, hasPlaneshiftMilestone(state, "twinTowers") ? 2 : 1);
-    applyMyrrorHeadStart(state);
-
-    log(
-        state,
-        "prestige",
-        `You Planeshift (+${fmtInt(essence)} Planar Essence). Myrror opens before you: your first foothold is among the ${RACES[beachhead].plural}.`,
-    );
-    state.run = newRun(startRace);
-    applyRunStart(state);
-    bump(state);
-    for (const m of PLANESHIFT_MILESTONES) {
-        if (m.planeshifts === pl.planeshifts) log(state, "milestone", `Planeshift milestone: ${m.name}. ${m.text}`);
-    }
-    return true;
 }
 
 /**

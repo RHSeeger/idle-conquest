@@ -11,7 +11,8 @@ Newest information is at the top of each section. The design itself is in `DESIG
 |---|---|---|---|
 | 1 | **Feel check, second round.** Run 1 has been re-paced, and there are new Overview and Campaign views (Session 2). Does the first 30–60 minutes now feel calmer and more under control? Is it now *too* slow anywhere? Start a **new game** for this (Options → reset), because your old save keeps its progress. | Bot pacing: 7 cities and 6 buildings by 10 min | No, but it's the most valuable input |
 | 2 | **Layer 3 feel and length.** It's built as a first pass of your chosen "two planes at once". In the sim (`runs=40 hours=16`), the first Planeshift comes at ~7h (it was ~10h before the auto-study change). Later Planeshifts come quickly. With Myrran works, boons and the fixed instant prices, the first Planeshift comes at ~7h25m, and Myrror is fully held by the 5th Planeshift at ~8h53m. Is "Arcanus loops automatically while Myrror slowly advances" fun? Do the Myrran works and boons give Myrror enough to do? Update 2026-10-06: auto-buy for works is done (Eternal Return). Pace: it doesn't feel too fast for now, but keep this open; if it needs slowing, the lever is a steeper Myrran defense growth. | DESIGN §7 | No |
-| 3 | **Layer 4 (Spell of Mastery and Challenge Wizards).** Answered 2026-10-07: build it. Direction: gate on both planes; the Spell is a layered reset into challenges that can be put off ("Keep playing"); challenges are one Ascension each; each wizard has their own rule, with a reward that echoes it. Still open: your review of the 14 wizard rules and rewards in DESIGN §8 (first draft), and the per-Mastery bonus | DESIGN §8 | Yes, for build stage 3 (challenges) |
+| 3 | **Challenge difficulty (Layer 4).** Built as approved: a challenge is an Ascension that keeps all your power except what its rule changes. In the sim that makes them as hard as you are weak. Right after a Mastery claim they're hard; once you're strong again (about 3h later), the bot clears all 14 in about 20 minutes, under a minute each. Switching off Insight upgrades in challenges didn't change that, because Essence, Myrror, kept Fame upgrades and the Mastery bonus carry it. Options: (A) keep it, so challenges are best taken early, when they're hard; (B) "play as that wizard": only Masteries, milestones and challenge rewards come along, with an easier goal (e.g. the first rival Fortress), since all four would be out of reach; (C) rival defenses in a challenge scale with your power | A (as built). `CHALLENGE_TUNING.insightLevels` and `npm run sim -- cinsight=0.5` are there to experiment | No |
+| — | ~~Layer 4 direction~~ | Answered 2026-10-07 and built: gate on both planes; the Spell is a layered reset into challenges that can be put off ("Keep playing"); challenges are one Ascension each; each wizard has their own rule, with a reward that echoes it; the 14 rules "look fine, test in play" | — |
 | — | ~~Layer 3 direction~~ | Answered: two planes at once | — |
 | — | ~~Active play amount~~ | Answered: clickable instants with cooldowns, auto-cast from the Grimoire milestone, is fine | — |
 
@@ -60,7 +61,7 @@ Items you've flagged as needing work. They're recorded here and picked up only w
 **Dev URL modes** (never touch your save):
 - `?devbot=1800` starts a throwaway game that the bot has already played for 1800 seconds.
 - `?devruns=6&devbot=300` first plays 6 full runs (with Refounds and Ascensions), then 300 seconds into the next run.
-- `&tab=army` opens a specific tab (`realm`, `buildings`, `army`, `lore`, `explore`, `magic`, `prestige`, `ascension`, `planes`, `stats`, `options`, `about`).
+- `&tab=army` opens a specific tab (`realm`, `buildings`, `army`, `lore`, `explore`, `magic`, `prestige`, `ascension`, `planes`, `mastery`, `stats`, `options`, `about`).
 - `?devruns=14&devbot=300&tab=planes` reaches Layer 3 (Myrror open). It takes a while to compute.
 
 **In-game dev tools:** Options → Developer tools gives speed ×10/×100, skip ahead, and grant resources/Fame.
@@ -68,6 +69,35 @@ Items you've flagged as needing work. They're recorded here and picked up only w
 ---
 
 ## Work done
+
+### Layer 4: Mastery (2026-10-07)
+
+Built as designed in DESIGN §8, in one go:
+- **The Spell of Mastery** (`content/spells.ts`, `engine/mastery.ts`):
+  - **Gate:** all 4 Myrran wizards banished this Planeshift, and all 4 rival Fortresses of Arcanus taken in the current run (new `run.fortressesTaken`). Only then can it be researched (1e18 Knowledge).
+  - **Channel:** started in the Mastery tab; mana income flows into it instead of the pool. It can be paused, and progress survives every reset.
+  - **Victory:** a screen with the journey's totals (new lifetime `records.totalAscensions` and `totalPlaneshifts`; old saves start them from their current counts), then Claim Mastery or Keep playing.
+- **The Mastery reset:** Layers 0–3 reset, including the best Myrror frontier. Every milestone counts as earned (`hasPlaneshiftMilestone`, `effectiveAscensions`, `isWizard`). Each Mastery gives ×2 production, gold, knowledge and mana.
+  - Shared with Planeshift: `resetLayersBelowPlanes` in planes.ts.
+- **Challenge Wizards** (`content/challenges.ts`):
+  - **The 14:** rules and rewards as effects, plus bans the engine checks (siege, mortal troops, enchantments, settlers, Fame upgrades, heroes).
+  - **New stats:** cost.hero, hero.xp, cost.instant, instant.cooldown, cost.enchantment, gold.fromMana, conquest.pop, conquest.troops, enchantment.armyPower, defense.ordinary, defense.domain, renown.bonus, node.power.
+  - **Entering and leaving:** both are Ascensions through the new `performAscension`, which `ascend` uses too. The player's planned profile is kept.
+  - **During a challenge:** Myrror pauses, and Ascending and Planeshifting are blocked.
+  - **Ending:** a completed challenge ends at the next tick, with a message.
+- **UI:**
+  - **Mastery tab:** the gate checklist, research, the channel bar with Begin, Pause and Resume, Claim, Masteries, and the 14 challenge cards with Start and Abandon.
+  - **On every tab:** a challenge banner under the tabs, the victory and challenge-complete screens, and a "★ Mastery" chip in the resource bar.
+  - **Elsewhere:** Mastery tab badges and next-step hints, the Mastery tab introduction, a glossary entry, Statistics rows, and challenge notes on the Ascension and Planes tabs.
+- **Bot and sim:**
+  - **Bot:** channels the Spell, claims the Mastery, and takes challenges (in order) in place of an Ascension once a run has cleared all of Arcanus. It gives up after 2h of play.
+  - **Sim:** new columns for Mastery and challenge state and mana/knowledge rates. New knobs: `smana=`, `cinsight=`.
+- **Fixed on the way:** after a claim, the old best Myrror frontier dropped the new campaign at a Myrran wizard's domain with no Essence upgrades. Surrendered cities give no Essence, so you could never Planeshift again. The claim now resets it.
+- **Tests:** `tests/mastery.test.ts` (15). 117 in all.
+- **Sim** (`runs=400 hours=16`):
+  - Layers 0–3 pacing is unchanged.
+  - The bot meets the Mastery gate at ~9h. The channel (8e15 mana) is 78% full at 11h51m, so the first Mastery comes at ~12h30m.
+  - After a claim, the bot is back to clearing Arcanus in about 3h. Then it beats each challenge in under a minute (see Decisions waiting #3).
 
 ### Session 1 (2026-10-04)
 
@@ -330,6 +360,7 @@ The city table is now grouped by race; "Show every city" brings back the full li
 | Insight softcap above 1,000 per Ascension (^0.4) | Fixes the late snowball noted in Session 1 | Yes (`INSIGHT_SOFTCAP`) |
 | Myrror tuning: base 1e12, ×1.75 per city | Layer 3 should span several Planeshifts | Yes (`MYRROR_TUNING`) |
 | **Changes and To do lists** live in the About tab under the tribute, from `content/changelog.ts` (a few player-facing lines per date, newest first, plus a short planned list). Add a line there for each player-visible change, and update To do when plans change | TODO #19: kept simple, with no new tabs. Internal detail stays in PROGRESS.md | Yes |
+| **Layer 4 details** (beyond your direction):<br>• The Spell needs 1e18 Knowledge to research and 8e15 mana to channel, ×10 for each Mastery already claimed.<br>• Each Mastery gives ×2 production, gold, knowledge and mana.<br>• The channel pauses and resumes, and survives all resets.<br>• Challenges can't start while the Spell channels or waits to be claimed.<br>• Entering a challenge gives Insight if the Ascension gate is met.<br>• Each wizard's retort was picked to suit them, unlock or not.<br>• Sharee starts knowing Skeletons and Hell Hounds.<br>• Ariel's rule became "ordinary cities give in at a quarter of their defense".<br>• A claim resets the best Myrror frontier | • The gate arrives at ~9h in the sim, so the channel fills the time to the 12–15h target. The ×10 growth stops repeat Masteries from accelerating, which they did with ×2 income each (4h, then 2.5h, 1.7h... down to 0.6h).<br>• Sharee: with no mortal troops and no summon known, a challenge would start with nothing to recruit.<br>• Ariel: Renown is measured against the Ascension's best frontier, which a challenge starts from zero.<br>• Best Myrror frontier: without the reset, Myrror stalls after a claim (see Work done) | Yes (`MASTERY_TUNING`, `MASTERY_BONUS`) |
 | **Favicon: a Tower of Wizardry** (`public/favicon.svg`): a pale stone tower and spire with a glowing gold tip and window, on the game's purple, in a rounded square. SVG only, linked relatively so it works under the Pages sub-path | Your pick from five options (tower, crossed swords, wizard's hat, battlements/crown, emoji). The most Master of Magic symbol in the game, and a tall shape reads at 16px. Not yet: a PNG apple-touch-icon for iOS home screens; a favicon dot when a tab has an "!" badge | Yes |
 | **Published on GitHub Pages** (https://rhseeger.github.io/idle-conquest/) by `.github/workflows/deploy-pages.yml`, on every push to `master` (or by hand from the Actions tab): tests, then build (which typechecks), then deploy; a failure publishes nothing. One-time setup: Settings > Pages > Source: "GitHub Actions". README links to the game | Your request, following blocks-game's workflow. The only difference: no lint step, since this project has no linter. Vite's `base: "./"` already makes the build work under a sub-path. The save lives in localStorage under `idle-conquest-save`, which is shared by every page on rhseeger.github.io but doesn't clash with other games | Yes |
 | **About tab in four sections** (a row of section buttons at the top): How to play (default), Master of Magic, To do & changes, Credits & links (AI disclosure, the GitHub link, and Patreon once it exists). Plus a slim **footer on every page**: Code on GitHub, Support on Patreon (hidden while `PATREON_URL` is null), AI disclosure, Inspired by Master of Magic; the last two open that About section. The header's tribute button opens the Master of Magic section. Links (`GITHUB_URL`, `PATREON_URL`) and the disclosure text are written directly in `ui/AboutPanel.tsx`, so you can edit them by hand; README.md has the same disclosure | Your request: too much for one long page. Sections keep each part short; the footer keeps the code, support and disclosure one click away from anywhere, which is where players expect them. The disclosure text is a draft for you to check | Yes |

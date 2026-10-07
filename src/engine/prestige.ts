@@ -5,6 +5,7 @@
  * to the Annals, records the run in the Chronicle (for automation), and starts
  * a new run as any race in the Annals.
  */
+import { challengeBans } from "../content/challenges";
 import { ARCHITECT_BUILDINGS, FAME_UPGRADES, MILESTONES, MilestoneId, warChestAmount } from "../content/fame";
 import { cityName } from "../content/frontier";
 import { RACES, RaceId } from "../content/races";
@@ -56,7 +57,7 @@ export function earnsMastery(state: GameState): boolean {
  * aren't lost at the next Refound, before Hall of Heroes is bought again.
  */
 export function refoundHeroKeeper(state: GameState): { name: string; slots: number } {
-    const hall = fameUpgradeLevel(state, "hallOfHeroes");
+    const hall = activeFameLevel(state, "hallOfHeroes");
     // read directly: ascension.ts imports this module
     const companions = state.ascension.upgrades.eternalCompanions ?? 0;
     return companions > 0 && companions >= hall
@@ -168,11 +169,11 @@ export function applyRunStart(state: GameState): void {
     if (hasMilestone(state, "foundations")) {
         give(["barracks", "buildersHall"]);
     }
-    const architects = fameUpgradeLevel(state, "royalArchitects");
+    const architects = activeFameLevel(state, "royalArchitects");
     for (let l = 1; l <= architects; l++) {
         give(ARCHITECT_BUILDINGS[l]);
     }
-    const chest = warChestAmount(fameUpgradeLevel(state, "warChest"));
+    const chest = warChestAmount(activeFameLevel(state, "warChest"));
     run.production = D(chest);
     run.gold = D(chest);
     if (hasMilestone(state, "autoSettle")) {
@@ -205,9 +206,10 @@ export function effectiveRefounds(state: GameState): number {
     return state.prestige.refounds + bonus;
 }
 
-/** Ascensions as counted for Ascension milestones: Planewalker (1 Planeshift) adds 3 */
+/** Ascensions as counted for Ascension milestones: Planewalker (1 Planeshift, or any Mastery) adds 3 */
 export function effectiveAscensions(state: GameState): number {
-    return state.ascension.ascensions + (state.planes.planeshifts >= 1 ? 3 : 0);
+    const planewalker = state.planes.planeshifts >= 1 || state.mastery.masteries >= 1;
+    return state.ascension.ascensions + (planewalker ? 3 : 0);
 }
 
 export function hasMilestone(state: GameState, id: MilestoneId): boolean {
@@ -221,10 +223,12 @@ export function renownFraction(state: GameState): number {
     if (!hasMilestone(state, "renown")) {
         return 0;
     }
-    let f = 0.5 + 0.1 * fameUpgradeLevel(state, "legend");
+    let f = 0.5 + 0.1 * activeFameLevel(state, "legend");
     if (hasMilestone(state, "secondCapital")) {
         f += 0.25;
     }
+    // Ariel's challenge reward
+    f += getStats(state).num("renown.bonus");
     return Math.min(0.95, f);
 }
 
@@ -241,6 +245,16 @@ export function renownLimit(state: GameState): number {
 
 export function fameUpgradeLevel(state: GameState, id: string): number {
     return state.prestige.upgrades[id] ?? 0;
+}
+
+/** Whether Fame upgrades take effect (not in Sss'ra's challenge) */
+export function fameUpgradesWork(state: GameState): boolean {
+    return !challengeBans(state, "fameUpgrades");
+}
+
+/** The level a Fame upgrade acts at: its level, or 0 while Fame upgrades don't work */
+export function activeFameLevel(state: GameState, id: string): number {
+    return fameUpgradesWork(state) ? fameUpgradeLevel(state, id) : 0;
 }
 
 export function fameUpgradeCost(state: GameState, id: string): number {
@@ -304,6 +318,7 @@ export function gainFame(state: GameState, amount: Decimal): void {
 // --- Effect sources ---
 
 registerCollector((state, stats) => {
+    if (!fameUpgradesWork(state)) return;
     for (const [id, level] of Object.entries(state.prestige.upgrades)) {
         const u = FAME_UPGRADES[id];
         if (u && level > 0) {

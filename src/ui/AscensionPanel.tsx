@@ -403,6 +403,12 @@ export function AscensionPanel() {
                 <button class="prestige-button ascend" disabled={!ok} onClick={doAscend}>
                     Ascend (+{fmtInt(insight)} Insight)
                 </button>
+                {state.mastery.challenge && (
+                    <span class="hint">
+                        {" "}
+                        Not during {state.mastery.challenge}'s challenge: it ends with its own Ascension (Mastery tab).
+                    </span>
+                )}
                 {planError && <span class="bad"> Can't Ascend with this profile: {planError}.</span>}
                 {unspent > 0 && (
                     <span class="bad">

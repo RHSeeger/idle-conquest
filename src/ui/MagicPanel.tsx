@@ -15,6 +15,7 @@ import {
     castInstant,
     enchantmentCost,
     fortressMana,
+    instantCooldown,
     instantCost,
     knowsSpell,
     manaRate,
@@ -61,7 +62,7 @@ function SpellAction(props: { state: GameState; spell: SpellDef }) {
                     <button disabled={!canCastEnchantment(state, spell.id)} onClick={() => castEnchantment(state, spell.id)}>
                         Cast
                     </button>
-                    <Price amount={enchantmentCost(spell)} currency="mana" have={state.run.mana} />
+                    <Price amount={enchantmentCost(state, spell)} currency="mana" have={state.run.mana} />
                 </span>
             );
         case "instant": {
@@ -76,9 +77,9 @@ function SpellAction(props: { state: GameState; spell: SpellDef }) {
                     >
                         {cooldown > 0 ? fmtTime(cooldown) : "Cast"}
                     </button>
-                    <Tip tip={`A fixed price: the more mana you make, the more often you can cast it (up to once every ${fmtTime(spell.cooldown ?? 0)}). Its siege burst grows with your army. Auto-recruit leaves mana for instants you can afford within ${fmtTime(INSTANT_RESERVE_SECONDS)} of income.`}>
-                        <Price amount={instantCost(spell)} currency="mana" have={state.run.mana} />
-                        <span class="hint"> (every {fmtTime(spell.cooldown ?? 0)})</span>
+                    <Tip tip={`A fixed price: the more mana you make, the more often you can cast it (up to once every ${fmtTime(instantCooldown(state, spell))}). Its siege burst grows with your army. Auto-recruit leaves mana for instants you can afford within ${fmtTime(INSTANT_RESERVE_SECONDS)} of income.`}>
+                        <Price amount={instantCost(state, spell)} currency="mana" have={state.run.mana} />
+                        <span class="hint"> (every {fmtTime(instantCooldown(state, spell))})</span>
                     </Tip>
                 </span>
             );
@@ -86,7 +87,7 @@ function SpellAction(props: { state: GameState; spell: SpellDef }) {
         case "summon":
             return <span class="hint">Known: conjure them in the Army tab</span>;
         case "utility":
-            return <span class="good">Known</span>;
+            return <span class="good">{spell.requiresMastery ? "Known: channel it in the Mastery tab" : "Known"}</span>;
     }
 }
 
@@ -121,9 +122,11 @@ function RealmSpells(props: { realm: SpellRealm }) {
                                                     remembered ·{" "}
                                                 </span>
                                             )}
-                                            {s.requiresTower && !towerCleared(state)
-                                                ? "needs a Tower of Wizardry cleared this run"
-                                                : `needs ${RARITY_BOOKS[s.rarity]} books`}
+                                            {s.requiresMastery
+                                                ? "needs every rival wizard on both planes (Mastery tab)"
+                                                : s.requiresTower && !towerCleared(state)
+                                                  ? "needs a Tower of Wizardry cleared this run"
+                                                  : `needs ${RARITY_BOOKS[s.rarity]} books`}
                                         </span>
                                     )}
                                 </td>

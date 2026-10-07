@@ -50,6 +50,10 @@ export const TAB_INTROS: Record<string, { title: string; text: string }> = {
         title: "Planes",
         text: "Through a Tower of Wizardry lies Myrror, a second world. Planeshift to open it, then split your army between the two planes. Myrror's conquests last through Refounds and Ascensions.",
     },
+    mastery: {
+        title: "Mastery",
+        text: "The end of the journey: once every rival wizard on both planes has fallen, research and channel the Spell of Mastery to win. Then claim a Mastery, start the worlds anew, and take on the Challenge Wizards.",
+    },
     stats: {
         title: "Statistics",
         text: "Records of your runs, Refounds and Ascensions.",
@@ -66,4 +70,5 @@ export const GLOSSARY: [string, string][] = [
     ["Mastery", "Bonuses for a race, earned by Refounding after a run as that race."],
     ["Ascension", "Start over as a wizard for Insight. Choose spellbooks (realms of magic) and retorts (special talents)."],
     ["Planeshift", "Open Myrror, the second world, for Planar Essence."],
+    ["Spell of Mastery", "Cast it to win, then start anew with a permanent bonus and the Challenge Wizards."],
 ];

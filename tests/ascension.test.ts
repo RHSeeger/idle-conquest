@@ -223,11 +223,11 @@ describe("Magic", () => {
         const state = wizard();
         state.run.knowledge = D(1e6);
         research(state, "fireBolt");
-        const price = instantCost(SPELLS.fireBolt);
+        const price = instantCost(state, SPELLS.fireBolt);
         expect(price.toNumber()).toBe(SPELLS.fireBolt.mana);
         state.prestige.upgrades.scholars = 5; // anything that changes the economy leaves the price alone
         state.rev++;
-        expect(instantCost(SPELLS.fireBolt).eq(price)).toBe(true);
+        expect(instantCost(state, SPELLS.fireBolt).eq(price)).toBe(true);
         state.run.mana = price;
         expect(castInstant(state, "fireBolt", D(100))).toBe(true);
         expect(state.run.mana.toNumber()).toBe(0);

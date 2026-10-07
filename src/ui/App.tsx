@@ -23,6 +23,8 @@ import { MagicPanel } from "./MagicPanel";
 import { StatsPanel } from "./StatsPanel";
 import { GoalBar } from "./Goal";
 import { TabIntro, tabIsNew, Welcome } from "./Intro";
+import { ChallengeBanner, isMasteryTabVisible, MasteryNotice, MasteryPanel, Victory } from "./MasteryPanel";
+import { masteryBonus } from "../engine/mastery";
 import { tabAttention } from "./attention";
 import { isWizard, manaRate } from "../engine/magic";
 import { RealmPanel } from "./RealmPanel";
@@ -40,6 +42,7 @@ type TabId =
     | "prestige"
     | "ascension"
     | "planes"
+    | "mastery"
     | "stats"
     | "options"
     | "about";
@@ -93,6 +96,7 @@ const TABS: TabDef[] = [
         },
         render: () => <PlanesPanel />,
     },
+    { id: "mastery", label: "Mastery", visible: () => isMasteryTabVisible(game()), render: () => <MasteryPanel /> },
     {
         id: "stats",
         label: "Statistics",
@@ -139,7 +143,7 @@ function ResourceBar() {
                 icon={CURRENCY_ICON.gold}
                 name="Gold"
                 amount={run.gold}
-                rate={econ.gold}
+                rate={econ.gold.plus(manaRate(state, stats).times(stats.get("gold.fromMana")))}
                 tip={<BreakdownView stats={stats} stat="gold.mult" title="Gold multiplier" />}
             />
             <Resource
@@ -196,6 +200,13 @@ function ResourceBar() {
                     <span class="resource-rate">
                         {isMyrrorOpen(state) ? `+${fmtInt(essenceOnPlaneshift(state))} on Planeshift` : ""}
                     </span>
+                </div>
+            )}
+            {state.mastery.masteries > 0 && (
+                <div class="resource mastery">
+                    <span class="resource-name">★ Mastery</span>
+                    <span class="resource-amount">{fmtInt(state.mastery.masteries)}</span>
+                    <span class="resource-rate">×{fmtInt(masteryBonus(state))} income</span>
                 </div>
             )}
             <div class="resource siege">
@@ -269,6 +280,7 @@ export function App(props: { offline: OfflineSummary | null; initialTab?: string
                 })}
             </nav>
             <GoalBar />
+            <ChallengeBanner onOpen={() => setTab("mastery")} />
             <div class="main">
                 <main>
                     <TabIntro tab={active.id} />
@@ -279,6 +291,8 @@ export function App(props: { offline: OfflineSummary | null; initialTab?: string
             <Footer onAbout={openAbout} />
             {offline && <OfflineReport summary={offline} onClose={() => setOffline(null)} />}
             {!offline && <Welcome />}
+            {!offline && <Victory />}
+            {!offline && <MasteryNotice />}
         </div>
     );
 }

@@ -4,6 +4,7 @@
  * balance simulator.
  */
 import { BUILDINGS } from "../content/buildings";
+import { challengeBans } from "../content/challenges";
 import { cityName } from "../content/frontier";
 import { LORE } from "../content/lore";
 import { RACES } from "../content/races";
@@ -135,7 +136,11 @@ export function isSettlersUnlocked(state: GameState): boolean {
 }
 
 export function canFoundSettlers(state: GameState): boolean {
-    return isSettlersUnlocked(state) && state.run.food.gte(settlersPrice(state, getStats(state)));
+    return (
+        isSettlersUnlocked(state) &&
+        !challengeBans(state, "settlers") &&
+        state.run.food.gte(settlersPrice(state, getStats(state)))
+    );
 }
 
 export function foundSettlers(state: GameState, quiet = false): boolean {

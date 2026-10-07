@@ -7,6 +7,8 @@ const ENDED: Record<RunRecord["ended"], { verb: string; currency: string; cls: s
     refound: { verb: "Refounded", currency: "Fame", cls: "fame" },
     ascend: { verb: "Ascended", currency: "Insight", cls: "insight" },
     planeshift: { verb: "Planeshifted", currency: "Essence", cls: "essence" },
+    mastery: { verb: "Claimed a Mastery", currency: "Mastery", cls: "mastery" },
+    challenge: { verb: "Left a challenge", currency: "Insight", cls: "insight" },
 };
 
 export function StatsPanel() {
@@ -28,8 +30,10 @@ export function StatsPanel() {
                             <td class="num">{fmtInt(r.totalRefounds)}</td>
                         </tr>
                         <tr>
-                            <td>Ascensions</td>
-                            <td class="num">{fmtInt(state.ascension.ascensions)}</td>
+                            <td>Ascensions (this Planeshift, all time)</td>
+                            <td class="num">
+                                {fmtInt(state.ascension.ascensions)}, {fmtInt(r.totalAscensions)}
+                            </td>
                         </tr>
                         <tr>
                             <td>Best frontier</td>
@@ -43,11 +47,11 @@ export function StatsPanel() {
                             <td>Rival wizards banished from Arcanus</td>
                             <td class="num">{state.ascension.wizardsDefeated.length} / 14</td>
                         </tr>
-                        {state.planes.planeshifts > 0 && (
+                        {r.totalPlaneshifts > 0 && (
                             <>
                                 <tr>
-                                    <td>Planeshifts</td>
-                                    <td class="num">{fmtInt(state.planes.planeshifts)}</td>
+                                    <td>Planeshifts (all time)</td>
+                                    <td class="num">{fmtInt(r.totalPlaneshifts)}</td>
                                 </tr>
                                 <tr>
                                     <td>Best Myrror frontier</td>
@@ -56,6 +60,18 @@ export function StatsPanel() {
                                 <tr>
                                     <td>Rival wizards banished from Myrror</td>
                                     <td class="num">{state.planes.wizardsDefeated.length} / 14</td>
+                                </tr>
+                            </>
+                        )}
+                        {state.mastery.masteries > 0 && (
+                            <>
+                                <tr>
+                                    <td>Masteries claimed</td>
+                                    <td class="num">{fmtInt(state.mastery.masteries)}</td>
+                                </tr>
+                                <tr>
+                                    <td>Challenge Wizards beaten</td>
+                                    <td class="num">{state.mastery.completed.length} / 14</td>
                                 </tr>
                             </>
                         )}

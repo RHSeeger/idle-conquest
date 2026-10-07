@@ -11,7 +11,11 @@ export interface ChangeEntry {
 export const CHANGES: ChangeEntry[] = [
     {
         date: "2026-10-07",
-        items: ["Playable on GitHub Pages, with a Tower of Wizardry icon in the browser tab."],
+        items: [
+            "Layer 4: the Spell of Mastery. Defeat every rival wizard on both planes, channel the Spell, and win. Then claim a Mastery to start the worlds anew, stronger.",
+            "The 14 Challenge Wizards: one Ascension as a rival wizard, under their own rule, for a reward that lasts forever.",
+            "Playable on GitHub Pages, with a Tower of Wizardry icon in the browser tab.",
+        ],
     },
     {
         date: "2026-10-06",
@@ -50,7 +54,7 @@ export const CHANGES: ChangeEntry[] = [
 ];
 
 export const PLANNED: string[] = [
-    "The Spell of Mastery and Challenge Wizards: the end of the journey.",
+    "Balancing the Challenge Wizards' rules and rewards.",
     "More to do on Myrror, perhaps plane spells or heroes leading the Myrran army.",
     "Balance and polish from play-testing.",
 ];

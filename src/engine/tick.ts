@@ -8,6 +8,7 @@ import { getStats } from "./collect";
 import { tickEconomy } from "./economy";
 import { tickExploration, tickLair } from "./exploration";
 import { tickMagic } from "./magic";
+import { tickMastery } from "./mastery";
 import { tickMyrror } from "./planes";
 import { GameState } from "./state";
 
@@ -24,6 +25,8 @@ export function tick(state: GameState, dt: number): void {
     }
     // Layer 3: the share of the army on Myrror fights there at the same time
     tickMyrror(state, getStats(state), dt);
+    // Layer 4: the Spell of Mastery's channel, and a finished challenge
+    tickMastery(state, getStats(state), dt);
     tickAutomation(state, dt);
     state.run.time += dt;
     state.meta.playtime += dt;

@@ -113,6 +113,9 @@ export function deserialize(json: string): GameState {
     const state = fillDefaults(raw, newGame()) as GameState;
     // saves from before the introduction already know their way around
     if (!raw.meta?.introsSeen) state.meta.introsSeen = [WELCOME_ID, ...Object.keys(TAB_INTROS)];
+    // lifetime counts began with Layer 4: start them from what the save still shows
+    if (raw.records?.totalAscensions === undefined) state.records.totalAscensions = state.ascension.ascensions;
+    if (raw.records?.totalPlaneshifts === undefined) state.records.totalPlaneshifts = state.planes.planeshifts;
     // the Myrror campaign defaults to null, so its own new fields are filled here
     const m = state.planes.myrror;
     if (m) {

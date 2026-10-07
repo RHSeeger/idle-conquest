@@ -97,6 +97,8 @@ export interface RunState {
     peakPower: Decimal;
     /** Run time of the last Arcanus conquest (auto-Refound's "stalled" check) */
     lastConquestAt: number;
+    /** Rival wizards' Fortresses taken this run (all of them: the Mastery gate and a challenge's goal) */
+    fortressesTaken: number;
     /** Army budget: what auto-recruit may still spend (a share of production, gold and mana gained) */
     recruitBudget: { production: Decimal; gold: Decimal; mana: Decimal };
     /** Production, gold and mana on hand after the last automation pass (to measure what was gained since) */
@@ -237,11 +239,44 @@ export function newCampaign(beachhead: MyrranRaceId, links: number): MyrrorCampa
     };
 }
 
+/** Layer 4 (Mastery) state. Survives every reset, including claiming a Mastery. */
+export interface MasteryState {
+    /** Masteries claimed (each one a Layer 4 reset) */
+    masteries: number;
+    /** Mana channelled into the Spell of Mastery so far, and whether income is flowing into it */
+    progress: Decimal;
+    channelling: boolean;
+    /** The Spell is complete and its Mastery not yet claimed ("Keep playing") */
+    cast: boolean;
+    /** The victory screen for the current cast has been closed */
+    victorySeen: boolean;
+    victory: VictoryRecord | null;
+    /** The Challenge Wizard being played (a wizard's name), and when it began (playtime) */
+    challenge: string | null;
+    challengeStartedAt: number;
+    /** The challenge's goal was reached; it ends (an Ascension back) at the next tick */
+    challengeDone: boolean;
+    /** Challenges completed */
+    completed: string[];
+    /** A message for the player, shown once (a challenge completed) */
+    notice: string | null;
+}
+
+/** The journey so far, as the victory screen shows it */
+export interface VictoryRecord {
+    playtime: number;
+    refounds: number;
+    ascensions: number;
+    planeshifts: number;
+    arcanusWizards: number;
+    myrranWizards: number;
+}
+
 /** One finished run, for the Statistics tab */
 export interface RunRecord {
     /** Total playtime when the run ended */
     endedAt: number;
-    ended: "refound" | "ascend" | "planeshift";
+    ended: "refound" | "ascend" | "planeshift" | "mastery" | "challenge";
     race: RaceId;
     length: number;
     frontier: number;
@@ -252,6 +287,9 @@ export interface RunRecord {
 
 export interface Records {
     totalRefounds: number;
+    /** Lifetime counts (the layers' own counters reset with the layer above) */
+    totalAscensions: number;
+    totalPlaneshifts: number;
     /** Fastest time (seconds into a run) to reach the first rival wizard's domain */
     fastestToWall: number | null;
     history: RunRecord[];
@@ -311,6 +349,7 @@ export interface GameState {
     prestige: PrestigeState;
     ascension: AscensionState;
     planes: PlanesState;
+    mastery: MasteryState;
     records: Records;
     automation: Automation;
     settings: Settings;
@@ -365,6 +404,7 @@ export function newRun(startingRace: RaceId): RunState {
         racesConquered: [],
         peakPower: D(0),
         lastConquestAt: 0,
+        fortressesTaken: 0,
         recruitBudget: { production: D(0), gold: D(0), mana: D(0) },
         recruitSeen: { production: D(0), gold: D(0), mana: D(0) },
     };
@@ -421,7 +461,20 @@ export function newGame(now = Date.now()): GameState {
             myrror: null,
             boonMemory: {},
         },
-        records: { totalRefounds: 0, fastestToWall: null, history: [] },
+        mastery: {
+            masteries: 0,
+            progress: D(0),
+            channelling: false,
+            cast: false,
+            victorySeen: false,
+            victory: null,
+            challenge: null,
+            challengeStartedAt: 0,
+            challengeDone: false,
+            completed: [],
+            notice: null,
+        },
+        records: { totalRefounds: 0, totalAscensions: 0, totalPlaneshifts: 0, fastestToWall: null, history: [] },
         automation: {
             buildings: true,
             units: true,

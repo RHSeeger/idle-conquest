@@ -2,7 +2,10 @@
  * Layer 2 magic: mana, spell research, enchantments, instants and magic nodes.
  * Only wizards (after the first Ascension) have any of this.
  */
+import { CHALLENGE_TUNING, challengeBans, challengeFactor } from "../content/challenges";
 import { LAIRS } from "../content/exploration";
+import { ARCANUS_WIZARDS } from "../content/frontier";
+import { MYRROR_WIZARDS } from "../content/myrror";
 import { FAMILIARS, FamiliarChoice } from "../content/familiars";
 import { REALMS, Realm, REALM_DEFS } from "../content/magic";
 import {
@@ -22,9 +25,28 @@ import { D, Decimal, ZERO } from "./decimal";
 import { Stats } from "./effects";
 import { bump, GameState, log } from "./state";
 
-/** Ascended at least once, or Planeshifted (you stay a wizard across Planeshifts) */
+/** Ascended at least once, or Planeshifted (you stay a wizard across Planeshifts), or a Master of Magic */
 export function isWizard(state: GameState): boolean {
-    return state.ascension.ascensions >= 1 || state.planes.planeshifts >= 1;
+    return state.ascension.ascensions >= 1 || state.planes.planeshifts >= 1 || state.mastery.masteries >= 1;
+}
+
+// --- The Mastery gate (Layer 4) ---
+
+export interface MasteryGate {
+    /** Myrran wizards banished this Planeshift */
+    myrran: number;
+    /** Rival wizards' Fortresses taken this run */
+    fortresses: number;
+    ready: boolean;
+}
+
+/** Every rival wizard on both planes: all of Myrror's this Planeshift, and all of Arcanus's in this run */
+export function masteryGate(state: GameState): MasteryGate {
+    const myrran = state.planes.myrror?.wizardsDefeated.length ?? 0;
+    const fortresses = state.run.fortressesTaken;
+    const m = state.mastery;
+    const ready = myrran >= MYRROR_WIZARDS && fortresses >= ARCANUS_WIZARDS && !m.challenge && !m.cast;
+    return { myrran, fortresses, ready };
 }
 
 // --- Wizard profile ---
@@ -160,6 +182,7 @@ export function towerCleared(state: GameState): boolean {
 export function spellAvailable(state: GameState, spell: SpellDef): boolean {
     if (!isWizard(state)) return false;
     if (spell.requiresTower && !towerCleared(state)) return false;
+    if (spell.requiresMastery && !knowsSpell(state, spell.id) && !masteryGate(state).ready) return false;
     if (spell.realm === "arcane") return true;
     return booksIn(state, spell.realm) >= RARITY_BOOKS[spell.rarity];
 }
@@ -169,7 +192,7 @@ export function availableSpells(state: GameState): SpellDef[] {
 }
 
 export function researchCost(state: GameState, stats: Stats, spell: SpellDef): Decimal {
-    let cost = D(RARITY_RESEARCH[spell.rarity])
+    let cost = D(spell.research ?? RARITY_RESEARCH[spell.rarity])
         .times(stats.get("cost.research"))
         .times(stats.get(`cost.research.${spell.realm}`));
     if (spell.realm !== "arcane") {
@@ -279,7 +302,12 @@ export function manaRate(state: GameState, stats: Stats): Decimal {
 
 export function tickMagic(state: GameState, stats: Stats, dt: number): void {
     if (!isWizard(state)) return;
-    state.run.mana = state.run.mana.plus(manaRate(state, stats).times(dt));
+    const income = manaRate(state, stats).times(dt);
+    // while the Spell of Mastery channels, mana income flows into it instead (engine/mastery.ts)
+    if (!state.mastery.channelling) state.run.mana = state.run.mana.plus(income);
+    // Jafar's rule and reward: gold from mana income
+    const fromMana = stats.get("gold.fromMana");
+    if (fromMana.gt(0)) state.run.gold = state.run.gold.plus(income.times(fromMana));
     for (const id of Object.keys(state.run.cooldowns)) {
         state.run.cooldowns[id] = Math.max(0, state.run.cooldowns[id] - dt);
     }
@@ -331,8 +359,8 @@ export function checkRetortUnlocks(state: GameState): void {
 
 // --- Enchantments ---
 
-export function enchantmentCost(spell: SpellDef): Decimal {
-    return D(RARITY_MANA[spell.rarity]);
+export function enchantmentCost(state: GameState, spell: SpellDef): Decimal {
+    return D(RARITY_MANA[spell.rarity]).times(getStats(state).get("cost.enchantment"));
 }
 
 export function canCastEnchantment(state: GameState, id: string): boolean {
@@ -340,15 +368,16 @@ export function canCastEnchantment(state: GameState, id: string): boolean {
     return (
         !!spell &&
         spell.kind === "enchantment" &&
+        !challengeBans(state, "enchantments") &&
         knowsSpell(state, id) &&
         !state.run.enchantments.includes(id) &&
-        state.run.mana.gte(enchantmentCost(spell))
+        state.run.mana.gte(enchantmentCost(state, spell))
     );
 }
 
 export function castEnchantment(state: GameState, id: string): boolean {
     if (!canCastEnchantment(state, id)) return false;
-    state.run.mana = state.run.mana.minus(enchantmentCost(SPELLS[id]));
+    state.run.mana = state.run.mana.minus(enchantmentCost(state, SPELLS[id]));
     state.run.enchantments.push(id);
     bump(state);
     log(state, "milestone", `Cast ${SPELLS[id].name}.`);
@@ -358,8 +387,13 @@ export function castEnchantment(state: GameState, id: string): boolean {
 // --- Instants ---
 
 /** A fixed price per spell, so more mana income means more casts */
-export function instantCost(spell: SpellDef): Decimal {
-    return D(spell.mana ?? 0);
+export function instantCost(state: GameState, spell: SpellDef): Decimal {
+    return D(spell.mana ?? 0).times(getStats(state).get("cost.instant"));
+}
+
+/** Seconds between casts of an instant */
+export function instantCooldown(state: GameState, spell: SpellDef): number {
+    return (spell.cooldown ?? 0) * getStats(state).num("instant.cooldown");
 }
 
 export function canCastInstant(state: GameState, id: string): boolean {
@@ -369,7 +403,7 @@ export function canCastInstant(state: GameState, id: string): boolean {
         spell.kind === "instant" &&
         knowsSpell(state, id) &&
         (state.run.cooldowns[id] ?? 0) <= 0 &&
-        state.run.mana.gte(instantCost(spell))
+        state.run.mana.gte(instantCost(state, spell))
     );
 }
 
@@ -381,8 +415,8 @@ export function canCastInstant(state: GameState, id: string): boolean {
 export function castInstant(state: GameState, id: string, powerAgainstTarget: Decimal): boolean {
     if (!canCastInstant(state, id)) return false;
     const spell = SPELLS[id];
-    state.run.mana = state.run.mana.minus(instantCost(spell));
-    state.run.cooldowns[id] = spell.cooldown ?? 0;
+    state.run.mana = state.run.mana.minus(instantCost(state, spell));
+    state.run.cooldowns[id] = instantCooldown(state, spell);
     const damage = powerAgainstTarget.times(spell.siegeSeconds ?? 0).times(getStats(state).get("instant.power"));
     if (state.run.armyTarget !== null) {
         state.run.lairSiege = state.run.lairSiege.plus(damage);
@@ -429,8 +463,11 @@ registerCollector((state, stats) => {
 });
 
 registerCollector((state, stats) => {
-    for (const [id, level] of Object.entries(state.ascension.upgrades)) {
+    // in a challenge you play as that wizard: Insight upgrades work at a reduced level
+    const share = state.mastery.challenge ? CHALLENGE_TUNING.insightLevels : 1;
+    for (const [id, owned] of Object.entries(state.ascension.upgrades)) {
         const u = INSIGHT_UPGRADES[id];
+        const level = Math.floor(owned * share);
         if (u && level > 0) stats.applyEffects(`Insight: ${u.name} ${level}`, u.effects, level);
     }
 });
@@ -448,13 +485,15 @@ registerCollector((state, stats) => {
     if (nodes.length === 0) return;
     // Node Mastery doubles node mana; read it from the retort list directly (stats are still being collected)
     const mastery = state.ascension.retorts.includes("nodeMastery") ? 2 : 1;
+    // Freya's rule and reward make nodes stronger
+    const power = challengeFactor(state, "node.power");
     stats.addModifier("mana.mult", {
         source: `Melded nodes ×${nodes.length}`,
         op: "add",
-        value: D(NODE_MANA * nodes.length * mastery),
+        value: D(NODE_MANA * nodes.length * mastery * power),
     });
     for (const type of nodes) {
         const b = NODE_BONUS[type];
-        if (b) stats.addModifier(b.stat, { source: LAIRS[type].name, op: "mult", value: D(b.value) });
+        if (b) stats.addModifier(b.stat, { source: LAIRS[type].name, op: "mult", value: D(1 + (b.value - 1) * power) });
     }
 });

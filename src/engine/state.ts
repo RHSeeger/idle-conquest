@@ -276,7 +276,8 @@ export interface VictoryRecord {
 export interface RunRecord {
     /** Total playtime when the run ended */
     endedAt: number;
-    ended: "refound" | "ascend" | "planeshift" | "mastery" | "challenge";
+    /** "enterChallenge" is the Ascension into a challenge; "challenge" the one back out of it */
+    ended: "refound" | "ascend" | "planeshift" | "mastery" | "enterChallenge" | "challenge";
     race: RaceId;
     length: number;
     frontier: number;
@@ -293,6 +294,38 @@ export interface Records {
     /** Fastest time (seconds into a run) to reach the first rival wizard's domain */
     fastestToWall: number | null;
     history: RunRecord[];
+    /** When the current run, Ascension, Planeshift and Mastery began (playtime), and how long the last few took */
+    layers: Record<LayerId, LayerTimes>;
+}
+
+/**
+ * The resets, from the run up: a Refound ends a run; a Mastery ends all four.
+ * "mastery" is the stretch since the game began, the last Mastery claimed, or
+ * a challenge began or ended (a challenge is its own stretch).
+ */
+export type LayerId = "run" | "ascension" | "planeshift" | "mastery";
+export const LAYER_IDS: LayerId[] = ["run", "ascension", "planeshift", "mastery"];
+
+export interface LayerTimes {
+    start: number;
+    /** Lengths of the last few, oldest first */
+    past: number[];
+}
+
+/** Which layers each kind of reset ends (entering or leaving a challenge is an Ascension, and ends a "mastery" stretch) */
+export const LAYERS_ENDED: Record<RunRecord["ended"], LayerId[]> = {
+    refound: ["run"],
+    ascend: ["run", "ascension"],
+    enterChallenge: ["run", "ascension", "mastery"],
+    challenge: ["run", "ascension", "mastery"],
+    planeshift: ["run", "ascension", "planeshift"],
+    mastery: ["run", "ascension", "planeshift", "mastery"],
+};
+
+export const MAX_LAYER_TIMES = 10;
+
+function newLayerTimes(): Record<LayerId, LayerTimes> {
+    return { run: { start: 0, past: [] }, ascension: { start: 0, past: [] }, planeshift: { start: 0, past: [] }, mastery: { start: 0, past: [] } };
 }
 
 export interface Settings {
@@ -474,7 +507,7 @@ export function newGame(now = Date.now()): GameState {
             completed: [],
             notice: null,
         },
-        records: { totalRefounds: 0, totalAscensions: 0, totalPlaneshifts: 0, fastestToWall: null, history: [] },
+        records: { totalRefounds: 0, totalAscensions: 0, totalPlaneshifts: 0, fastestToWall: null, history: [], layers: newLayerTimes() },
         automation: {
             buildings: true,
             units: true,
@@ -508,7 +541,7 @@ export function bump(state: GameState): void {
     state.rev++;
 }
 
-const MAX_HISTORY = 30;
+export const MAX_HISTORY = 30;
 
 /** Records the run that is ending (call before replacing state.run) */
 export function recordRun(state: GameState, ended: RunRecord["ended"], gain: Decimal): void {
@@ -524,6 +557,13 @@ export function recordRun(state: GameState, ended: RunRecord["ended"], gain: Dec
     });
     if (state.records.history.length > MAX_HISTORY) {
         state.records.history.splice(0, state.records.history.length - MAX_HISTORY);
+    }
+    const now = state.meta.playtime;
+    for (const id of LAYERS_ENDED[ended]) {
+        const l = state.records.layers[id];
+        l.past.push(now - l.start);
+        if (l.past.length > MAX_LAYER_TIMES) l.past.splice(0, l.past.length - MAX_LAYER_TIMES);
+        l.start = now;
     }
 }
 

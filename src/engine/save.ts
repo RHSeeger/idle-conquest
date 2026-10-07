@@ -8,7 +8,33 @@
 import { TAB_INTROS, WELCOME_ID } from "../content/intro";
 import { Decimal } from "./decimal";
 import { backfillCampaign } from "./planes";
-import { GameState, newCampaign, newGame, SAVE_VERSION } from "./state";
+import { GameState, LAYER_IDS, LAYERS_ENDED, MAX_HISTORY, MAX_LAYER_TIMES, newCampaign, newGame, SAVE_VERSION } from "./state";
+
+/**
+ * Saves from before the layer timers: rebuild them from the recent-runs
+ * history. A full history may have lost older entries, so a layer that hasn't
+ * ended within it starts no later than its oldest run (a lower bound).
+ */
+function backfillLayerTimes(state: GameState): void {
+    const history = state.records.history;
+    const full = history.length >= MAX_HISTORY;
+    const earliest = full ? history[0].endedAt - history[0].length : 0;
+    for (const id of LAYER_IDS) {
+        const l = state.records.layers[id];
+        l.past = [];
+        l.start = earliest;
+        let known = !full;
+        for (const h of history) {
+            if (!LAYERS_ENDED[h.ended].includes(id)) continue;
+            if (known) l.past.push(h.endedAt - l.start);
+            l.start = h.endedAt;
+            known = true;
+        }
+        if (l.past.length > MAX_LAYER_TIMES) l.past.splice(0, l.past.length - MAX_LAYER_TIMES);
+    }
+    // the current run's own clock is exact
+    state.records.layers.run.start = Math.max(0, state.meta.playtime - state.run.time);
+}
 
 const STORAGE_KEY = "idle-conquest-save";
 
@@ -116,6 +142,10 @@ export function deserialize(json: string): GameState {
     // lifetime counts began with Layer 4: start them from what the save still shows
     if (raw.records?.totalAscensions === undefined) state.records.totalAscensions = state.ascension.ascensions;
     if (raw.records?.totalPlaneshifts === undefined) state.records.totalPlaneshifts = state.planes.planeshifts;
+    if (!raw.records?.layers) backfillLayerTimes(state);
+    // a challenge's stretch began when it did (older history recorded entering one as a plain Ascension)
+    const l = state.records.layers.mastery;
+    if (state.mastery.challenge && l.start < state.mastery.challengeStartedAt) l.start = state.mastery.challengeStartedAt;
     // the Myrror campaign defaults to null, so its own new fields are filled here
     const m = state.planes.myrror;
     if (m) {

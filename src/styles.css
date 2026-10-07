@@ -558,6 +558,11 @@ td.buy-button button.full:not(:disabled) {
     color: var(--accent);
 }
 
+/* Statistics: time taken per layer; the live row stands out */
+.layer-times tr.current td {
+    font-weight: 600;
+}
+
 /* rival wizards' domains: the campaign's landmarks */
 .region.wizard {
     font-weight: 600;

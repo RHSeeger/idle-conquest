@@ -1,6 +1,6 @@
 import { RACES } from "../content/races";
 import { fmtInt, fmtTime } from "../engine/format";
-import { RunRecord } from "../engine/state";
+import { LAYER_IDS, LayerId, MAX_LAYER_TIMES, RunRecord } from "../engine/state";
 import { game } from "./game";
 
 const ENDED: Record<RunRecord["ended"], { verb: string; currency: string; cls: string }> = {
@@ -8,8 +8,68 @@ const ENDED: Record<RunRecord["ended"], { verb: string; currency: string; cls: s
     ascend: { verb: "Ascended", currency: "Insight", cls: "insight" },
     planeshift: { verb: "Planeshifted", currency: "Essence", cls: "essence" },
     mastery: { verb: "Claimed a Mastery", currency: "Mastery", cls: "mastery" },
+    enterChallenge: { verb: "Began a challenge", currency: "Insight", cls: "insight" },
     challenge: { verb: "Left a challenge", currency: "Insight", cls: "insight" },
 };
+
+/** Each column is named for the reset that starts it ("run" is avoided: it means too many things) */
+const LAYER_NAMES: Record<LayerId, { name: string; tip: string }> = {
+    run: { name: "Refound", tip: "From founding (or Refounding) your realm to the next reset of any kind" },
+    ascension: { name: "Ascension", tip: "From an Ascension (or the start) to the next one, or a bigger reset" },
+    planeshift: { name: "Planeshift", tip: "From a Planeshift (or the start) to the next one, or a Mastery" },
+    mastery: {
+        name: "Mastery / challenge",
+        tip: "From the start, a Mastery claimed, or a challenge begun or left, to the next of those",
+    },
+};
+
+/** How long the current Refound, Ascension, Planeshift and Mastery/challenge have lasted, and the last few of each */
+function LayerTimesSection() {
+    const state = game();
+    const r = state.records;
+    const shown = LAYER_IDS;
+    const rows = 1 + Math.max(...shown.map((id) => r.layers[id].past.length));
+    const cell = (id: LayerId, row: number) => {
+        const l = r.layers[id];
+        if (row === 0) return fmtTime(state.meta.playtime - l.start);
+        const t = l.past[l.past.length - row];
+        return t === undefined ? "" : fmtTime(t);
+    };
+    return (
+        <section>
+            <h2>Time taken</h2>
+            <p class="hint">
+                How long each lasted: the current one at the top, then the last {MAX_LAYER_TIMES}, newest first. A bigger
+                reset also ends the smaller ones (an Ascension starts a new realm too). Beginning or leaving a challenge is
+                an Ascension, and starts a new Mastery / challenge stretch.
+            </p>
+            <table class="layer-times">
+                <thead>
+                    <tr>
+                        <th></th>
+                        {shown.map((id) => (
+                            <th key={id} class="num" title={LAYER_NAMES[id].tip}>
+                                {LAYER_NAMES[id].name}
+                            </th>
+                        ))}
+                    </tr>
+                </thead>
+                <tbody>
+                    {Array.from({ length: rows }, (_, row) => (
+                        <tr key={row} class={row === 0 ? "current" : ""}>
+                            <td>{row === 0 ? "Current" : row === 1 ? "Last" : `${row} ago`}</td>
+                            {shown.map((id) => (
+                                <td key={id} class="num">
+                                    {cell(id, row)}
+                                </td>
+                            ))}
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </section>
+    );
+}
 
 export function StatsPanel() {
     const state = game();
@@ -78,6 +138,7 @@ export function StatsPanel() {
                     </tbody>
                 </table>
             </section>
+            <LayerTimesSection />
             <section>
                 <h2>
                     Recent runs <span class="count">(last {r.history.length})</span>

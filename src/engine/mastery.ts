@@ -173,7 +173,7 @@ export function startChallenge(state: GameState, wizard: string): boolean {
     performAscension(state, books, state.run.startingRace, retorts, {
         insight,
         keepPlan: true,
-        ended: "ascend",
+        ended: "enterChallenge",
         text: `You take up ${wizard}'s challenge` + (insight.gt(0) ? ` (+${fmtInt(insight)} Insight)` : "") + `. Their rule: ${def.rule}.`,
     });
     for (const id of def.startSpells ?? []) {

@@ -273,7 +273,7 @@ Exploration in L2 can reveal **Towers of Wizardry**. These are heavy lairs, and 
 
 **Planeshift milestones:**
 - **1: Planewalker.** You stay a Wizard. Ascension milestones count as 3 extra Ascensions. Auto-Refound unlocks.
-- **2:** auto-Ascend unlocks.
+- **2:** auto-Ascend and auto-buy for Myrran works unlock.
 - **3:** start each Planeshift with 2 links.
 - **4:** Myrror Renown. Cities below half your best Myrror frontier surrender.
 

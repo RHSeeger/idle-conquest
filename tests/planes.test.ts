@@ -34,6 +34,7 @@ import {
     setArmyShare,
     tickMyrror,
 } from "../src/engine/planes";
+import { runAutomation } from "../src/engine/automation";
 import { hasMilestone, refound } from "../src/engine/prestige";
 import { GameState, newGame } from "../src/engine/state";
 import { hasAscensionMilestone } from "../src/engine/ascension";
@@ -189,6 +190,23 @@ describe("Myrror", () => {
         expect(buyMyrranWork(state, "adamantiumArms")).toBe(true);
         expect(m.resources.adamantium).toBe(3);
         expect(getStats(state).num("army.power")).toBeCloseTo(before * 1.25);
+    });
+
+    it("auto-buys Myrran works once Eternal Return is earned, if switched on", () => {
+        const state = opened();
+        const m = state.planes.myrror!;
+        m.resources.adamantium = 5;
+        state.planes.planeshifts = 1;
+        runAutomation(state);
+        expect(m.works).toEqual({});
+        state.planes.planeshifts = 2;
+        state.automation.works = false;
+        runAutomation(state);
+        expect(m.works).toEqual({});
+        state.automation.works = true;
+        runAutomation(state);
+        expect(Object.keys(m.works).length).toBeGreaterThan(0);
+        expect(m.resources.adamantium).toBeLessThan(2);
     });
 
     it("Planar Gates add links, still at most six", () => {

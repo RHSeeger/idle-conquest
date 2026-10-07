@@ -39,7 +39,7 @@ function planesAttention(state: GameState): string | null {
     if (!m) return null;
     const reasons: string[] = [];
     if (m.pendingBoons.length > 0) reasons.push("A Myrran boon is waiting for your choice");
-    if (MYRRAN_WORK_ORDER.some((id) => canBuyMyrranWork(state, id))) reasons.push("You can afford a Myrran work");
+    if (!isAutomationActive(state, "works") && MYRRAN_WORK_ORDER.some((id) => canBuyMyrranWork(state, id))) reasons.push("You can afford a Myrran work");
     return reasons.length > 0 ? reasons.join("; ") : null;
 }
 

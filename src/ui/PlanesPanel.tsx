@@ -3,6 +3,8 @@
  */
 import { useState } from "preact/hooks";
 import { REGION_SIZE } from "../content/frontier";
+import { isAutomationUnlocked } from "../engine/automation";
+import { AutoToggle } from "./AutoToggle";
 import {
     boonDef,
     CAPITAL_YIELD,
@@ -284,12 +286,13 @@ function MyrranRiches() {
     return (
         <section>
             <h2>
-                Myrran works <Resources />
+                Myrran works <Resources /> <AutoToggle kind="works" label="Auto-buy" />
             </h2>
             <p class="hint">
                 Every Myrran city taken yields {CITY_YIELD} of its race's resource, region capitals and Fortresses{" "}
                 {CAPITAL_YIELD}: Adamantium from {RESOURCE_RACES("adamantium")}, Quork from {RESOURCE_RACES("quork")},
                 Crysx from {RESOURCE_RACES("crysx")}. Works last until the next Planeshift, as the campaign does.
+                {isAutomationUnlocked(state, "works") && " Auto-buy buys whatever is affordable, cheapest first."}
             </p>
             <div class="cards">
                 {MYRRAN_WORK_ORDER.map((id) => {

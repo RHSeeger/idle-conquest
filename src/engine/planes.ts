@@ -21,6 +21,7 @@ import {
     HOLDING_STAT,
     KNOWN_ON_TWO_WORLDS,
     MAX_LINKS,
+    MYRRAN_WORK_ORDER,
     MYRRAN_WORKS,
     MyrranResource,
     myrrorCity,
@@ -219,6 +220,16 @@ export function buyMyrranWork(state: GameState, id: string): boolean {
     m.works[id] = myrranWorkLevel(state, id) + 1;
     bump(state);
     return true;
+}
+
+/** Auto-buy Myrran works (Eternal Return): whatever is affordable, cheapest first */
+export function autoWorks(state: GameState): void {
+    for (let guard = 0; guard < 100; guard++) {
+        const affordable = MYRRAN_WORK_ORDER.filter((id) => canBuyMyrranWork(state, id)).sort(
+            (a, b) => myrranWorkCost(state, a) - myrranWorkCost(state, b),
+        );
+        if (affordable.length === 0 || !buyMyrranWork(state, affordable[0])) return;
+    }
 }
 
 /**

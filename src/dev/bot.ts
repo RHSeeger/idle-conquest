@@ -35,15 +35,13 @@ import {
 import { isRetortUnlocked, pickableRealms, totalPicks } from "../engine/magic";
 import { RETORTS } from "../content/retorts";
 import { spellbookCount } from "../engine/exploration";
-import { ESSENCE_UPGRADE_ORDER, MYRRAN_WORK_ORDER } from "../content/myrror";
+import { ESSENCE_UPGRADE_ORDER } from "../content/myrror";
 import { MYRROR_RING } from "../content/races";
 import {
+    autoWorks,
     buyEssenceUpgrade,
-    buyMyrranWork,
     canBuyEssenceUpgrade,
-    canBuyMyrranWork,
     chooseBoon,
-    myrranWorkCost,
     canPlaneshift,
     essenceOnPlaneshift,
     essenceUpgradeCost,
@@ -64,12 +62,7 @@ function botMyrror(state: GameState): void {
     if (!m) return;
     // the second option: a race's Myrror boon, or a wizard's spellbooks
     while (m.pendingBoons.length > 0) chooseBoon(state, 0, 1);
-    for (let guard = 0; guard < 100; guard++) {
-        const affordable = MYRRAN_WORK_ORDER.filter((id) => canBuyMyrranWork(state, id)).sort(
-            (a, b) => myrranWorkCost(state, a) - myrranWorkCost(state, b),
-        );
-        if (affordable.length === 0 || !buyMyrranWork(state, affordable[0])) break;
-    }
+    autoWorks(state);
 }
 
 /** Tracks progress so the bot can tell when a run has stalled */

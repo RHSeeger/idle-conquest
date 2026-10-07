@@ -12,6 +12,7 @@ export const CHANGES: ChangeEntry[] = [
     {
         date: "2026-10-06",
         items: [
+            "Auto-buy for Myrran works, unlocked by Eternal Return (2 Planeshifts).",
             "An introduction for new players: a welcome, a short card the first time you open each tab, and How to play in the About tab.",
             "Myrror has its own riches: Adamantium, Quork and Crysx from conquered cities, spent on Myrran works.",
             "Taking a Myrran region capital offers a choice of two boons.",

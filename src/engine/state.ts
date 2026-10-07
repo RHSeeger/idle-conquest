@@ -282,6 +282,8 @@ export interface Automation {
     keepFame: boolean;
     /** How auto-buy picks Fame upgrades: the last Ascension's purchase order, or cheapest first */
     fameMode: "chronicle" | "cheapest";
+    /** Auto-buy Myrran works (Eternal Return, Planeshift milestone) */
+    works: boolean;
     /** Myrror boons: repeat the choice last made for the same race or wizard instead of asking */
     repeatBoons: boolean;
     /** How auto-recruit picks troops */
@@ -433,6 +435,7 @@ export function newGame(now = Date.now()): GameState {
             fame: true,
             keepFame: true,
             fameMode: "chronicle",
+            works: true,
             repeatBoons: true,
             unitMode: "chronicle",
             buildMode: "chronicle",

@@ -46,7 +46,7 @@ import {
     insightUpgradeLevel,
 } from "./ascension";
 import { FAME_UPGRADE_ORDER, FAME_UPGRADES } from "../content/fame";
-import { hasPlaneshiftMilestone } from "./planes";
+import { autoWorks, hasPlaneshiftMilestone } from "./planes";
 import { RaceId } from "../content/races";
 import {
     availableSpells,
@@ -82,7 +82,8 @@ export type AutomationKind =
     | "cast"
     | "refound"
     | "ascend"
-    | "fame";
+    | "fame"
+    | "works";
 
 /** Auto-Refound/Ascend also fire when no Arcanus city has fallen for this long (seconds) */
 export const AUTO_PRESTIGE_STALL_SECONDS = 600;
@@ -108,6 +109,7 @@ export function isAutomationUnlocked(state: GameState, kind: AutomationKind): bo
         case "refound":
             return hasPlaneshiftMilestone(state, "planewalker");
         case "ascend":
+        case "works":
             return hasPlaneshiftMilestone(state, "autoAscend");
         case "fame":
             return insightUpgradeLevel(state, "royalStewards") > 0;
@@ -450,6 +452,8 @@ export function runAutomation(state: GameState, force = false): void {
         if (isAutomationActive(state,"refound") && autoRefound(state)) return;
         // Fame upgrades: the bot buys its own
         if (isAutomationActive(state, "fame")) autoFame(state);
+        // Myrran works: the bot buys its own
+        if (isAutomationActive(state, "works")) autoWorks(state);
     }
     // measure gains before anything spends; remember what's left afterwards
     const budgeted = !force && isAutomationActive(state,"units") && isRecruitBudgeted(state);

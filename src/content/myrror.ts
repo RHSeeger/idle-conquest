@@ -492,7 +492,7 @@ export const PLANESHIFT_MILESTONES: PlaneshiftMilestoneDef[] = [
         id: "autoAscend",
         planeshifts: 2,
         name: "Eternal Return",
-        text: "Unlock auto-Ascend (with your planned wizard profile).",
+        text: "Unlock auto-Ascend (with your planned wizard profile) and auto-buy for Myrran works.",
     },
     {
         id: "twinTowers",

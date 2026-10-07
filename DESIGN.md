@@ -40,7 +40,7 @@ Reading the current code (`src/typescript/*`) shows the cause. The problem is th
 ## 3. Layer overview
 
 ```
-Layer 4  MASTERY     cast the Spell of Mastery; endgame and challenge wizards     (tentative)
+Layer 4  MASTERY     cast the Spell of Mastery; then Challenge Wizards             currency: none (challenges)
            ^
 Layer 3  PLANESHIFT  Myrror opens; two planes run at once                         currency: Planar Essence
            ^
@@ -285,10 +285,81 @@ These are good candidates once the core loop has been played.
 
 ---
 
-## 8. Layer 4: Mastery (tentative endgame)
+## 8. Layer 4: Mastery
 
-- Goal: defeat every rival wizard on both planes, then research and cast the **Spell of Mastery**. This is the "you win" moment from MoM.
-- After that, **Challenge Wizards**: the 14 original wizard portraits (Merlin, Raven, Sharee, Lo Pan, Jafar, Oberic, Rjak, Sss'ra, Tauron, Freya, Horus, Ariel, Tlaloc, Kali) as fixed-profile challenge runs. Each grants a permanent reward, much like Antimatter Dimensions challenges.
+**Direction approved (2026-10-07):** the gate covers both planes; casting the Spell is a layered reset into challenges that the player may put off; challenges are one Ascension each; every wizard has their own rule, and their reward echoes it. Numbers and the wizard rules below are first drafts for tuning.
+
+**The new verb is *challenge*.** Layer 4 has no fourth currency to grind. Its rewards come from the Spell of Mastery itself (a small bonus per cast) and from the Challenge Wizards, as in Antimatter Dimensions' challenges.
+
+### The Spell of Mastery
+
+**Gate**, within one Planeshift:
+- banish all 4 Myrran wizards; **and**
+- in one Arcanus run, take all 4 rival wizards' Fortresses (the end of the Arcanus frontier).
+
+Then **research the Spell of Mastery** (Arcane, a very large Knowledge cost). It only becomes researchable once the gate is met.
+
+**Casting is a channel**, as in MoM, where it takes many turns:
+- Start it once, and from then on all mana income pours into the Spell instead of your mana pool. So enchantments, instants and summons wait while it channels.
+- At the income you'll have by then, it should take roughly 20–30 minutes. A progress bar shows it.
+- Refounding or Ascending while channelling keeps the progress.
+- When it completes: **you have won.** A victory screen sums up the journey (time played, Refounds, Ascensions, Planeshifts, wizards banished, cities taken).
+
+**Claim it now or later.** The victory screen offers:
+- **Claim Mastery:** the layered reset (below).
+- **Keep playing:** carry on with your current game for as long as you like. A new **Mastery** tab holds the Claim button for whenever you're ready. You can't cast the Spell again until it's claimed.
+
+### The Mastery reset
+
+- **Resets:** everything in Layers 0–3. That means the run, Fame, Insight, Planar Essence, their upgrades, and the Myrror campaign.
+- **Keeps:** every milestone's automation (Refound, Ascension and Planeshift milestones count as earned), unlocked retorts, race Mastery, Chronicles, realms seen, wizards ever banished, and everything earned in Layer 4. The climb back is quick and thought-free; that's the replay rule (section 5).
+- **Gives:**
+  - one **Mastery**, with a permanent bonus per Mastery (first idea: ×2 production, gold, knowledge and mana);
+  - **the Challenge Wizards**, unlocked by the first Mastery.
+- Each later cast of the Spell (same gate) gives another Mastery.
+
+### Challenge Wizards
+
+- **Entering a challenge is an Ascension.** Your current Ascension ends, as Ascending always does, and a new one begins as that wizard:
+  - their fixed spellbooks (their realms in MoM, already in `RIVAL_WIZARD_DEFS`);
+  - a fixed retort that suits their rule;
+  - **their rule**, which applies for the whole challenge.
+- **Goal:** in one run of that Ascension, reach the end of the Arcanus frontier by taking all 4 rival Fortresses. Refounds within the challenge are allowed.
+- **Myrror pauses during a challenge**, with no army sent there. Your Planeshift state is otherwise kept.
+- **Leaving:** completing the challenge or abandoning it ends it with another Ascension, back to your own profile.
+- **Reward:** completing a wizard's challenge grants a permanent reward that echoes their rule, a lasting, milder version of its upside.
+- **Length:** target 30–90 minutes each.
+
+**The 14 wizards: first draft (rules and rewards to tune):**
+
+| Wizard | Realms | Rule (for the challenge) | Reward (permanent) |
+|---|---|---|---|
+| Merlin | Life, Nature | Heroes are free and gain experience ×3, but troops cost ×3 | Heroes gain experience 50% faster |
+| Raven | Sorcery, Nature | No siege troops, but expeditions are twice as fast | Exploration 50% faster |
+| Sharee | Death, Chaos | No mortal troops (summons only), but summons cost half | Summons cost 25% less |
+| Lo Pan | Sorcery, Chaos | No enchantments, but instants cost half and recharge twice as fast | Instant cooldowns 25% shorter |
+| Jafar | Sorcery | Cities pay no taxes (no gold income), but you earn gold equal to half your mana income | Gold income +10% of mana income |
+| Oberic | Nature, Chaos | Settlers can't found cities, but cities taken by force bring twice the citizens | Conquered cities bring 25% more citizens |
+| Rjak | Death | Each city taken by force brings only half its citizens, but its defenders rise to join your army as free troops | Cities taken by force add a few free troops |
+| Sss'ra | Life, Chaos | Fame upgrades don't work, but Refounds give ×3 Fame | Fame +25% |
+| Tauron | Chaos | Army power is halved, but instants hit ×3 as hard | Instants hit 50% harder |
+| Freya | Nature | Lore costs ×3, but magic nodes are ×3 as strong | Magic nodes 50% stronger |
+| Horus | Life, Sorcery | Enchantments cost double, but each active enchantment gives ×1.2 army power | Enchantments cost 25% less |
+| Ariel | Life | Army power is halved, but cities surrender much sooner (strong Renown) | Renown reaches 10% further |
+| Tlaloc | Nature, Death | Production and gold are halved, but mana is ×3 | Mana +25% |
+| Kali | Death, Sorcery | No heroes, but rival wizards' wards and Fortresses are half as strong | Rival Fortresses 15% weaker |
+
+### Pacing targets
+
+- First Spell of Mastery: roughly 12–15 hours of play. The bot reaches all of Myrror at about 9h now. The Arcanus half of the gate and the channel make up the rest.
+- All 14 challenges: another 10–20 hours.
+
+### Build stages
+
+1. **The Spell:** the gate, the research, the channel, the victory screen and "Keep playing". No reset yet.
+2. **The Mastery reset:** the Mastery tab, Claim, the per-Mastery bonus, and what's kept.
+3. **Challenges:** the framework (entering, the goal, abandoning, Myrror pausing, rewards), then the 14 wizards in a few batches.
+4. **The bot and sim** follow each stage, then tuning.
 
 ---
 

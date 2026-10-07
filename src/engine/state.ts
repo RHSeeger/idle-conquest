@@ -318,6 +318,8 @@ export interface GameState {
         lastTick: number;
         /** Total seconds simulated across all runs */
         playtime: number;
+        /** New-player introductions already shown: "welcome" and tab ids (content/intro.ts) */
+        introsSeen: string[];
     };
     log: LogEntry[];
 }
@@ -440,7 +442,7 @@ export function newGame(now = Date.now()): GameState {
             loreSpendCap: 0.1,
         },
         settings: { buyAmount: 1, autosaveSeconds: 15, devSpeed: 1, showDevTools: false },
-        meta: { created: now, lastTick: now, playtime: 0 },
+        meta: { created: now, lastTick: now, playtime: 0, introsSeen: [] },
         log: [],
     };
 }

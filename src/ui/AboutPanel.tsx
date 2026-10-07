@@ -1,10 +1,11 @@
 /**
- * About: credit and thanks to Master of Magic, which this game is built on.
+ * About: How to play, then credit and thanks to Master of Magic, which this game is built on.
  * The same write-up is in README.md; keep the two in step.
  * Also the player-facing To do and Changes lists, from content/changelog.ts.
  */
 
 import { CHANGES, PLANNED } from "../content/changelog";
+import { HowToPlay } from "./Intro";
 
 function Ext(props: { href: string; children: string }) {
     return (
@@ -17,6 +18,10 @@ function Ext(props: { href: string; children: string }) {
 export function AboutPanel() {
     return (
         <div class="panel about">
+            <HowToPlay />
+
+            <hr class="about-divider" />
+
             <section>
                 <h2>A tribute to Master of Magic</h2>
                 <p>

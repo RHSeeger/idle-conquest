@@ -22,6 +22,7 @@ import { AscensionPanel } from "./AscensionPanel";
 import { MagicPanel } from "./MagicPanel";
 import { StatsPanel } from "./StatsPanel";
 import { GoalBar } from "./Goal";
+import { TabIntro, tabIsNew, Welcome } from "./Intro";
 import { tabAttention } from "./attention";
 import { isWizard, manaRate } from "../engine/magic";
 import { RealmPanel } from "./RealmPanel";
@@ -252,17 +253,25 @@ export function App(props: { offline: OfflineSummary | null; initialTab?: string
                             onClick={() => setTab(t.id)}
                         >
                             {t.label}
-                            {attention && <span class="tab-badge">!</span>}
+                            {attention ? (
+                                <span class="tab-badge">!</span>
+                            ) : (
+                                t.id !== active.id && tabIsNew(state, t.id) && <span class="tab-new">new</span>
+                            )}
                         </button>
                     );
                 })}
             </nav>
             <GoalBar />
             <div class="main">
-                <main>{active.render()}</main>
+                <main>
+                    <TabIntro tab={active.id} />
+                    {active.render()}
+                </main>
                 <Log />
             </div>
             {offline && <OfflineReport summary={offline} onClose={() => setOffline(null)} />}
+            {!offline && <Welcome />}
         </div>
     );
 }

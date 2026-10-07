@@ -5,6 +5,7 @@
  * version; `migrate` upgrades older saves step by step. Unknown/missing fields
  * are filled from a fresh game so adding new state never breaks old saves.
  */
+import { TAB_INTROS, WELCOME_ID } from "../content/intro";
 import { Decimal } from "./decimal";
 import { backfillCampaign } from "./planes";
 import { GameState, newCampaign, newGame, SAVE_VERSION } from "./state";
@@ -110,6 +111,8 @@ export function serialize(state: GameState): string {
 export function deserialize(json: string): GameState {
     const raw = migrate(decode(JSON.parse(json)));
     const state = fillDefaults(raw, newGame()) as GameState;
+    // saves from before the introduction already know their way around
+    if (!raw.meta?.introsSeen) state.meta.introsSeen = [WELCOME_ID, ...Object.keys(TAB_INTROS)];
     // the Myrror campaign defaults to null, so its own new fields are filled here
     const m = state.planes.myrror;
     if (m) {

@@ -12,6 +12,7 @@ export const CHANGES: ChangeEntry[] = [
     {
         date: "2026-10-06",
         items: [
+            "An introduction for new players: a welcome, a short card the first time you open each tab, and How to play in the About tab.",
             "Myrror has its own riches: Adamantium, Quork and Crysx from conquered cities, spent on Myrran works.",
             "Taking a Myrran region capital offers a choice of two boons.",
             "Instant spells have fixed mana prices, and auto-recruit leaves mana for them.",
@@ -43,7 +44,6 @@ export const CHANGES: ChangeEntry[] = [
 
 export const PLANNED: string[] = [
     "The Spell of Mastery and Challenge Wizards: the end of the journey.",
-    "An introduction for new players.",
     "More to do on Myrror, perhaps plane spells or heroes leading the Myrran army.",
     "Balance and polish from play-testing.",
 ];

@@ -61,6 +61,16 @@ describe("Save", () => {
         expect(loaded.prestige.chronicle.buildOrder).toEqual([]);
     });
 
+    it("shows the introduction to new games only, not to saves from before it", () => {
+        const fresh = newGame(0);
+        expect(deserialize(serialize(fresh)).meta.introsSeen).toEqual([]);
+        const old = newGame(0) as any;
+        delete old.meta.introsSeen;
+        const seen = deserialize(serialize(old)).meta.introsSeen;
+        expect(seen).toContain("welcome");
+        expect(seen).toContain("magic");
+    });
+
     it("migrates v1 saves: Renown restarts for wizards, the planned profile is the current one", () => {
         const wizard = newGame(0) as any;
         wizard.version = 1;

@@ -180,7 +180,7 @@ Items you've flagged as needing work. They're recorded here and picked up only w
 
 ### Session 2 (2026-10-04)
 
-- Added a **"Next ×2" troop buy amount** (your request). It buys exactly enough to reach the next 25-owned drill doubling (e.g. 5 owned → +20), or nothing if you can't afford that many, the same as ×10/×100.
+- Added a **"Next ×2" troop buy amount** (your request). It buys exactly enough to reach the next 25-owned drill doubling (e.g. 5 owned → +20), or nothing if you can't afford that many, the same as ×10/×100. (Changed 2026-10-06: they all buy *up to* the amount now; see Decisions.)
 
 **Your play-test feedback, and what I did about each point**
 
@@ -330,6 +330,7 @@ The city table is now grouped by race; "Show every city" brings back the full li
 | Insight softcap above 1,000 per Ascension (^0.4) | Fixes the late snowball noted in Session 1 | Yes (`INSIGHT_SOFTCAP`) |
 | Myrror tuning: base 1e12, ×1.75 per city | Layer 3 should span several Planeshifts | Yes (`MYRROR_TUNING`) |
 | **Changes and To do lists** live in the About tab under the tribute, from `content/changelog.ts` (a few player-facing lines per date, newest first, plus a short planned list). Add a line there for each player-visible change, and update To do when plans change | TODO #19: kept simple, with no new tabs. Internal detail stays in PROGRESS.md | Yes |
+| **Troop buy amounts buy "up to"**: ×10, ×100 and Next ×2 buy as many of that amount as you can afford, rather than all or nothing. The buy button shows how many it will buy; its text is green when it buys the full amount chosen, plain when it buys only some (with a tooltip "You can afford N of the M chosen"), and grey (disabled) when it can buy none, still showing the full amount and its price | Your design, after two tries: dimmed text for a partial buy looked too much like disabled, and a dashed border didn't read well | Yes (`buyUnits`, `unitsWanted`) |
 | **Auto-buy Myrran works** comes with the Planeshift milestone Eternal Return (2 Planeshifts, with auto-Ascend). It buys whatever is affordable, cheapest first, every automation tick; on by default; the toggle sits in the Myrran works heading. The Planes "!" badge for an affordable work is off while it runs | Your call (decision #2). Planeshift 2, not 1, so the first Myrror campaign's works are bought by hand and learned. The bot uses the same `autoWorks`, so pacing is unchanged | Yes |
 | **New-player introduction** (texts in `content/intro.ts`, UI in `ui/Intro.tsx`): a welcome box on a new game (three short paragraphs); a one-line card at the top of each tab the first time it's opened, shown for that visit until dismissed with "Got it" or the tab is left, with a small "new" label on tabs not yet opened (opening a tab counts as reading it: play-test, the label stayed on tabs already viewed but not dismissed); and How to play (the welcome text plus a short glossary) at the top of the About tab, with a button to show the tab cards again. What's been seen is saved in `meta.introsSeen`; saves from before this count as having seen everything | TODO #14: a light touch, so players aren't dropped in the deep end but aren't lectured either. It builds on the existing goal bar (`Goal.tsx`), which still gives the next step. Old saves skip it because their players already know the game | Yes |
 

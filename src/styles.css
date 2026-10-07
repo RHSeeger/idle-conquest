@@ -406,6 +406,10 @@ td.buy button {
     min-width: 56px;
     margin-right: 6px;
 }
+/* green: buys the full amount chosen; plain text: only some of it; grey (disabled): none */
+td.buy button.full:not(:disabled) {
+    color: var(--good);
+}
 
 .growth {
     color: var(--good);

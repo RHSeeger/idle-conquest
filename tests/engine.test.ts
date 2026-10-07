@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buyBuilding, buyUnits } from "../src/engine/actions";
 import { getStats } from "../src/engine/collect";
+import { unitPrice } from "../src/engine/costs";
 import { D } from "../src/engine/decimal";
 import { Stats } from "../src/engine/effects";
 import { deserialize, exportSave, importSave, serialize } from "../src/engine/save";
@@ -97,7 +98,7 @@ describe("Save", () => {
 });
 
 describe("Buying units", () => {
-    it('"next" buys exactly up to the next drill doubling, or nothing', () => {
+    it('"next" buys up to the next drill doubling, or nothing with nothing to spend', () => {
         const state = newGame(0);
         state.run.production = D(1e9);
         buyBuilding(state, "barracks");
@@ -107,6 +108,17 @@ describe("Buying units", () => {
         expect(state.run.units.spearmen).toBe(50);
         state.run.production = D(0);
         expect(buyUnits(state, "spearmen", "next")).toBe(0);
+    });
+
+    it("buys fewer than the amount chosen when that many aren't affordable", () => {
+        const state = newGame(0);
+        state.run.production = D(1e9);
+        buyBuilding(state, "barracks");
+        state.run.production = unitPrice(state, getStats(state), "spearmen", 3);
+        expect(buyUnits(state, "spearmen", 10)).toBe(3);
+        state.run.production = unitPrice(state, getStats(state), "spearmen", 4);
+        expect(buyUnits(state, "spearmen", "next")).toBe(4);
+        expect(state.run.units.spearmen).toBe(7);
     });
 });
 

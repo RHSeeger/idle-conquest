@@ -79,10 +79,16 @@ export function rushBuilding(state: GameState, id: string): boolean {
 
 // --- Units ---
 
+/** How many units a buy of `amount` wants: "next" is enough to reach the next drill doubling */
+export function unitsWanted(state: GameState, id: string, amount: number | "next" | "max", affordable: number): number {
+    if (amount === "max") return affordable;
+    return amount === "next" ? toNextDrill(state.run.units[id] ?? 0) : amount;
+}
+
 /**
- * Buys `amount` units, or none if that many aren't affordable. "max" buys as
- * many as affordable; "next" buys exactly enough to reach the next drill
- * doubling. Returns the number bought.
+ * Buys up to `amount` units: fewer if that many aren't affordable. "max" buys
+ * as many as affordable; "next" buys up to the next drill doubling. Returns
+ * the number bought.
  */
 export function buyUnits(state: GameState, id: string, amount: number | "next" | "max"): number {
     if (!UNITS[id] || !isUnitAvailable(state, id)) {
@@ -90,8 +96,7 @@ export function buyUnits(state: GameState, id: string, amount: number | "next" |
     }
     const stats = getStats(state);
     const affordable = unitAffordable(state, stats, id);
-    const wanted = amount === "next" ? toNextDrill(state.run.units[id] ?? 0) : amount;
-    const n = wanted === "max" ? affordable : wanted <= affordable ? wanted : 0;
+    const n = Math.min(unitsWanted(state, id, amount, affordable), affordable);
     if (n <= 0) {
         return 0;
     }

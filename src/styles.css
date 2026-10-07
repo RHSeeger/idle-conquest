@@ -406,8 +406,22 @@ td.buy button {
     min-width: 56px;
     margin-right: 6px;
 }
+/* troops: the button and its price in separate columns, the price column a fixed width, so buttons don't shift as prices change */
+td.buy-button {
+    white-space: nowrap;
+    text-align: right;
+}
+td.buy-button button {
+    min-width: 64px;
+}
+td.buy-price {
+    white-space: nowrap;
+    text-align: left;
+    width: 8em;
+    min-width: 8em;
+}
 /* green: buys the full amount chosen; plain text: only some of it; grey (disabled): none */
-td.buy button.full:not(:disabled) {
+td.buy-button button.full:not(:disabled) {
     color: var(--good);
 }
 

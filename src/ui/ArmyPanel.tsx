@@ -356,6 +356,7 @@ function Troops() {
                         <th class="num">Power each</th>
                         <th class="num">Total</th>
                         <th />
+                        <th />
                     </tr>
                 </thead>
                 <tbody>
@@ -393,7 +394,7 @@ function Troops() {
                                     </Tip>
                                 </td>
                                 <td class="num">{fmt(each.times(owned))}</td>
-                                <td class="buy">
+                                <td class="buy-button">
                                     <button
                                         class={partial ? undefined : "full"}
                                         title={partial ? `You can afford ${fmtInt(n)} of the ${fmtInt(wanted)} chosen` : undefined}
@@ -402,6 +403,8 @@ function Troops() {
                                     >
                                         +{fmtInt(n)}
                                     </button>
+                                </td>
+                                <td class="buy-price">
                                     <Price amount={price} currency={u.currency} have={wallet(state, u.currency)} />
                                 </td>
                             </tr>

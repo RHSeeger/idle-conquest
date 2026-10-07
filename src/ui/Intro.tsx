@@ -3,6 +3,7 @@
  * new game, a card the first time each tab is opened, and a How to play
  * section for the About tab.
  */
+import { useEffect, useState } from "preact/hooks";
 import { GLOSSARY, TAB_INTROS, WELCOME, WELCOME_ID } from "../content/intro";
 import { GameState } from "../engine/state";
 import { game } from "./game";
@@ -38,14 +39,26 @@ export function Welcome() {
     );
 }
 
+/**
+ * Opening a tab counts as seeing its introduction (so its "new" label goes),
+ * but the card stays for that visit, until dismissed or the tab is left.
+ */
 export function TabIntro(props: { tab: string }) {
     const state = game();
+    const welcomed = introSeen(state, WELCOME_ID);
+    const [showing, setShowing] = useState<string | null>(null);
+    useEffect(() => {
+        if (welcomed && TAB_INTROS[props.tab] && !introSeen(state, props.tab)) {
+            markSeen(state, props.tab);
+            setShowing(props.tab);
+        }
+    }, [props.tab, welcomed]);
     const intro = TAB_INTROS[props.tab];
-    if (!intro || introSeen(state, props.tab) || !introSeen(state, WELCOME_ID)) return null;
+    if (!intro || showing !== props.tab) return null;
     return (
         <div class="tab-intro">
             <b>{intro.title}:</b> {intro.text}{" "}
-            <button class="toggle" onClick={() => markSeen(state, props.tab)}>
+            <button class="toggle" onClick={() => setShowing(null)}>
                 Got it
             </button>
         </div>

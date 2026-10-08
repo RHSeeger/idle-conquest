@@ -1239,6 +1239,10 @@ ul.boons {
 .card.challenge {
     gap: 4px;
 }
+.challenge-lore {
+    font-style: italic;
+    color: var(--muted);
+}
 .card.challenge.done {
     border-color: var(--good);
 }

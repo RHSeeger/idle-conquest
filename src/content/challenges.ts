@@ -43,6 +43,8 @@ export type ChallengeBan = "siege" | "mortalTroops" | "enchantments" | "settlers
 
 export interface ChallengeDef {
     wizard: string;
+    /** Who the wizard is, in a sentence or two that explains their rule */
+    lore: string;
     realms: Realm[];
     retort: string;
     rule: string;
@@ -60,6 +62,7 @@ const add = (stat: string, value: number): EffectDef => ({ stat, op: "add", valu
 const list: Omit<ChallengeDef, "realms">[] = [
     {
         wizard: "Merlin",
+        lore: "The old sage trusts a few chosen champions over any army. Would-be heroes come to Merlin for nothing but the chance to learn, while common soldiers find the court strange and dear to keep.",
         retort: "sageMaster",
         rule: "Heroes are free and gain experience ×3, but troops cost ×3",
         reward: "Heroes gain experience 50% faster",
@@ -68,6 +71,7 @@ const list: Omit<ChallengeDef, "realms">[] = [
     },
     {
         wizard: "Raven",
+        lore: "Raven rules from the high woods and has no patience for battering rams. Her ravens and scouts are everywhere first.",
         retort: "runemaster",
         rule: "No siege troops, but expeditions are twice as fast",
         reward: "Exploration 50% faster",
@@ -77,6 +81,7 @@ const list: Omit<ChallengeDef, "realms">[] = [
     },
     {
         wizard: "Sharee",
+        lore: "The conjurer trusts no living soldier. Every warrior in Sharee's host was called up from death or chaos, and calling them comes easily.",
         retort: "conjurer",
         rule: "No mortal troops, only summoned creatures, but summons cost half",
         reward: "Summons cost 25% less",
@@ -87,6 +92,7 @@ const list: Omit<ChallengeDef, "realms">[] = [
     },
     {
         wizard: "Lo Pan",
+        lore: "Lo Pan holds that a spell kept running is power wasted. Magic is for one decisive stroke, then the next, and the next.",
         retort: "channeler",
         rule: "No enchantments, but instants cost half and recharge twice as fast",
         reward: "Instant spells recharge 25% faster",
@@ -96,6 +102,7 @@ const list: Omit<ChallengeDef, "realms">[] = [
     },
     {
         wizard: "Jafar",
+        lore: "Jafar's subjects pay no taxes: the palace's gold pours out of the alchemist's crucibles, transmuted from raw mana.",
         retort: "alchemy",
         rule: "Cities pay no taxes (no gold income), but you earn gold equal to half your mana income",
         reward: "Earn gold equal to 10% of your mana income",
@@ -104,6 +111,7 @@ const list: Omit<ChallengeDef, "realms">[] = [
     },
     {
         wizard: "Oberic",
+        lore: "Oberic founds nothing. What Oberic wants is taken by force, and the cities taken fill with the conquered.",
         retort: "manaFocusing",
         rule: "Settlers can't found cities, but cities taken by force bring twice the citizens",
         reward: "Cities taken by force bring 25% more citizens",
@@ -113,6 +121,7 @@ const list: Omit<ChallengeDef, "realms">[] = [
     },
     {
         wizard: "Rjak",
+        lore: "Rjak leaves few survivors, and fewer still stay dead. Half a fallen city's people are lost, but its defenders rise again to march in Rjak's ranks.",
         retort: "warlord",
         rule: "Cities taken by force bring only half their citizens, but their defenders rise to join your army (5 of your best troops each)",
         reward: "Cities taken by force add 2 of your best troops",
@@ -121,6 +130,7 @@ const list: Omit<ChallengeDef, "realms">[] = [
     },
     {
         wizard: "Sss'ra",
+        lore: "In Sss'ra's court the honours of your past lives count for nothing. Sss'ra's own name, though, spreads three times as fast.",
         retort: "famous",
         rule: "Fame upgrades don't work, but Refounds give ×3 Fame",
         reward: "Fame +25%",
@@ -130,6 +140,7 @@ const list: Omit<ChallengeDef, "realms">[] = [
     },
     {
         wizard: "Tauron",
+        lore: "The minotaur lord of chaos scorns marching columns. Tauron's army is a rabble, but the fire Tauron hurls is terrible.",
         retort: "manaFocusing",
         rule: "Army power is halved, but instant spells hit ×3 as hard",
         reward: "Instant spells hit 50% harder",
@@ -138,6 +149,7 @@ const list: Omit<ChallengeDef, "realms">[] = [
     },
     {
         wizard: "Freya",
+        lore: "Freya draws power from the land itself. Scholars' lore matters little to her; the nodes where the world's magic wells up are everything.",
         retort: "nodeMastery",
         rule: "Lore costs ×3, but magic nodes are ×3 as strong",
         reward: "Magic nodes 50% stronger",
@@ -146,6 +158,7 @@ const list: Omit<ChallengeDef, "realms">[] = [
     },
     {
         wizard: "Horus",
+        lore: "To Horus, enchantment is the true art of war: costly and demanding, and worth it. Every spell kept running makes the army stronger.",
         retort: "archmage",
         rule: "Enchantments cost double, but each active enchantment gives ×1.2 army power",
         reward: "Enchantments cost 25% less",
@@ -154,6 +167,7 @@ const list: Omit<ChallengeDef, "realms">[] = [
     },
     {
         wizard: "Ariel",
+        lore: "Ariel would rather win a city than take it. Ariel's armies are small, but ordinary towns open their gates gladly; only capitals and Fortresses must be fought for.",
         retort: "charismatic",
         rule: "Army power is halved, but ordinary cities (not capitals or Fortresses) give in at a quarter of their defense",
         reward: "Renown reaches 10% further",
@@ -162,6 +176,7 @@ const list: Omit<ChallengeDef, "realms">[] = [
     },
     {
         wizard: "Tlaloc",
+        lore: "Tlaloc's realm is bled to feed the altars. Fields and treasuries suffer, but the mana that flows from the sacrifice is immense.",
         retort: "runemaster",
         rule: "Production and gold are halved, but mana is ×3",
         reward: "Mana +25%",
@@ -170,6 +185,7 @@ const list: Omit<ChallengeDef, "realms">[] = [
     },
     {
         wizard: "Kali",
+        lore: "Kali walks alone and trusts no champion. But the rival wizards fear her, and their wards weaken when she comes.",
         retort: "archmage",
         rule: "No heroes, but rival wizards' domains and Fortresses are half as strong",
         reward: "Rival wizards' domains and Fortresses 15% weaker",

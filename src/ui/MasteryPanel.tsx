@@ -164,6 +164,7 @@ function ChallengesSection() {
         const replay = m.completed.includes(wizard);
         const text = [
             replay ? `Replay ${wizard}'s challenge?` : `Accept ${wizard}'s challenge?`,
+            c.lore,
             `This is an Ascension: your current Ascension ends (with Insight if its gate is met), and a new one begins as ${wizard}, with their books and retort.`,
             `Rule: ${c.rule}.`,
             `Goal: take all ${ARCANUS_WIZARDS} rival Fortresses of Arcanus in one run. Refounds are allowed; Ascending and Planeshifting aren't. Myrror pauses meanwhile.`,
@@ -194,6 +195,7 @@ function ChallengesSection() {
                                 {w} {done && <span class="good">✓</span>}
                                 {active && <span class="count">· in progress</span>}
                             </div>
+                            <div class="card-text challenge-lore">{c.lore}</div>
                             <div class="card-text hint">
                                 {Object.entries(books)
                                     .map(([r, n]) => `${n} ${REALM_DEFS[r as keyof typeof REALM_DEFS].name}`)

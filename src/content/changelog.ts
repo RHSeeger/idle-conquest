@@ -10,6 +10,10 @@ export interface ChangeEntry {
 
 export const CHANGES: ChangeEntry[] = [
     {
+        date: "2026-10-08",
+        items: ["Fixed: Fame could show as -0 (or -1) at the start of an Ascension or challenge."],
+    },
+    {
         date: "2026-10-07",
         items: [
             "Layer 4: the Spell of Mastery. Defeat every rival wizard on both planes, channel the Spell, and win. Then claim a Mastery to start the worlds anew, stronger.",

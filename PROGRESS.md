@@ -43,7 +43,6 @@ Items you've flagged as needing work. They're recorded here and picked up only w
 | 12 | ~~**Fix: it must not be possible to select Life and Death books together.**~~ Done: once one has books, the other's + button is disabled, with "not with Life/Death" shown under it (tested). Original note: The Ascension tab says "Life and Death cannot be combined", yet the profile planner currently lets you pick both. Once one has books, the planner should stop you adding the other. | 2026-10-05 |
 | 11 | ~~**Discuss Spell Memory (Insight)**~~ Done: built as decided (see Decisions). Original note: after Familiar and Retort Mastery are built. Your idea: keep researched spells through Ascension, including across profile changes (learn Life spells, do a run without Life, return to Life and still know them). Possibly too strong, so maybe 2 levels: (1) only for realms in the new profile, (2) permanent for every realm you've learned. | 2026-10-05 |
 | 20 | **Reword the challenge button "Take it up".** You don't like the wording of the Mastery tab's button that starts a Challenge Wizard (`src/ui/MasteryPanel.tsx`; after a win it reads "Play again"). Pick something better. | 2026-10-07 |
-| 21 | **Bug: Fame shows `-1` at the start of a challenge.** The Fame amount in the resource bar at the top of the page reads `-1` when a Challenge Wizard run begins. Also seen: Fame shows `-0` at first (noted 2026-10-07, probably the same cause, e.g. Enduring Legacy's Fame debt making the amount negative). | 2026-10-07 |
 | 22 | **Challenges have little to do.** Your note: during a challenge you change some settings, but not much, and there isn't much you can do to make it go faster. No clear solution yet. Update 2026-10-08: doing a challenge is boring. Everything is automated, you can start really powerful, and there's nothing to really "do". It's not a challenge, more just a scenario (see also #28). Ideas to discuss: rules that ask for a choice rather than just changing numbers (e.g. pick which ban to take), a challenge-only spend (something bought with what the rule makes plentiful), or milestones inside a challenge (each Fortress gives a pick). | 2026-10-07 |
 | 23 | **"Run" is ambiguous.** Your note: the word "run" is used in many places and means different things. Mostly it's the stretch from founding (or Refounding) a realm to the next reset, but it also turns up loosely for an Ascension or the whole game. Needs one clear meaning (or a better word) used consistently in the UI. "Realm" is taken by the magic realms. The Statistics tab already avoids it (columns named for their reset). | 2026-10-07 |
 | 24 | **Tell players to power up before challenges (if that's how it works).** If it turns out you're meant to build up power after claiming a Mastery before taking on challenges, the game should say so (e.g. on the Mastery tab or in the challenge start dialog). Right now it's easy to assume that starting a challenge resets you like a Mastery claim. Wait until play-testing shows challenges feel reasonable after powering up (decision #3). | 2026-10-07 |
@@ -79,6 +78,14 @@ Items you've flagged as needing work. They're recorded here and picked up only w
 ---
 
 ## Work done
+
+### Fixes (2026-10-08)
+
+- **Fame showed `-0` (or `-1`) at the start of a challenge** (was TODO #21):
+  - **Cause, reproduced:** break_infinity's `0 minus 0` is a negative zero. Every Ascension (a challenge start is one) resets Fame to 0, then Fame Echo calls `gainFame` with 0 Fame and 0 debt, which computed `0 − 0`. `fmtInt` printed it as `-0`.
+  - **The `-1`:** not reproduced. It would need a tiny negative from float error, which `fmtInt`'s floor turns into `-1`. Covered by the display fix below.
+  - **Fix:** `gainFame` skips zero amounts and zero subtractions. `fmtInt` turns `-0` into `0` and nudges by 1e-9 before flooring, so float error can't show as `-1` for any resource. Existing saves holding `-0` display correctly too.
+  - **Tests:** 3 in `tests/prestige.test.ts` (127 in all).
 
 ### Layer 4: Mastery (2026-10-07)
 

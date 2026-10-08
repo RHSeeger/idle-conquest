@@ -323,9 +323,11 @@ export function fameUpgradesValue(state: GameState): Decimal {
 /** Adds Fame to spend, after repaying any Enduring Legacy debt */
 export function gainFame(state: GameState, amount: Decimal): void {
     const p = state.prestige;
+    if (amount.lte(0)) return;
     const repaid = Decimal.min(amount, p.fameDebt);
-    p.fameDebt = p.fameDebt.minus(repaid);
-    p.fame = p.fame.plus(amount.minus(repaid));
+    if (repaid.gt(0)) p.fameDebt = p.fameDebt.minus(repaid);
+    // skipping a zero subtraction matters: in break_infinity, 0 minus 0 is -0 (shown as "-0")
+    p.fame = p.fame.plus(repaid.gt(0) ? amount.minus(repaid) : amount);
 }
 
 // --- Effect sources ---

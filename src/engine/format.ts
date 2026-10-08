@@ -36,7 +36,8 @@ export function fmt(value: DecimalSource, places = 2): string {
 export function fmtInt(value: DecimalSource): string {
     const d = D(value);
     if (d.lt(1e6)) {
-        return Math.floor(d.toNumber()).toLocaleString("en-US");
+        // the nudge keeps float error (e.g. -1e-12) from flooring to -1; `|| 0` turns -0 into 0
+        return (Math.floor(d.toNumber() + 1e-9) || 0).toLocaleString("en-US");
     }
     return fmt(d);
 }

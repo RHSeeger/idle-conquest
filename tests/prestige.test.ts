@@ -4,6 +4,7 @@ import { conquer, currentPlan, tickFrontier } from "../src/engine/army";
 import { autoRefound, isAutomationUnlocked } from "../src/engine/automation";
 import { getStats } from "../src/engine/collect";
 import { D } from "../src/engine/decimal";
+import { fmtInt } from "../src/engine/format";
 import {
     buyFameUpgrade,
     canRefound,
@@ -13,6 +14,7 @@ import {
     refound,
     renownLimit,
     fameWithFullTribute,
+    gainFame,
     TRIBUTE_SECONDS,
     tributeSecondsLeft,
 } from "../src/engine/prestige";
@@ -182,5 +184,32 @@ describe("Fame upgrades", () => {
         state.prestige.fame = D(1000);
         buyFameUpgrade(state, "scouting");
         expect(currentPlan(state).length).toBe(before + 1);
+    });
+});
+
+describe("Fame display", () => {
+    it("gaining no Fame (Fame Echo after an empty Ascension) leaves a clean 0, not -0", () => {
+        const state = newGame(0);
+        gainFame(state, D(0));
+        expect(Object.is(state.prestige.fame.toNumber(), -0)).toBe(false);
+        expect(fmtInt(state.prestige.fame)).toBe("0");
+    });
+
+    it("repays Enduring Legacy debt first, exactly", () => {
+        const state = newGame(0);
+        state.prestige.fameDebt = D(30);
+        gainFame(state, D(30));
+        expect(fmtInt(state.prestige.fame)).toBe("0");
+        expect(state.prestige.fameDebt.toNumber()).toBe(0);
+        gainFame(state, D(12));
+        expect(state.prestige.fame.toNumber()).toBe(12);
+    });
+
+    it("whole numbers never show as -0 or -1 from float error", () => {
+        expect(fmtInt(D(0).minus(D(0)))).toBe("0");
+        expect(fmtInt(-1e-12)).toBe("0");
+        expect(fmtInt(-1)).toBe("-1");
+        expect(fmtInt(2.9999999999)).toBe("3");
+        expect(fmtInt(2.7)).toBe("2");
     });
 });

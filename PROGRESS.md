@@ -104,6 +104,11 @@ Items you've flagged as needing work. They're recorded here and picked up only w
 - **Confirmation:** asks "Accept …'s challenge?" or "Replay …'s challenge?". On a replay, it says the reward is already yours and isn't given again.
 - **Chronicle:** "You accept …'s challenge".
 - **Fixed on the way:** completing a replay showed "Your reward, for good", as if it gave the reward again. It now says the challenge is complete again and the reward was already yours.
+- **Why the buttons are greyed out** (play-test: every button was grey, with no reason given):
+  - **New `challengeBlockedReason`** (mastery.ts), which `canStartChallenge` now uses. It covers: no Mastery yet, a challenge in progress, the Spell cast and waiting to be claimed, and the Spell channelling.
+  - **Shown in two places:** as the disabled buttons' tooltip, and as a line under the cards.
+  - **The old hint** covered only the Spell cases. A challenge in progress greyed out every other button silently.
+  - **Channelling:** the message says to pause it, since a paused channel (progress kept) doesn't block challenges.
 
 ### Save files (2026-10-08, was TODO #25)
 

@@ -156,8 +156,17 @@ export function challengeProfile(state: GameState, def: ChallengeDef): { books: 
 }
 
 export function canStartChallenge(state: GameState, wizard: string): boolean {
+    return !!CHALLENGES[wizard] && challengeBlockedReason(state) === null;
+}
+
+/** Why no challenge can be started right now (null if one can) */
+export function challengeBlockedReason(state: GameState): string | null {
     const m = state.mastery;
-    return m.masteries >= 1 && !!CHALLENGES[wizard] && !m.challenge && !m.channelling && !m.cast;
+    if (m.masteries < 1) return "Challenges open after your first Mastery.";
+    if (m.challenge) return `You're in ${m.challenge}'s challenge: complete or abandon it first.`;
+    if (m.cast) return "The Spell of Mastery is cast: claim your Mastery first.";
+    if (m.channelling) return "The Spell of Mastery is channelling: pause it to start a challenge (its progress is kept).";
+    return null;
 }
 
 /** Enters a challenge: an Ascension as that wizard. Insight is earned as usual if the Ascension gate is met */

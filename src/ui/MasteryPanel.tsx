@@ -19,6 +19,7 @@ import {
     canClaimMastery,
     canCompleteChallenge,
     canStartChallenge,
+    challengeBlockedReason,
     challengeProfile,
     claimMastery,
     completeChallenge,
@@ -157,6 +158,7 @@ function ChallengesSection() {
             </section>
         );
     }
+    const blocked = challengeBlockedReason(state);
     const doStart = (wizard: string) => {
         const c = CHALLENGES[wizard];
         const replay = m.completed.includes(wizard);
@@ -206,7 +208,7 @@ function ChallengesSection() {
                             </div>
                             {!active && (
                                 <div class="card-cost">
-                                    <button disabled={!canStartChallenge(state, w)} onClick={() => doStart(w)}>
+                                    <button disabled={!canStartChallenge(state, w)} title={blocked ?? undefined} onClick={() => doStart(w)}>
                                         {done ? "Replay challenge" : "Accept challenge"}
                                     </button>
                                 </div>
@@ -215,9 +217,7 @@ function ChallengesSection() {
                     );
                 })}
             </div>
-            {(m.channelling || m.cast) && !m.challenge && (
-                <p class="hint">Challenges wait while the Spell of Mastery channels or waits to be claimed.</p>
-            )}
+            {blocked && <p class="hint">{blocked}</p>}
         </section>
     );
 }

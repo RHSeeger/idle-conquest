@@ -12,7 +12,7 @@ export const CHANGES: ChangeEntry[] = [
     {
         date: "2026-10-08",
         items: [
-            "Challenge buttons read Accept challenge and Replay challenge, and a replay says plainly that its reward is already yours.",
+            "Challenge buttons read Accept challenge and Replay challenge, and a replay says plainly that its reward is already yours. When they're greyed out, the Mastery tab says why.",
             "Options: download your save as a file, and load one from a file. Loading or importing a save now asks before replacing your game.",
             "Dismiss a hero to make room for another, including in the slots kept through Refound and Ascension.",
             "Fixed: amounts could show as -0 (Fame at the start of a challenge, and elsewhere), and rates near zero as tiny negative numbers.",

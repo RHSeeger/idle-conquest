@@ -2,7 +2,7 @@ import { useState } from "preact/hooks";
 import { FAME_BRANCH_NAMES, FAME_UPGRADES, FAME_UPGRADE_ORDER, FameBranch, MILESTONES } from "../content/fame";
 import { regionPlan } from "../content/frontier";
 import { ARCANUS_RING, RACES, RaceId } from "../content/races";
-import { raceRegions } from "../engine/army";
+import { nextRaceRegions } from "../engine/army";
 import { fmt, fmtInt, fmtTime } from "../engine/format";
 import {
     buyFameUpgrade,
@@ -15,6 +15,8 @@ import {
     tributeSecondsLeft,
     fameUpgradeCost,
     fameUpgradeLevel,
+    scoutingInUse,
+    setScoutingUse,
     MAX_RACE_MASTERY,
     refound,
     refoundRequirementText,
@@ -25,6 +27,7 @@ import {
     TRIBUTE_SHARE,
     tributeShare,
 } from "../engine/prestige";
+import { SCOUTING_ALL } from "../engine/state";
 import { game } from "./game";
 import { AutoMode, AutoPrestige, AutoToggle, ModeOption } from "./AutoToggle";
 import { isAutomationUnlocked, nextFameChronicleStep } from "../engine/automation";
@@ -39,7 +42,7 @@ function RefoundSection() {
     // races conquered this run become available too
     const options = [...new Set([...p.annals, ...(ok ? state.run.racesConquered : [])])];
     const raceForPlan = options.includes(choice) ? choice : options[0];
-    const plan = regionPlan(raceForPlan, raceRegions(state));
+    const plan = regionPlan(raceForPlan, nextRaceRegions(state));
 
     const doRefound = () => {
         const full = fameWithFullTribute(state);
@@ -185,7 +188,7 @@ function FameTree() {
                             const u = FAME_UPGRADES[id];
                             const level = fameUpgradeLevel(state, id);
                             const maxed = level >= u.maxLevel;
-                            return (
+                            const card = (
                                 <button
                                     key={id}
                                     class="card"
@@ -207,11 +210,44 @@ function FameTree() {
                                     </div>
                                 </button>
                             );
+                            return id === "scouting" && level > 0 ? (
+                                <div key={id}>
+                                    {card}
+                                    <ScoutingUse />
+                                </div>
+                            ) : (
+                                card
+                            );
                         })}
                     </div>
                 ))}
             </div>
         </section>
+    );
+}
+
+/** Far Scouting: how many of its levels to use (fewer regions = the Fortresses sooner, e.g. for challenges) */
+function ScoutingUse() {
+    const state = game();
+    const owned = fameUpgradeLevel(state, "scouting");
+    const use = state.prestige.scoutingUse;
+    const now = scoutingInUse(state);
+    const next = Math.min(owned, use);
+    return (
+        <div class="scouting-use">
+            <span class="hint">Use:</span>{" "}
+            {Array.from({ length: owned + 1 }, (_, l) => (
+                <button key={l} class={"toggle" + (Math.min(use, owned) === l ? " on" : "")} onClick={() => setScoutingUse(state, l === owned ? SCOUTING_ALL : l)}>
+                    {l === owned ? `all (${l})` : l}
+                </button>
+            ))}
+            <div class="hint">
+                {now === next
+                    ? `${now} extra region${now === 1 ? "" : "s"} this realm.`
+                    : `${now} extra region${now === 1 ? "" : "s"} this realm; ${next} from the next Refound.`}{" "}
+                Fewer regions reach the rival wizards sooner (handy for challenges).
+            </div>
+        </div>
     );
 }
 

@@ -14,7 +14,7 @@ import { D, Decimal } from "./decimal";
 import { fmtInt } from "./format";
 import { cityMaxPop } from "./economy";
 import { Hero, heroCarryLog, mostExperienced } from "./heroes";
-import { bump, GameState, log, newRun, recordRun } from "./state";
+import { bump, GameState, log, newRun, recordRun, SCOUTING_ALL } from "./state";
 
 export const MAX_RACE_MASTERY = 5;
 
@@ -159,6 +159,8 @@ export function refound(state: GameState, nextRace: RaceId): boolean {
 /** Applies legacy bonuses (milestones, Fame upgrades) to a freshly started run */
 export function applyRunStart(state: GameState): void {
     const run = state.run;
+    // Far Scouting: the levels chosen take effect as a realm is founded
+    run.scoutingCap = state.prestige.scoutingUse;
     const give = (ids: string[]) => {
         for (const id of ids) {
             if (!run.buildings.includes(id)) {
@@ -255,6 +257,17 @@ export function fameUpgradesWork(state: GameState): boolean {
 /** The level a Fame upgrade acts at: its level, or 0 while Fame upgrades don't work */
 export function activeFameLevel(state: GameState, id: string): number {
     return fameUpgradesWork(state) ? fameUpgradeLevel(state, id) : 0;
+}
+
+/** Chooses how many Far Scouting levels to use, from the next Refound (or any reset) */
+export function setScoutingUse(state: GameState, levels: number): void {
+    state.prestige.scoutingUse = Math.max(0, Math.min(SCOUTING_ALL, Math.floor(levels)));
+    bump(state);
+}
+
+/** Far Scouting levels in effect this run */
+export function scoutingInUse(state: GameState): number {
+    return Math.min(activeFameLevel(state, "scouting"), state.run.scoutingCap);
 }
 
 export function fameUpgradeCost(state: GameState, id: string): number {

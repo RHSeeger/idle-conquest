@@ -27,7 +27,7 @@ import { getStats, racesInRealm } from "./collect";
 import { D, Decimal, ONE, ZERO } from "./decimal";
 import { roleStat, Stats, unitPowerStat } from "./effects";
 import { effectiveTraits, isWizard, knowsSpell } from "./magic";
-import { activeFameLevel, renownLimit } from "./prestige";
+import { activeFameLevel, renownLimit, scoutingInUse } from "./prestige";
 import { bump, GameState, log } from "./state";
 
 export function isUnitAvailable(state: GameState, id: string, races: readonly string[] = racesInRealm(state)): boolean {
@@ -130,7 +130,12 @@ export function myrrorShare(state: GameState): number {
 }
 
 export function raceRegions(state: GameState): number {
-    return BASE_RACE_REGIONS + Math.floor(activeFameLevel(state, "scouting"));
+    return BASE_RACE_REGIONS + Math.floor(scoutingInUse(state));
+}
+
+/** Race regions the next realm will have (Far Scouting's chosen levels apply from then) */
+export function nextRaceRegions(state: GameState): number {
+    return BASE_RACE_REGIONS + Math.floor(Math.min(activeFameLevel(state, "scouting"), state.prestige.scoutingUse));
 }
 
 /** Mortals meet one rival wizard (an impassable wall); wizards can fight through all of Arcanus */

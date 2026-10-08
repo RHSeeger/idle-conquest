@@ -558,6 +558,17 @@ td.buy-button button.full:not(:disabled) {
     color: var(--accent);
 }
 
+/* Far Scouting: how many levels to use, under its card */
+.scouting-use {
+    margin: -2px 0 8px;
+    font-size: 12px;
+}
+
+.scouting-use button.toggle {
+    padding: 1px 8px;
+    margin-right: 4px;
+}
+
 /* Statistics: time taken per layer; the live row stands out */
 .layer-times tr.current td {
     font-weight: 600;

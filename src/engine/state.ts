@@ -99,6 +99,8 @@ export interface RunState {
     lastConquestAt: number;
     /** Rival wizards' Fortresses taken this run (all of them: the Mastery gate and a challenge's goal) */
     fortressesTaken: number;
+    /** At most this many Far Scouting levels apply this run (prestige.scoutingUse when it was founded) */
+    scoutingCap: number;
     /** Army budget: what auto-recruit may still spend (a share of production, gold and mana gained) */
     recruitBudget: { production: Decimal; gold: Decimal; mana: Decimal };
     /** Production, gold and mana on hand after the last automation pass (to measure what was gained since) */
@@ -120,6 +122,11 @@ export interface PrestigeState {
      * that hasn't been repaid yet. Fame earned pays this off before it can be spent.
      */
     fameDebt: Decimal;
+    /**
+     * How many Far Scouting levels to use (the player's choice, kept through
+     * every reset). Taken up when a realm is founded (`run.scoutingCap`).
+     */
+    scoutingUse: number;
     /** Completed runs as each starting race */
     raceMastery: Partial<Record<RaceId, number>>;
     /** Furthest frontier ever reached, and furthest during this Ascension (Renown uses the latter) */
@@ -398,6 +405,9 @@ export interface GameState {
     log: LogEntry[];
 }
 
+/** Far Scouting's "use every level" (its max level) */
+export const SCOUTING_ALL = 3;
+
 export function newRun(startingRace: RaceId): RunState {
     return {
         startingRace,
@@ -438,6 +448,7 @@ export function newRun(startingRace: RaceId): RunState {
         peakPower: D(0),
         lastConquestAt: 0,
         fortressesTaken: 0,
+        scoutingCap: SCOUTING_ALL,
         recruitBudget: { production: D(0), gold: D(0), mana: D(0) },
         recruitSeen: { production: D(0), gold: D(0), mana: D(0) },
     };
@@ -456,6 +467,7 @@ export function newGame(now = Date.now()): GameState {
             upgrades: {},
             fameOrder: [],
             fameDebt: D(0),
+            scoutingUse: SCOUTING_ALL,
             raceMastery: {},
             bestFrontier: 0,
             ascensionBestFrontier: 0,

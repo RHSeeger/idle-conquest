@@ -159,12 +159,13 @@ function ChallengesSection() {
     }
     const doStart = (wizard: string) => {
         const c = CHALLENGES[wizard];
+        const replay = m.completed.includes(wizard);
         const text = [
-            `Take up ${wizard}'s challenge?`,
+            replay ? `Replay ${wizard}'s challenge?` : `Accept ${wizard}'s challenge?`,
             `This is an Ascension: your current Ascension ends (with Insight if its gate is met), and a new one begins as ${wizard}, with their books and retort.`,
             `Rule: ${c.rule}.`,
             `Goal: take all ${ARCANUS_WIZARDS} rival Fortresses of Arcanus in one run. Refounds are allowed; Ascending and Planeshifting aren't. Myrror pauses meanwhile.`,
-            `Reward: ${c.reward}.`,
+            replay ? `Reward: ${c.reward} (already yours; a replay doesn't give it again).` : `Reward: ${c.reward}.`,
         ].join("\n\n");
         if (confirm(text)) startChallenge(state, wizard);
     };
@@ -206,7 +207,7 @@ function ChallengesSection() {
                             {!active && (
                                 <div class="card-cost">
                                     <button disabled={!canStartChallenge(state, w)} onClick={() => doStart(w)}>
-                                        {done ? "Play again" : "Take it up"}
+                                        {done ? "Replay challenge" : "Accept challenge"}
                                     </button>
                                 </div>
                             )}

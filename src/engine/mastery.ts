@@ -174,7 +174,7 @@ export function startChallenge(state: GameState, wizard: string): boolean {
         insight,
         keepPlan: true,
         ended: "enterChallenge",
-        text: `You take up ${wizard}'s challenge` + (insight.gt(0) ? ` (+${fmtInt(insight)} Insight)` : "") + `. Their rule: ${def.rule}.`,
+        text: `You accept ${wizard}'s challenge` + (insight.gt(0) ? ` (+${fmtInt(insight)} Insight)` : "") + `. Their rule: ${def.rule}.`,
     });
     for (const id of def.startSpells ?? []) {
         if (!state.ascension.spellsKnown.includes(id)) state.ascension.spellsKnown.push(id);
@@ -214,8 +214,13 @@ function endChallenge(state: GameState, completed: boolean): void {
     const insight = insightOnAscend(state);
     m.challenge = null;
     m.challengeDone = false;
-    if (completed && !m.completed.includes(wizard)) m.completed.push(wizard);
-    if (completed) m.notice = `${wizard}'s challenge is complete! Your reward, for good: ${def.reward}.`;
+    if (completed) {
+        const replay = m.completed.includes(wizard);
+        if (!replay) m.completed.push(wizard);
+        m.notice = replay
+            ? `${wizard}'s challenge is complete again! Its reward (${def.reward}) was already yours.`
+            : `${wizard}'s challenge is complete! Your reward, for good: ${def.reward}.`;
+    }
     const a = state.ascension;
     let books = a.planBooks;
     let retorts = a.planRetorts;

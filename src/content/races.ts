@@ -86,7 +86,7 @@ export const RACES: Record<RaceId, RaceDef> = {
         plural: "Nomads",
         adjective: "Nomad",
         plane: "arcanus",
-        description: "Desert traders and horsemen. Their caravans bring wealth to any realm they join.",
+        description: "Desert traders and horsemen. Their caravans bring wealth to any kingdom they join.",
         cityEffects: [
             { stat: "pop.growth", op: "add", value: -0.1, scope: "self" },
             { stat: "gold.perTaxpayer", op: "add", value: 0.5, scope: "self" },

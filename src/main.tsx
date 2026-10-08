@@ -95,5 +95,5 @@ function start(): void {
 }
 
 // Show something while offline progress (which can take a second or two) is simulated
-render(<div class="loading">Your realm carried on without you… catching up.</div>, document.getElementById("app")!);
+render(<div class="loading">Your kingdom carried on without you… catching up.</div>, document.getElementById("app")!);
 setTimeout(start, 30);

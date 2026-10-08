@@ -29,7 +29,7 @@ export function ExplorationPanel() {
                     fraction={run.exploreProgress / cost}
                     label={`Next discovery: ${fmtTime((cost - run.exploreProgress) / speed)} · speed ×${fmt(speed)} (more cities, more lands to explore)`}
                 />
-                <p class="hint">{run.sites.length} sites discovered this run.</p>
+                <p class="hint">{run.sites.length} sites discovered in this kingdom.</p>
             </section>
 
             <Lairs />

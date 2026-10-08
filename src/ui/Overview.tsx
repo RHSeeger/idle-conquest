@@ -1,9 +1,19 @@
 /**
- * "What is going on": one line per active system, each saying what it is doing
+ * "At a glance": one line per active system, each saying what it is doing
  * now and what comes next. Meant to be the place a player can glance at to
- * feel in control, instead of visiting every tab.
+ * feel in control, instead of visiting every tab. Shown above the tabs on every
+ * tab, collapsible.
  */
 import { ComponentChildren } from "preact";
+import { useState } from "preact/hooks";
+import { ARCANUS_WIZARDS } from "../content/frontier";
+import { MAX_HEROES } from "../content/heroes";
+import { MYRROR_WIZARDS } from "../content/myrror";
+import { Stats } from "../engine/effects";
+import { heroesAllowed, hireCost, isTavernOpen } from "../engine/heroes";
+import { masteryCost, masterySecondsLeft, SPELL_OF_MASTERY } from "../engine/mastery";
+import { masteryGate } from "../engine/magic";
+import { isMasteryTabVisible } from "./MasteryPanel";
 import { BUILDINGS } from "../content/buildings";
 import { LORE, LORE_ORDER } from "../content/lore";
 import { isBuildingVisible, isLoreUnlocked, isSettlersUnlocked } from "../engine/actions";
@@ -53,7 +63,33 @@ function Line(props: { icon: string; label: string; auto?: AutomationKind; child
     );
 }
 
+const OPEN_KEY = "idle-conquest.glanceOpen";
+
+/** Whether the panel was left open (per browser; open unless closed before) */
+function loadOpen(): boolean {
+    try {
+        return localStorage.getItem(OPEN_KEY) !== "0";
+    } catch {
+        return true;
+    }
+}
+
+function saveOpen(open: boolean): void {
+    try {
+        localStorage.setItem(OPEN_KEY, open ? "1" : "0");
+    } catch {
+        // storage blocked: the panel just forgets
+    }
+}
+
 export function Overview() {
+    const [open, setOpenState] = useState(loadOpen);
+    const setOpen = (o: boolean) => {
+        if (o !== open) {
+            setOpenState(o);
+            saveOpen(o);
+        }
+    };
     const state = game();
     const stats = getStats(state);
     const econ = realmEconomy(state, stats);
@@ -79,8 +115,8 @@ export function Overview() {
     const spellCost = nextSpell ? researchCost(state, stats, nextSpell) : undefined;
 
     return (
-        <section>
-            <h2>Overview</h2>
+        <details class="glance" open={open} onToggle={(e) => setOpen((e.currentTarget as HTMLDetailsElement).open)}>
+            <summary>At a glance</summary>
             <ul class="overview">
                 <Line icon="⚔" label="Army" auto="units">
                     {armyActivity(state)}
@@ -118,6 +154,11 @@ export function Overview() {
                                   ? Infinity
                                   : settlersPrice(state, stats).minus(run.food).div(econ.food).toNumber(),
                         )}
+                    </Line>
+                )}
+                {heroesAllowed(state) && (isTavernOpen(state) || run.heroes.length > 0) && (
+                    <Line icon="♛" label="Heroes">
+                        {heroLine(state, econ, mana)}
                     </Line>
                 )}
                 {isExplorationUnlocked(state) && (
@@ -170,7 +211,38 @@ export function Overview() {
                             : `Wizards' Guild ${asc.wizardsGuild ? "✓" : "✗"} · books ${asc.books}/${ASCENSION_BOOKS} · realms ${asc.realms}/${ASCENSION_REALMS}`}
                     </Line>
                 )}
+                {isMasteryTabVisible(state) && (
+                    <Line icon="★" label="Mastery">
+                        {masteryLine(state, stats)}
+                    </Line>
+                )}
             </ul>
-        </section>
+        </details>
     );
+}
+
+/** What the Mastery layer is waiting on: a challenge, the Spell's channel, or the gate */
+function masteryLine(state: GameState, stats: Stats): string {
+    const m = state.mastery;
+    const gate = masteryGate(state);
+    if (m.challenge) {
+        return m.challengeDone
+            ? `${m.challenge}'s challenge is won: complete it (Mastery tab)`
+            : `${m.challenge}'s challenge · Fortresses ${state.run.fortressesTaken}/${ARCANUS_WIZARDS} in this kingdom`;
+    }
+    if (m.cast) return "the Spell is cast: claim your Mastery (Mastery tab)";
+    const pct = Math.floor(m.progress.div(masteryCost(state)).toNumber() * 100);
+    if (m.channelling) return `channelling the Spell: ${pct}% · ${fmtTime(masterySecondsLeft(state, stats))} left`;
+    if (m.progress.gt(0)) return `the Spell is ${pct}% channelled (paused)`;
+    if (gate.ready) return knowsSpell(state, SPELL_OF_MASTERY) ? "every rival wizard has fallen: channel the Spell" : "every rival wizard has fallen: research the Spell";
+    return `Myrran wizards ${gate.myrran}/${MYRROR_WIZARDS} · Arcanus Fortresses ${gate.fortresses}/${ARCANUS_WIZARDS} in this kingdom`;
+}
+
+/** Heroes: how many serve, and when the next can be hired */
+function heroLine(state: GameState, econ: RealmEconomy, mana: Decimal): string {
+    const n = state.run.heroes.length;
+    const count = `${n}/${MAX_HEROES} heroes`;
+    if (n >= MAX_HEROES) return `${count}, every place filled`;
+    if (!isTavernOpen(state)) return `${count} · hiring needs an Adventurers' Guild`;
+    return `${count} · next hire ${when(secondsToAfford(state, econ, mana, { gold: hireCost(state) }))} (Army tab)`;
 }

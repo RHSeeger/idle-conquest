@@ -1074,7 +1074,38 @@ button.toggle.auto {
     position: relative; /* keep the accent border on top of its neighbour's */
 }
 
-/* --- overview (Realm tab) --- */
+/* --- At a glance: the overview panel, above the tabs, collapsible --- */
+.glance {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 12px;
+    margin-bottom: 8px;
+    font-size: 13px;
+}
+.glance summary {
+    cursor: pointer;
+    font-weight: 600;
+}
+.glance[open] summary {
+    margin-bottom: 4px;
+}
+/* two columns on wide screens, to keep it short */
+.glance .overview {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 24px;
+}
+@media (max-width: 900px) {
+    .glance .overview {
+        grid-template-columns: 1fr;
+    }
+}
+.glance .overview li {
+    border-bottom: none;
+    padding: 1px 0;
+}
+
 .overview {
     list-style: none;
     margin: 0;

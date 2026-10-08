@@ -176,7 +176,7 @@ const list: Omit<ChallengeDef, "realms">[] = [
     },
     {
         wizard: "Tlaloc",
-        lore: "Tlaloc's realm is bled to feed the altars. Fields and treasuries suffer, but the mana that flows from the sacrifice is immense.",
+        lore: "Tlaloc's kingdom is bled to feed the altars. Fields and treasuries suffer, but the mana that flows from the sacrifice is immense.",
         retort: "runemaster",
         rule: "Production and gold are halved, but mana is ×3",
         reward: "Mana +25%",

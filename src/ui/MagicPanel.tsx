@@ -125,7 +125,7 @@ function RealmSpells(props: { realm: SpellRealm }) {
                                             {s.requiresMastery
                                                 ? "needs every rival wizard on both planes (Mastery tab)"
                                                 : s.requiresTower && !towerCleared(state)
-                                                  ? "needs a Tower of Wizardry cleared this run"
+                                                  ? "needs a Tower of Wizardry cleared in this kingdom"
                                                   : `needs ${RARITY_BOOKS[s.rarity]} books`}
                                         </span>
                                     )}
@@ -180,7 +180,7 @@ export function MagicPanel() {
                     Cathedrals add mana in every city; the Wizards' Guild and melded magic nodes multiply it. Spells are
                     researched with Knowledge and stay known until you Ascend again
                     {spellMemoryLevel(state) > 0 && " (Spell Memory brings them back after an Ascension, if your profile has the books)"}.
-                    Enchantments last until the end of the run.
+                    Enchantments last until this kingdom ends.
                 </p>
                 <CurrentProfile />
                 <DormantSpells />

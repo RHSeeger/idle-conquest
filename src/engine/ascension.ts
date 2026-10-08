@@ -130,7 +130,7 @@ export function ascend(
         insight,
         keepPlan: false,
         ended: "ascend",
-        text: `You Ascend as a Wizard (+${fmtInt(insight)} Insight). Your new realm is founded by ${RACES[startRace].plural}.`,
+        text: `You Ascend as a Wizard (+${fmtInt(insight)} Insight). Your new kingdom is founded by ${RACES[startRace].plural}.`,
     });
     return true;
 }

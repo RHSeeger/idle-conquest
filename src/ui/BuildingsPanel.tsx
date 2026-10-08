@@ -41,7 +41,7 @@ export function BuildingsPanel() {
                         onChange={(m) => (state.automation.buildMode = m)}
                         options={[
                             { value: "cheapest", label: "Cheapest", tip: "Build whatever costs least first" },
-                            { value: "chronicle", label: "Chronicle", tip: "Follow your last run's build order" },
+                            { value: "chronicle", label: "Chronicle", tip: "Follow your last kingdom's build order" },
                         ]}
                     />
                 </h2>

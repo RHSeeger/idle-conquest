@@ -1,7 +1,6 @@
 import { useState } from "preact/hooks";
 import { RACES, RaceId } from "../content/races";
 import { Decimal, ZERO } from "../engine/decimal";
-import { Overview } from "./Overview";
 import { canFoundSettlers, foundSettlers, isSettlersUnlocked, setTaxShare } from "../engine/actions";
 import { getStats } from "../engine/collect";
 import { settlersPrice } from "../engine/costs";
@@ -21,7 +20,8 @@ export function sizeTier(pop: number): string {
     return "Capital";
 }
 
-export function RealmPanel() {
+/** The kingdom itself (top of the Kingdom tab): citizens, settlers and cities */
+export function KingdomSections() {
     const state = game();
     const stats = getStats(state);
     const econ = realmEconomy(state, stats);
@@ -40,8 +40,7 @@ export function RealmPanel() {
     }
 
     return (
-        <div class="panel">
-            <Overview />
+        <>
             <section>
                 <h2>Citizens</h2>
                 <p class="hint">
@@ -93,7 +92,7 @@ export function RealmPanel() {
                                 <th class="num">Pop</th>
                                 <th class="num">⚒/s</th>
                                 <th class="num">◉/s</th>
-                                <th>Realm bonus while held</th>
+                                <th>Kingdom bonus while held</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -141,7 +140,7 @@ export function RealmPanel() {
                                             <div>
                                                 <b>{RACES[c.city.race].plural}</b>
                                                 <div>City: {RACES[c.city.race].cityEffectText}</div>
-                                                <div>Realm: {RACES[c.city.race].realmEffectText}</div>
+                                                <div>Kingdom: {RACES[c.city.race].realmEffectText}</div>
                                             </div>
                                         }
                                     >
@@ -165,6 +164,6 @@ export function RealmPanel() {
                 </table>
                 )}
             </section>
-        </div>
+        </>
     );
 }

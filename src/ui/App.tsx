@@ -27,13 +27,12 @@ import { ChallengeBanner, isMasteryTabVisible, MasteryNotice, MasteryPanel, Vict
 import { masteryBonus } from "../engine/mastery";
 import { tabAttention } from "./attention";
 import { isWizard, manaRate } from "../engine/magic";
-import { RealmPanel } from "./RealmPanel";
+import { Overview } from "./Overview";
 import { PlanesPanel } from "./PlanesPanel";
 import { planeshiftProgress } from "../engine/ascension";
 import { essenceOnPlaneshift, isMyrrorOpen } from "../engine/planes";
 
 type TabId =
-    | "realm"
     | "buildings"
     | "army"
     | "lore"
@@ -55,7 +54,8 @@ interface TabDef {
 }
 
 const TABS: TabDef[] = [
-    { id: "realm", label: "Realm", visible: () => true, render: () => <RealmPanel /> },
+    // named for the layer, like Ascension, Planes and Mastery (Refound is the verb); the id is kept for saves
+    { id: "prestige", label: "Kingdom", visible: () => true, render: () => <PrestigePanel /> },
     { id: "buildings", label: "Buildings", visible: () => true, render: () => <BuildingsPanel /> },
     { id: "army", label: "Army", visible: () => true, render: () => <ArmyPanel /> },
     { id: "lore", label: "Lore", visible: () => isLoreUnlocked(game()), render: () => <LorePanel /> },
@@ -67,15 +67,9 @@ const TABS: TabDef[] = [
     },
     { id: "magic", label: "Magic", visible: () => isWizard(game()), render: () => <MagicPanel /> },
     {
-        id: "prestige",
-        label: "Refound",
-        visible: () => canRefound(game()) || game().prestige.refounds > 0 || game().ascension.ascensions > 0,
-        render: () => <PrestigePanel />,
-    },
-    {
         id: "ascension",
         label: "Ascension",
-        // not in the very first run: it has enough to take in already
+        // not in the very first kingdom: it has enough to take in already
         visible: () => {
             const s = game();
             return (
@@ -236,7 +230,8 @@ function Log() {
 
 export function App(props: { offline: OfflineSummary | null; initialTab?: string }) {
     useTicker(10);
-    const [tab, setTab] = useState<TabId>((props.initialTab as TabId) ?? "realm");
+    // "realm" was the first tab's id before it became part of the Kingdom tab (old ?tab= links)
+    const [tab, setTab] = useState<TabId>(props.initialTab === "realm" || !props.initialTab ? "prestige" : (props.initialTab as TabId));
     const [offline, setOffline] = useState(props.offline);
     const [aboutSection, setAboutSection] = useState<AboutSection>("howto");
     const state = game();
@@ -252,13 +247,14 @@ export function App(props: { offline: OfflineSummary | null; initialTab?: string
             <header>
                 <h1>Idle Conquest</h1>
                 <span class="hint">
-                    Run {fmtTime(state.run.time)} · Total {fmtTime(state.meta.playtime)}
+                    Kingdom {fmtTime(state.run.time)} · Total {fmtTime(state.meta.playtime)}
                 </span>
                 <button class="link tribute" onClick={() => openAbout("tribute")}>
                     A tribute to Master of Magic (1994)
                 </button>
             </header>
             <ResourceBar />
+            <Overview />
             <nav class="tabs">
                 {visible.map((t) => {
                     const attention = tabAttention(state, t.id);

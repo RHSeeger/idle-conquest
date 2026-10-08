@@ -86,7 +86,7 @@ const list: RetortDef[] = [
         picks: 2,
         effects: [{ stat: "mana.mult", op: "mult", value: 3 }],
         text: "×3 mana",
-        unlock: { kind: "enchantmentsInRun", count: 8, text: "Have 8 enchantments active in one run" },
+        unlock: { kind: "enchantmentsInRun", count: 8, text: "Have 8 enchantments active in one kingdom" },
     },
     {
         id: "archmage",
@@ -121,7 +121,7 @@ const list: RetortDef[] = [
         picks: 1,
         effects: [], // applied directly by the magic-node collector in engine/magic.ts
         text: "Magic nodes give twice the mana",
-        unlock: { kind: "nodesMelded", count: 3, text: "Meld 3 magic nodes in one run" },
+        unlock: { kind: "nodesMelded", count: 3, text: "Meld 3 magic nodes in one kingdom" },
     },
     {
         id: "divinePower",

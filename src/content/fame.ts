@@ -137,7 +137,7 @@ const list: FameUpgradeDef[] = [
         maxLevel: 5,
         cost: (l) => Math.round(4 * Math.pow(2.5, l)),
         effects: [],
-        text: (l) => (l === 0 ? "Nothing yet" : `Start each run with ${fmtNum(warChestAmount(l))} production and gold`),
+        text: (l) => (l === 0 ? "Nothing yet" : `Start each kingdom with ${fmtNum(warChestAmount(l))} production and gold`),
     },
     {
         id: "hallOfHeroes",
@@ -150,8 +150,8 @@ const list: FameUpgradeDef[] = [
             l === 0
                 ? "Heroes leave when you Refound"
                 : l >= MAX_HEROES
-                  ? "When you Refound, all your heroes follow you to the new realm"
-                  : `When you Refound, your ${l === 1 ? "most experienced hero follows" : `${l} most experienced heroes follow`} you to the new realm`,
+                  ? "When you Refound, all your heroes follow you to the new kingdom"
+                  : `When you Refound, your ${l === 1 ? "most experienced hero follows" : `${l} most experienced heroes follow`} you to the new kingdom`,
     },
     {
         id: "legend",
@@ -173,7 +173,6 @@ export const FAME_BRANCH_NAMES: Record<FameBranch, string> = {
     legacy: "Legacy",
 };
 
-/** Buildings granted at the start of a run by Royal Architects, by level */
 /**
  * Royal Architects: buildings each level starts you with. Early levels give the
  * quick buildings that unlock something (Library: Knowledge); later ones skip
@@ -214,19 +213,19 @@ export const MILESTONES: MilestoneDef[] = [
         id: "foundations",
         refounds: 1,
         name: "Foundations",
-        text: "Start every run with a Barracks and a Builders' Hall.",
+        text: "Start every kingdom with a Barracks and a Builders' Hall.",
     },
     {
         id: "autoBuild",
         refounds: 1,
         name: "Master Builders",
-        text: "Unlock auto-build: buildings are bought automatically, in the order of your last run (the Chronicle).",
+        text: "Unlock auto-build: buildings are bought automatically, in the order of your last kingdom (the Chronicle).",
     },
     {
         id: "autoRecruit",
         refounds: 2,
         name: "Standing Orders",
-        text: "Unlock auto-recruit (follows your last run's army mix), auto-study (Lore) and auto-raid (lairs).",
+        text: "Unlock auto-recruit (follows your last kingdom's army mix), auto-study (Lore) and auto-raid (lairs).",
     },
     {
         id: "renown",
@@ -238,7 +237,7 @@ export const MILESTONES: MilestoneDef[] = [
         id: "autoSettle",
         refounds: 3,
         name: "Pioneers",
-        text: "Unlock auto-settle, and start every run with 2 extra settled towns.",
+        text: "Unlock auto-settle, and start every kingdom with 2 extra settled towns.",
     },
     {
         id: "quartermasters",

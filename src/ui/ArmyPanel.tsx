@@ -137,7 +137,7 @@ export function Lairs() {
         <section>
             <h2>
                 Monster lairs <AutoToggle kind="lairs" label="Auto-raid" />
-                <span class="count"> · {cleared} cleared this run</span>
+                <span class="count"> · {cleared} cleared in this kingdom</span>
             </h2>
             <p class="hint">
                 {autoOn
@@ -278,7 +278,7 @@ function Troops() {
                     onChange={(m) => (state.automation.unitMode = m)}
                     options={[
                         { value: "efficient", label: "Most efficient", tip: "Best power per cost against the current target" },
-                        { value: "chronicle", label: "Chronicle", tip: "Rebuild your last run's army mix" },
+                        { value: "chronicle", label: "Chronicle", tip: "Rebuild your last kingdom's army mix" },
                     ]}
                 />
                 {hasMilestone(state, "quartermasters") && (

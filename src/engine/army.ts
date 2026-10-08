@@ -261,7 +261,7 @@ export function conquer(state: GameState, target: FrontierCity, quiet = false, s
         state,
         "conquest",
         `Conquered ${target.name} (${RACES[target.race].adjective}${target.isRegionCapital ? " region capital" : ""}).` +
-            (isNewRace ? ` ${RACES[target.race].plural} join your realm!` : ""),
+            (isNewRace ? ` ${RACES[target.race].plural} join your kingdom!` : ""),
     );
 }
 

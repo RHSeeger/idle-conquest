@@ -34,6 +34,8 @@ import { game } from "./game";
 import { AutoMode, AutoPrestige, AutoToggle, ModeOption } from "./AutoToggle";
 import { isAutomationUnlocked, nextFameChronicleStep } from "../engine/automation";
 import { heroRefoundText } from "./HeroesSection";
+import { KingdomSections } from "./KingdomSections";
+import { GameState } from "../engine/state";
 
 function RefoundSection() {
     const state = game();
@@ -52,7 +54,7 @@ function RefoundSection() {
             (fame.gt(0) ? `for +${fmtInt(fame)} Fame` : "for no Fame") +
             (full.gt(fame) ? ` (waiting ${fmtTime(tributeSecondsLeft(state))} for the full tribute would give ${fmtInt(full)})` : "") +
             (earnsMastery(state) ? "" : `, and no Mastery for the ${RACES[state.run.startingRace].plural} (no city taken by force)`);
-        if (confirm(`Refound your civilization as ${RACES[raceForPlan].plural}? This run's progress will be reset ${gain}.`)) {
+        if (confirm(`Refound your civilization as ${RACES[raceForPlan].plural}? This kingdom's progress will be reset ${gain}.`)) {
             refound(state, raceForPlan);
         }
     };
@@ -64,7 +66,7 @@ function RefoundSection() {
         <section>
             <h2>Refound</h2>
             <p class="hint">
-                Abandon this realm and found a new one. Your conquests become <b>Fame</b>, every race you conquered joins
+                Abandon this kingdom and found a new one. Your conquests become <b>Fame</b>, every race you conquered joins
                 the <b>Annals</b>, and you may start as any race in them. Each starting race meets different
                 neighbours.
             </p>
@@ -82,11 +84,11 @@ function RefoundSection() {
                     <li>
                         Population that surrendered to your Renown: {fmtInt(run.surrenderedPop * 1000)}, paying{" "}
                         <b>{Math.round(tribute * 100)}%</b> as tribute
-                        {tribute < TRIBUTE_SHARE && ` (rising to ${TRIBUTE_SHARE * 100}% after ${TRIBUTE_SECONDS / 60} minutes of the run)`}
+                        {tribute < TRIBUTE_SHARE && ` (rising to ${TRIBUTE_SHARE * 100}% after ${TRIBUTE_SECONDS / 60} minutes of the kingdom)`}
                     </li>
                 )}
                 <li>
-                    Races conquered this run: <b>{run.racesConquered.length}</b> (+{run.racesConquered.length * 25}% Fame)
+                    Races conquered in this kingdom: <b>{run.racesConquered.length}</b> (+{run.racesConquered.length * 25}% Fame)
                 </li>
                 <li>Fame = (counted population ÷ 8,000)^0.9 × the race bonus × Fame multipliers.</li>
             </ul>
@@ -98,7 +100,7 @@ function RefoundSection() {
             )}
             {ok && !earnsMastery(state) && (
                 <p class="hint">
-                    No city taken by force yet this run: Refounding now won't add Mastery for the{" "}
+                    No city taken by force yet in this kingdom: Refounding now won't add Mastery for the{" "}
                     {RACES[run.startingRace].plural} or replace your Chronicle (the build order and army that automation
                     follows).
                 </p>
@@ -106,7 +108,7 @@ function RefoundSection() {
             {run.heroes.length > 0 && <p class="hint">{heroRefoundText(state)}</p>}
             {ok && fullTribute.lte(0) && (
                 <p class="bad">
-                    This run would give no Fame: take cities by force first. You can still Refound, for example to
+                    This kingdom would give no Fame: take cities by force first. You can still Refound, for example to
                     start over as a different race.
                 </p>
             )}
@@ -120,7 +122,7 @@ function RefoundSection() {
                 ))}
             </div>
             <p class="hint">
-                Starting as {RACES[raceForPlan].plural}: {RACES[raceForPlan].cityEffectText.toLowerCase()}; realm bonus{" "}
+                Starting as {RACES[raceForPlan].plural}: {RACES[raceForPlan].cityEffectText.toLowerCase()}; kingdom bonus{" "}
                 {RACES[raceForPlan].realmEffectText.toLowerCase()}. Frontier: {plan.map((r) => r.name).join(" → ")}
             </p>
             <button class="prestige-button" disabled={!ok} onClick={doRefound}>
@@ -253,7 +255,7 @@ function ScoutingUse() {
     const tip = (
         <>
             How many of Far Scouting's levels to use. Fewer regions reach the rival wizards sooner (handy for
-            challenges). A change applies from the next Refound (or any reset), not to this realm. This realm:{" "}
+            challenges). A change applies from the next Refound (or any reset), not to this kingdom. This kingdom:{" "}
             {regions(now)}.
         </>
     );
@@ -272,7 +274,7 @@ function ScoutingUse() {
                     </button>
                 ))}
             </Tip>
-            {now !== next && <div class="hint">This realm: {regions(now)}; {next} from the next Refound.</div>}
+            {now !== next && <div class="hint">This kingdom: {regions(now)}; {next} from the next Refound.</div>}
         </div>
     );
 }
@@ -304,7 +306,7 @@ function Milestones() {
                     Renown: the first {renownLimit(state)} frontier cities surrender at once ({Math.round(renownFraction(state) * 100)}% of
                     your best frontier {state.ascension.ascensions > 0 ? "this Ascension" : "so far"}, {p.ascensionBestFrontier}).
                     Surrendered cities pay Fame as tribute: up to {TRIBUTE_SHARE * 100}% of their population, building up
-                    over the first {TRIBUTE_SECONDS / 60} minutes of a run.
+                    over the first {TRIBUTE_SECONDS / 60} minutes of a kingdom.
                 </p>
             )}
         </section>
@@ -328,7 +330,7 @@ function Annals() {
                         <th>Race</th>
                         <th>Mastery</th>
                         <th>In cities of this race</th>
-                        <th>Realm bonus while held</th>
+                        <th>Kingdom bonus while held</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -346,18 +348,30 @@ function Annals() {
                     })}
                 </tbody>
             </table>
-            <p class="hint">Mastery grows by one each time you Refound after a run as that race that took at least one city by force: ×1.1 production and +0.5 max population per star, in that race's cities.</p>
+            <p class="hint">Mastery grows by one each time you Refound after a kingdom of that race that took at least one city by force: ×1.1 production and +0.5 max population per star, in that race's cities.</p>
         </section>
     );
 }
 
+/** Refounding comes up once it's possible, or once it has been done (the first kingdom has enough to take in) */
+export function isRefoundShown(state: GameState): boolean {
+    return canRefound(state) || state.prestige.refounds > 0 || state.ascension.ascensions > 0;
+}
+
+/** The Kingdom tab: the kingdom itself, then the Refound that ends it (as Ascension and Planes do for their layers) */
 export function PrestigePanel() {
+    const state = game();
     return (
         <div class="panel">
-            <RefoundSection />
-            <FameTree />
-            <Milestones />
-            <Annals />
+            <KingdomSections />
+            {isRefoundShown(state) && (
+                <>
+                    <RefoundSection />
+                    <FameTree />
+                    <Milestones />
+                    <Annals />
+                </>
+            )}
         </div>
     );
 }

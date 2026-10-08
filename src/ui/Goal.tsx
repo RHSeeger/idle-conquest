@@ -22,10 +22,10 @@ function nextGoal(state: GameState): string | null {
     if (p.refounds === 0 && state.ascension.ascensions === 0 && !veteran) {
         if (!has("barracks")) return "Build a Barracks (Buildings tab) so you can train troops.";
         if (units === 0) return "Train some Spearmen (Army tab). Troops besiege the next city on the frontier.";
-        if (run.frontier.index === 0) return "Wait for your army to take its first city. Conquered cities add citizens to your realm.";
+        if (run.frontier.index === 0) return "Wait for your army to take its first city. Conquered cities add citizens to your kingdom.";
         if (!has("buildersHall")) return "Keep building: the Builders' Hall makes every other building cheaper.";
         if (!canRefound(state)) return "Push on through the Borderlands: conquer a city of another race to unlock Refound.";
-        return "You can Refound (Refound tab) whenever conquests slow down. Fame makes every later run faster.";
+        return "You can Refound (Kingdom tab) whenever conquests slow down. Fame makes every later kingdom faster.";
     }
     if (!has("explorersGuild") && p.refounds <= 2 && state.ascension.ascensions === 0 && !veteran) {
         return "Build an Explorers' Guild: expeditions find resource sites, monster lairs and spellbooks.";
@@ -35,7 +35,7 @@ function nextGoal(state: GameState): string | null {
     if (state.ascension.ascensions === 0) {
         const asc = ascensionProgress(state);
         if (p.realmsSeen.length > 0 && !asc.ready) {
-            return "To Ascend you need a Wizards' Guild (needs a city of High Men, High Elves, Nomads or Orcs) and 6 spellbooks from 3 realms in one run.";
+            return "To Ascend you need a Wizards' Guild (needs a city of High Men, High Elves, Nomads or Orcs) and 6 spellbooks from 3 realms in one kingdom.";
         }
         if (asc.ready) return "You can Ascend (Ascension tab) and become a Wizard.";
         return null;
@@ -77,7 +77,7 @@ function masteryGoal(state: GameState): string | null | undefined {
     const gate = masteryGate(state);
     if (gate.ready) return "Every rival wizard of both worlds has fallen: research the Spell of Mastery (Mastery tab).";
     if (gate.myrran >= MYRROR_WIZARDS) {
-        return `Myrror's wizards are all banished. Take every rival Fortress of Arcanus in one run (${gate.fortresses} of ${ARCANUS_WIZARDS} this run) to reach the Spell of Mastery.`;
+        return `Myrror's wizards are all banished. Take every rival Fortress of Arcanus in one kingdom (${gate.fortresses} of ${ARCANUS_WIZARDS} in this one) to reach the Spell of Mastery.`;
     }
     if (m.masteries > 0 && m.completed.length === 0) {
         return "The Challenge Wizards await (Mastery tab): one Ascension as a rival wizard, under their rule, for a lasting reward.";

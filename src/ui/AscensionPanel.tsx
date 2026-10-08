@@ -72,10 +72,10 @@ function Gate() {
     return (
         <ul class="gate">
             <li>
-                {check(p.wizardsGuild)} A Wizards' Guild in your realm
+                {check(p.wizardsGuild)} A Wizards' Guild in your kingdom
             </li>
             <li>
-                {check(p.books >= ASCENSION_BOOKS)} Spellbooks found this run: {p.books} of {ASCENSION_BOOKS}
+                {check(p.books >= ASCENSION_BOOKS)} Spellbooks found in this kingdom: {p.books} of {ASCENSION_BOOKS}
             </li>
             <li>
                 {check(p.realms >= ASCENSION_REALMS)} Realms among them: {p.realms} of at least {ASCENSION_REALMS}
@@ -320,7 +320,7 @@ function BeyondArcanus() {
                 the Beastmen, Dark Elves, Draconians, Dwarves, Klackons and Trolls.
             </p>
             <ul class="gate">
-                <li>{check(p.towerCleared)} Clear a Tower of Wizardry this run (found by expeditions)</li>
+                <li>{check(p.towerCleared)} Clear a Tower of Wizardry in this kingdom (found by expeditions)</li>
                 <li>{check(p.riteKnown)} Research the Rite of the Tower (Arcane; Plane Shift halves its cost)</li>
             </ul>
             {p.ready && (
@@ -351,7 +351,7 @@ export function AscensionPanel() {
             `Ascend as: ${profileText(books, retorts)}, starting as ${RACES[chosenRace].plural}.` +
                 (familiarLevel(state) > 0 ? ` Familiar: ${familiarName(resolveFamiliar(a.planFamiliar, books))}.` : ""),
             unspent > 0 ? `WARNING: ${unspent} pick${unspent === 1 ? " is" : "s are"} unspent.` : "",
-            `Your realm, Fame, Fame upgrades and refounds reset${a.ascensions >= 2 ? "" : ", and the Annals are cleared"}. You gain ${fmtInt(insight)} Insight.`,
+            `Your kingdom, Fame, Fame upgrades and refounds reset${a.ascensions >= 2 ? "" : ", and the Annals are cleared"}. You gain ${fmtInt(insight)} Insight.`,
         ];
         if (confirm(lines.filter(Boolean).join("\n\n"))) {
             ascend(state, books, chosenRace, retorts);
@@ -365,7 +365,7 @@ export function AscensionPanel() {
                 <p class="hint">
                     {!isWizard(state) ? (
                         <>
-                            Leave the throne and become a <b>Wizard</b>. Every run after this has mana, spells, magic nodes
+                            Leave the throne and become a <b>Wizard</b>. Every kingdom after this has mana, spells, magic nodes
                             and summoned creatures, and you can break the wards of rival wizards and fight through their
                             domains.{" "}
                         </>
@@ -373,7 +373,7 @@ export function AscensionPanel() {
                         <>Ascend again to choose a new wizard profile and start a fresh Ascension. </>
                     )}
                     Insight is based on the Fame earned this Ascension ({fmtInt(a.fameEarned)} so far, plus what refounding now
-                    would give), the spellbooks you hold this run, and the rival wizards you defeated.
+                    would give), the spellbooks you hold in this kingdom, and the rival wizards you defeated.
                 </p>
                 {isWizard(state) && <h3>This Ascension</h3>}
                 <CurrentProfile />

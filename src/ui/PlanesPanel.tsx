@@ -70,7 +70,7 @@ function PlaneshiftSection() {
     const doShift = () => {
         const text = [
             `Planeshift, opening Myrror among the ${RACES[beachhead].plural}?`,
-            `Your realm, Fame, refounds, Insight, Insight upgrades, Ascensions and spells reset${pl.myrror ? ", and so does this Myrror campaign (with its resources, works and boons)" : ""}.`,
+            `Your kingdom, Fame, refounds, Insight, Insight upgrades, Ascensions and spells reset${pl.myrror ? ", and so does this Myrror campaign (with its resources, works and boons)" : ""}.`,
             `You stay a Wizard (${profileText(profile.books, profile.retorts)}) and gain ${fmtInt(essence)} Planar Essence.`,
         ].join("\n\n");
         if (confirm(text)) planeshift(state, beachhead, startRace);
@@ -82,11 +82,11 @@ function PlaneshiftSection() {
             <p class="hint">
                 Towers of Wizardry stand where the walls between the worlds are thin. Through them lies <b>Myrror</b>.
                 Planeshifting starts everything below over, but from then on you fight on two planes at once: your
-                Arcanus realm keeps looping (Refound, Ascend) while part of its army pushes a Myrror campaign that
+                Arcanus kingdoms keep coming and going (Refound, Ascend) while part of its army pushes a Myrror campaign that
                 lasts until the next Planeshift.
             </p>
             <ul class="gate">
-                <li>{check(gate.towerCleared)} Clear a Tower of Wizardry this run (found by expeditions, wizards only)</li>
+                <li>{check(gate.towerCleared)} Clear a Tower of Wizardry in this kingdom (found by expeditions, wizards only)</li>
                 <li>{check(gate.riteKnown)} Research the Rite of the Tower (Arcane; Plane Shift halves its cost)</li>
             </ul>
             <h3>Myrran beachhead</h3>
@@ -183,8 +183,8 @@ function MyrrorSection() {
                     />
                     {eta > 86400 && power && power.gt(0) && (
                         <p class="hint">
-                            Too strong for now. Myrror moves when your Arcanus army is strong: late in each run, and more
-                            with every Ascension. Siege progress here is never lost between runs.
+                            Too strong for now. Myrror moves when your Arcanus army is strong: late in each kingdom, and more
+                            with every Ascension. Siege progress here is never lost between kingdoms.
                         </p>
                     )}
                 </div>

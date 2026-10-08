@@ -39,7 +39,7 @@ import { game } from "./game";
 const check = (ok: boolean) => <span class={ok ? "good" : "bad"}>{ok ? "✓" : "✗"}</span>;
 
 const CLAIM_TEXT =
-    "Claiming starts the worlds anew: the run, Fame, Insight, Planar Essence, their upgrades and the Myrror campaign all reset. " +
+    "Claiming starts the worlds anew: your kingdom, Fame, Insight, Planar Essence, their upgrades and the Myrror campaign all reset. " +
     "Every milestone counts as earned, so automation runs from the start.";
 
 function doClaim(state: GameState) {
@@ -90,7 +90,7 @@ function SpellSection() {
                                 </li>
                                 <li>
                                     {check(gate.fortresses >= ARCANUS_WIZARDS)} Take every rival wizard's Fortress on Arcanus in one
-                                    run ({gate.fortresses} of {ARCANUS_WIZARDS} this run)
+                                    kingdom ({gate.fortresses} of {ARCANUS_WIZARDS} in this one)
                                 </li>
                             </ul>
                             <p>
@@ -167,7 +167,7 @@ function ChallengesSection() {
             c.lore,
             `This is an Ascension: your current Ascension ends (with Insight if its gate is met), and a new one begins as ${wizard}, with their books and retort.`,
             `Rule: ${c.rule}.`,
-            `Goal: take all ${ARCANUS_WIZARDS} rival Fortresses of Arcanus in one run. Refounds are allowed; Ascending and Planeshifting aren't. Myrror pauses meanwhile.`,
+            `Goal: take all ${ARCANUS_WIZARDS} rival Fortresses of Arcanus in one kingdom. Refounds are allowed; Ascending and Planeshifting aren't. Myrror pauses meanwhile.`,
             replay ? `Reward: ${c.reward} (already yours; a replay doesn't give it again).` : `Reward: ${c.reward}.`,
         ].join("\n\n");
         if (confirm(text)) startChallenge(state, wizard);
@@ -179,7 +179,7 @@ function ChallengesSection() {
             </h2>
             <p class="hint">
                 One Ascension as a rival wizard, with their books, retort and rule. Goal: take all {ARCANUS_WIZARDS} rival
-                Fortresses of Arcanus in one run. Refounds are allowed; Ascending and Planeshifting aren't, and Myrror
+                Fortresses of Arcanus in one kingdom. Refounds are allowed; Ascending and Planeshifting aren't, and Myrror
                 pauses (its holdings, works and boons still count). Rewards last forever.
             </p>
             {m.challenge && <CurrentChallenge />}
@@ -239,7 +239,7 @@ function CurrentChallenge() {
     return (
         <div class="challenge-current">
             <p>
-                <b>{c.wizard}'s challenge</b> · {fmtTime(state.meta.playtime - m.challengeStartedAt)} so far · Fortresses this run:{" "}
+                <b>{c.wizard}'s challenge</b> · {fmtTime(state.meta.playtime - m.challengeStartedAt)} so far · Fortresses in this kingdom:{" "}
                 <b>
                     {state.run.fortressesTaken} of {ARCANUS_WIZARDS}
                 </b>
@@ -254,7 +254,7 @@ function CurrentChallenge() {
                         ? `Won! Completing it gives the reward (${c.reward}) and Ascends you back to your own profile` +
                           (insight.gt(0) ? ` (+${fmtInt(insight)} Insight)` : "") +
                           "."
-                        : `Once all ${ARCANUS_WIZARDS} rival Fortresses of Arcanus have fallen in one run. You can Refound as often as you like to get there (a Refound starts the count again), but you can't Ascend until it's complete. Completing it gives the reward and Ascends you back to your own profile (auto-Ascend does it for you).`}
+                        : `Once all ${ARCANUS_WIZARDS} rival Fortresses of Arcanus have fallen in one kingdom. You can Refound as often as you like to get there (a Refound starts the count again), but you can't Ascend until it's complete. Completing it gives the reward and Ascends you back to your own profile (auto-Ascend does it for you).`}
                 </span>
             </p>
             <button class="toggle" onClick={doAbandon}>
@@ -286,7 +286,7 @@ export function ChallengeBanner(props: { onOpen: () => void }) {
                 <span class="good">Won: complete it on the Mastery tab.</span>
             ) : (
                 <>
-                    Fortresses this run: {state.run.fortressesTaken} of {ARCANUS_WIZARDS}.
+                    Fortresses in this kingdom: {state.run.fortressesTaken} of {ARCANUS_WIZARDS}.
                 </>
             )}{" "}
             <button class="link" onClick={props.onOpen}>

@@ -246,7 +246,7 @@ function endChallenge(state: GameState, completed: boolean): void {
             (completed ? `${wizard}'s challenge is complete! Reward: ${def.reward}.` : `You abandon ${wizard}'s challenge.`) +
             ` You Ascend as yourself again` +
             (insight.gt(0) ? ` (+${fmtInt(insight)} Insight)` : "") +
-            `; your new realm is founded by ${RACES[state.run.startingRace].plural}.`,
+            `; your new kingdom is founded by ${RACES[state.run.startingRace].plural}.`,
     });
 }
 

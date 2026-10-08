@@ -12,9 +12,9 @@ const ENDED: Record<RunRecord["ended"], { verb: string; currency: string; cls: s
     challenge: { verb: "Left a challenge", currency: "Insight", cls: "insight" },
 };
 
-/** Each column is named for the reset that starts it ("run" is avoided: it means too many things) */
+/** Each column is named for the reset that starts it (the Refound one is "Kingdom": a Refound starts a new kingdom) */
 const LAYER_NAMES: Record<LayerId, { name: string; tip: string }> = {
-    run: { name: "Refound", tip: "From founding (or Refounding) your realm to the next reset of any kind" },
+    run: { name: "Kingdom", tip: "From founding (or Refounding) a kingdom to the next reset of any kind" },
     ascension: { name: "Ascension", tip: "From an Ascension (or the start) to the next one, or a bigger reset" },
     planeshift: { name: "Planeshift", tip: "From a Planeshift (or the start) to the next one, or a Mastery" },
     mastery: {
@@ -40,7 +40,7 @@ function LayerTimesSection() {
             <h2>Time taken</h2>
             <p class="hint">
                 How long each lasted: the current one at the top, then the last {MAX_LAYER_TIMES}, newest first. A bigger
-                reset also ends the smaller ones (an Ascension starts a new realm too). Beginning or leaving a challenge is
+                reset also ends the smaller ones (an Ascension starts a new kingdom too). Beginning or leaving a challenge is
                 an Ascension, and starts a new Mastery / challenge stretch.
             </p>
             <table class="layer-times">
@@ -100,7 +100,7 @@ export function StatsPanel() {
                             <td class="num">{fmtInt(state.prestige.bestFrontier)}</td>
                         </tr>
                         <tr>
-                            <td>Fastest run to the first rival wizard's domain</td>
+                            <td>Fastest kingdom to reach the first rival wizard's domain</td>
                             <td class="num">{r.fastestToWall === null ? "—" : fmtTime(r.fastestToWall)}</td>
                         </tr>
                         <tr>
@@ -141,9 +141,9 @@ export function StatsPanel() {
             <LayerTimesSection />
             <section>
                 <h2>
-                    Recent runs <span class="count">(last {r.history.length})</span>
+                    Recent kingdoms <span class="count">(last {r.history.length})</span>
                 </h2>
-                {history.length === 0 && <p class="hint">No finished runs yet.</p>}
+                {history.length === 0 && <p class="hint">No finished kingdoms yet.</p>}
                 {history.length > 0 && (
                     <table>
                         <thead>

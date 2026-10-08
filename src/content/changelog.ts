@@ -12,6 +12,8 @@ export const CHANGES: ChangeEntry[] = [
     {
         date: "2026-10-08",
         items: [
+            "Clearer words: the stretch from founding (or Refounding) to the next reset is now a Kingdom, everywhere, and \"realm\" means only the realms of magic.",
+            "The Kingdom tab (first) holds your cities and citizens and, below them, the Refound, as Ascension and Planes do for theirs. What used to be the Realm tab's overview is now At a glance, always shown above the tabs, with new Heroes and Mastery lines; click its heading to collapse it.",
             "Each Challenge Wizard has a few words on who they are and why their challenge works the way it does.",
             "Challenge buttons read Accept challenge and Replay challenge, and a replay says plainly that its reward is already yours. When they're greyed out, the Mastery tab says why.",
             "Options: download your save as a file, and load one from a file. Loading or importing a save now asks before replacing your game.",

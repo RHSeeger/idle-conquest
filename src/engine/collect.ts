@@ -44,7 +44,7 @@ registerCollector((state, stats) => {
     for (const raceId of racesInRealm(state)) {
         const r = RACES[raceId];
         stats.applyEffects(`${r.plural} (cities)`, r.cityEffects, 1, raceId);
-        stats.applyEffects(`${r.plural} (realm)`, r.realmEffects);
+        stats.applyEffects(`${r.plural} (kingdom)`, r.realmEffects);
     }
 });
 

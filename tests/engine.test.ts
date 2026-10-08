@@ -4,11 +4,46 @@ import { getStats } from "../src/engine/collect";
 import { unitPrice } from "../src/engine/costs";
 import { D } from "../src/engine/decimal";
 import { Stats } from "../src/engine/effects";
+import { fmt, fmtFixed, fmtInt, fmtSigned } from "../src/engine/format";
 import { deserialize, exportSave, importSave, serialize } from "../src/engine/save";
 import { newGame } from "../src/engine/state";
 import { simulate } from "../src/engine/tick";
 import { neighborOrder } from "../src/content/races";
 import { frontierCity, regionPlan, wallIndex } from "../src/content/frontier";
+
+describe("Number formatting", () => {
+    const negZero = D(0).minus(D(0)); // break_infinity's 0 - 0 is -0
+
+    it("whole numbers never show as -0, or as -1 from float error", () => {
+        expect(fmtInt(negZero)).toBe("0");
+        expect(fmtInt(-1e-12)).toBe("0");
+        expect(fmtInt(-1)).toBe("-1");
+        expect(fmtInt(2.9999999999)).toBe("3");
+        expect(fmtInt(2.7)).toBe("2");
+    });
+
+    it("float noise around 0 shows as 0", () => {
+        expect(fmt(negZero)).toBe("0");
+        expect(fmt(-1e-13)).toBe("0");
+        expect(fmt(1e-13)).toBe("0");
+        expect(fmt(-0.5)).toBe("-0.5");
+        expect(fmt(0.005)).toBe("5.0e-3");
+    });
+
+    it("fixed decimals never show -0.0", () => {
+        expect(fmtFixed(-0.01, 1)).toBe("0.0");
+        expect(fmtFixed(-0.4, 0)).toBe("0");
+        expect(fmtFixed(-1.25, 1)).toBe("-1.3");
+        expect(fmtFixed(3.14159, 2)).toBe("3.14");
+    });
+
+    it("signed changes never show +-", () => {
+        expect(fmtSigned(5)).toBe("+5");
+        expect(fmtSigned(-5)).toBe("-5");
+        expect(fmtSigned(negZero)).toBe("+0");
+        expect(fmtSigned(-1e-13)).toBe("+0");
+    });
+});
 
 describe("Stats resolver", () => {
     it("combines base, adds and mults", () => {

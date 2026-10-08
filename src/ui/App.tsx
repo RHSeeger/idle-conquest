@@ -5,7 +5,7 @@ import { currentTarget, siegePower } from "../engine/army";
 import { getStats } from "../engine/collect";
 import { Decimal } from "../engine/decimal";
 import { realmEconomy } from "../engine/economy";
-import { fmt, fmtInt, fmtTime } from "../engine/format";
+import { fmt, fmtInt, fmtSigned, fmtTime } from "../engine/format";
 import { ArmyPanel, armyActivity } from "./ArmyPanel";
 import { BuildingsPanel } from "./BuildingsPanel";
 import { BreakdownView, CURRENCY_ICON, Tip } from "./components";
@@ -115,7 +115,7 @@ function Resource(props: { icon: string; name: string; amount: Decimal; rate: De
                 {props.icon} {props.name}
             </span>
             <span class="resource-amount">{fmt(props.amount)}</span>
-            <span class="resource-rate">+{fmt(props.rate)}/s</span>
+            <span class="resource-rate">{fmtSigned(props.rate)}/s</span>
         </div>
     );
     return props.tip ? <Tip tip={props.tip}>{body}</Tip> : body;

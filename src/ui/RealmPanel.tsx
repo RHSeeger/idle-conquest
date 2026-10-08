@@ -6,7 +6,7 @@ import { canFoundSettlers, foundSettlers, isSettlersUnlocked, setTaxShare } from
 import { getStats } from "../engine/collect";
 import { settlersPrice } from "../engine/costs";
 import { realmEconomy } from "../engine/economy";
-import { fmt, fmtPercent } from "../engine/format";
+import { fmt, fmtFixed, fmtPercent } from "../engine/format";
 import { AutoToggle } from "./AutoToggle";
 import { BreakdownView, Price, Tip } from "./components";
 import { game } from "./game";
@@ -104,7 +104,7 @@ export function RealmPanel() {
                                     </td>
                                     <td class="num">{e.cities}</td>
                                     <td class="num">
-                                        {e.pop.toFixed(0)} / {e.maxPop.toFixed(0)}
+                                        {fmtFixed(e.pop, 0)} / {fmtFixed(e.maxPop, 0)}
                                     </td>
                                     <td class="num">{fmt(e.production)}</td>
                                     <td class="num">{fmt(e.gold)}</td>
@@ -151,11 +151,11 @@ export function RealmPanel() {
                                 <td>{sizeTier(c.city.pop)}</td>
                                 <td class="num">
                                     <Tip tip={<BreakdownView stats={stats} stat="pop.max" scope={c.city.race} title="Maximum population" />}>
-                                        {c.city.pop.toFixed(1)} / {c.maxPop.toFixed(1)}
+                                        {fmtFixed(c.city.pop, 1)} / {fmtFixed(c.maxPop, 1)}
                                     </Tip>
-                                    {c.growth > 0 && <span class="growth"> +{(c.growth * 60).toFixed(2)}/m</span>}
+                                    {c.growth > 0 && <span class="growth"> +{fmtFixed(c.growth * 60, 2)}/m</span>}
                                 </td>
-                                <td class="num">{c.farmers.toFixed(1)}</td>
+                                <td class="num">{fmtFixed(c.farmers, 1)}</td>
                                 <td class="num">{fmt(c.production)}</td>
                                 <td class="num">{fmt(c.gold)}</td>
                                 <td class="num">{c.foodSurplus > 0.005 ? "+" + fmt(c.foodSurplus) : "0"}</td>

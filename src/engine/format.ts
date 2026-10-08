@@ -1,6 +1,9 @@
 import { D, Decimal, DecimalSource } from "./decimal";
 
-const SUFFIXES = ["", "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc"];
+/** Anything closer to 0 than this is float error, not a real amount */
+const NOISE = 1e-9;
+
+const SUFFIXES =["", "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc"];
 
 /**
  * Formats a number for display.
@@ -12,6 +15,10 @@ export function fmt(value: DecimalSource, places = 2): string {
     const d = D(value);
     if (!Number.isFinite(d.mantissa) || !Number.isFinite(d.exponent)) {
         return "∞";
+    }
+    // float noise (e.g. a rate that should be 0 coming out as -1e-13) shows as 0
+    if (d.abs().lt(NOISE)) {
+        return "0";
     }
     if (d.lt(0)) {
         return "-" + fmt(d.neg(), places);
@@ -37,9 +44,21 @@ export function fmtInt(value: DecimalSource): string {
     const d = D(value);
     if (d.lt(1e6)) {
         // the nudge keeps float error (e.g. -1e-12) from flooring to -1; `|| 0` turns -0 into 0
-        return (Math.floor(d.toNumber() + 1e-9) || 0).toLocaleString("en-US");
+        return (Math.floor(d.toNumber() + NOISE) || 0).toLocaleString("en-US");
     }
     return fmt(d);
+}
+
+/** A plain number to fixed decimals, without the "-0.0" toFixed gives for tiny negatives */
+export function fmtFixed(n: number, places: number): string {
+    const s = n.toFixed(places);
+    return /^-0(\.0*)?$/.test(s) ? s.slice(1) : s;
+}
+
+/** A change with its sign: "+5", "-5", "+0" (never "+-5") */
+export function fmtSigned(value: DecimalSource, places = 2): string {
+    const s = fmt(value, places);
+    return s.startsWith("-") ? s : "+" + s;
 }
 
 export function fmtPercent(fraction: number): string {

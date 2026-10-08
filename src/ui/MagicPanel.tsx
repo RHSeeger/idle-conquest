@@ -4,7 +4,7 @@ import { RARITY_BOOKS, RARITY_NAMES, SPELLS, SPELL_ORDER, SpellDef, SpellRealm }
 import { currentTarget, siegePower } from "../engine/army";
 import { getStats } from "../engine/collect";
 import { lairTarget } from "../engine/exploration";
-import { fmt, fmtTime } from "../engine/format";
+import { fmt, fmtSigned, fmtTime } from "../engine/format";
 import {
     booksIn,
     canCastEnchantment,
@@ -170,7 +170,7 @@ export function MagicPanel() {
                 <h2>
                     Mana <span class="mana">{fmt(state.run.mana)}</span>{" "}
                     <Tip tip={<BreakdownView stats={stats} stat="mana.mult" title="Mana multiplier" />}>
-                        <span class="count">+{fmt(manaRate(state, stats))}/s</span>
+                        <span class="count">{fmtSigned(manaRate(state, stats))}/s</span>
                     </Tip>
                     <AutoToggle kind="research" label="Auto-research" />
                     <AutoToggle kind="cast" label="Auto-cast" />

@@ -85,7 +85,13 @@ Items you've flagged as needing work. They're recorded here and picked up only w
   - **Cause, reproduced:** break_infinity's `0 minus 0` is a negative zero. Every Ascension (a challenge start is one) resets Fame to 0, then Fame Echo calls `gainFame` with 0 Fame and 0 debt, which computed `0 − 0`. `fmtInt` printed it as `-0`.
   - **The `-1`:** not reproduced. It would need a tiny negative from float error, which `fmtInt`'s floor turns into `-1`. Covered by the display fix below.
   - **Fix:** `gainFame` skips zero amounts and zero subtractions. `fmtInt` turns `-0` into `0` and nudges by 1e-9 before flooring, so float error can't show as `-1` for any resource. Existing saves holding `-0` display correctly too.
-  - **Tests:** 3 in `tests/prestige.test.ts` (127 in all).
+- **`-0` and float noise elsewhere in the UI** (audit of every number shown):
+  - **Only `toLocaleString` and `toFixed` can print `-0`** (`String(-0)` and template strings give `"0"`). `fmtInt` used `toLocaleString`, so any amount that reached exactly 0 by subtraction (e.g. Gold, Insight, Essence) could show `-0`. The `fmtInt` fix covers all of them.
+  - **`fmt`:** anything within 1e-9 of 0 now shows `0`, not noise like `-1.0e-13`.
+  - **New `fmtFixed`:** `toFixed` without `-0.0`, used for the Realm tab's population, growth and farmers.
+  - **New `fmtSigned`:** for changes shown with a sign. The resource bar rates, the Magic tab's mana rate and breakdown "add" rows used a hard-coded `+`, which would show `+-5/s` for a negative rate.
+  - **Checked, already safe:** `fmtPercent`, and the content files' `fmtNum` helpers (`Number(n.toFixed(2))` and `Math.round` above 100).
+- **Tests:** 2 Fame tests in `tests/prestige.test.ts` and 4 formatting tests in `tests/engine.test.ts` (130 in all).
 
 ### Layer 4: Mastery (2026-10-07)
 

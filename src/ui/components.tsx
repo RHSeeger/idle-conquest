@@ -5,7 +5,7 @@ import { ComponentChildren } from "preact";
 import { Currency } from "../content/buildings";
 import { Decimal } from "../engine/decimal";
 import { Stats } from "../engine/effects";
-import { fmt } from "../engine/format";
+import { fmt, fmtSigned } from "../engine/format";
 
 export function Tip(props: { tip: ComponentChildren; children: ComponentChildren; class?: string }) {
     return (
@@ -30,7 +30,7 @@ export function BreakdownView(props: { stats: Stats; stat: string; scope?: strin
                 <div class="breakdown-row" key={i}>
                     <span>{m.source}</span>
                     <span class={m.op}>
-                        {m.op === "add" ? (m.value.gte(0) ? "+" : "") + fmt(m.value) : "×" + fmt(m.value)}
+                        {m.op === "add" ? fmtSigned(m.value) : "×" + fmt(m.value)}
                     </span>
                 </div>
             ))}

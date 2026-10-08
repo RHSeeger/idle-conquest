@@ -11,7 +11,7 @@ export interface ChangeEntry {
 export const CHANGES: ChangeEntry[] = [
     {
         date: "2026-10-08",
-        items: ["Fixed: Fame could show as -0 (or -1) at the start of an Ascension or challenge."],
+        items: ["Fixed: amounts could show as -0 (Fame at the start of a challenge, and elsewhere), and rates near zero as tiny negative numbers."],
     },
     {
         date: "2026-10-07",

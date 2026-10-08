@@ -204,12 +204,4 @@ describe("Fame display", () => {
         gainFame(state, D(12));
         expect(state.prestige.fame.toNumber()).toBe(12);
     });
-
-    it("whole numbers never show as -0 or -1 from float error", () => {
-        expect(fmtInt(D(0).minus(D(0)))).toBe("0");
-        expect(fmtInt(-1e-12)).toBe("0");
-        expect(fmtInt(-1)).toBe("-1");
-        expect(fmtInt(2.9999999999)).toBe("3");
-        expect(fmtInt(2.7)).toBe("2");
-    });
 });

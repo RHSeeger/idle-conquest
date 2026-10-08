@@ -294,7 +294,8 @@ h3 {
 }
 
 /* --- buttons --- */
-button {
+button,
+label.button {
     font: inherit;
     color: var(--text);
     background: var(--button);
@@ -304,7 +305,13 @@ button {
     cursor: pointer;
 }
 
-button:hover:not(:disabled) {
+/* a <label> wrapping a hidden file input, styled as a button */
+label.button {
+    display: inline-block;
+}
+
+button:hover:not(:disabled),
+label.button:hover {
     background: var(--button-hover);
 }
 

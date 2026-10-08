@@ -46,7 +46,6 @@ Items you've flagged as needing work. They're recorded here and picked up only w
 | 22 | **Challenges have little to do.** Your note: during a challenge you change some settings, but not much, and there isn't much you can do to make it go faster. No clear solution yet. Update 2026-10-08: doing a challenge is boring. Everything is automated, you can start really powerful, and there's nothing to really "do". It's not a challenge, more just a scenario (see also #28). Ideas to discuss: rules that ask for a choice rather than just changing numbers (e.g. pick which ban to take), a challenge-only spend (something bought with what the rule makes plentiful), or milestones inside a challenge (each Fortress gives a pick). | 2026-10-07 |
 | 23 | **"Run" is ambiguous.** Your note: the word "run" is used in many places and means different things. Mostly it's the stretch from founding (or Refounding) a realm to the next reset, but it also turns up loosely for an Ascension or the whole game. Needs one clear meaning (or a better word) used consistently in the UI. "Realm" is taken by the magic realms. The Statistics tab already avoids it (columns named for their reset). | 2026-10-07 |
 | 24 | **Tell players to power up before challenges (if that's how it works).** If it turns out you're meant to build up power after claiming a Mastery before taking on challenges, the game should say so (e.g. on the Mastery tab or in the challenge start dialog). Right now it's easy to assume that starting a challenge resets you like a Mastery claim. Wait until play-testing shows challenges feel reasonable after powering up (decision #3). | 2026-10-07 |
-| 25 | **Save to and load from a file.** The save/export screen (Options) should be able to download the save as a file and import one from a file, besides the current copy/paste text. | 2026-10-08 |
 | 26 | **A reason to redo a challenge?** Consider whether replaying a completed challenge ("Play again") should give anything. Right now the reward is granted once, so a replay gives nothing beyond the Ascension itself. Possible directions to discuss: a reward that grows per completion (with diminishing returns), best-time records, or a harder tier. | 2026-10-08 |
 | 27 | **Flavor text for the rival wizards.** Add some flavor and information about each of the 14 wizards (e.g. on their challenge cards). At the very least it should explain why their challenge is the way it is: how the rule and reward fit who they are (e.g. Sharee the conjurer fields only summons). | 2026-10-08 |
 | 28 | **Challenges are too easy once powered up.** Play-test: with ~25k Insight (possibly less is enough), every challenge except Sss'ra's is super easy. Mostly, a lot of Fame (Fame upgrades) plows through everything. That's why Sss'ra's, which switches Fame upgrades off, is much harder and longer. Ties into decision #3 (challenge difficulty) and TODO #24 (telling players to power up first): too hard right after a Mastery, too easy once strong. | 2026-10-08 |
@@ -99,6 +98,15 @@ Items you've flagged as needing work. They're recorded here and picked up only w
 - **UI:** a muted "Dismiss" link at the bottom of each hero card (`HeroesSection.tsx`, `.hero-dismiss`). It asks for confirmation, naming their rank and xp and what's lost.
 - **Effect on keeping:** the next most experienced hero takes over the dismissed hero's slot in Hall of Heroes and Eternal Companions. See the decision row "Dismissing heroes".
 - **Tests:** 1 in `tests/heroes.test.ts` (131 in all).
+
+### Save files (2026-10-08, was TODO #25)
+
+- **Options → Save:**
+  - **"Download save file":** writes `idle-conquest-YYYY-MM-DD-HHMM.txt` (local time).
+  - **"Load from file":** a `<label class="button">` around a hidden file input.
+- **Format:** the file holds the same text as Export, so files and pasted saves are interchangeable. Raw JSON files also load (`importSave` already accepted them). A BOM added by an editor is trimmed.
+- **Loading asks first:** loading a file or importing pasted text now asks for confirmation before replacing the current game. The paste Import used to replace it with no prompt. Both share one `loadSave` path, and its messages name the source (the file name, or "pasted text").
+- **Not tested here:** the download and file-picker steps are browser-only; the save text itself is covered by the existing export/import tests.
 
 ### Layer 4: Mastery (2026-10-07)
 

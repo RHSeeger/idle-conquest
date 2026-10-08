@@ -5,23 +5,60 @@ import { bump, newGame } from "../engine/state";
 import { simulate } from "../engine/tick";
 import { game, setGame } from "./game";
 
+/** e.g. "idle-conquest-2026-10-08-1105.txt" (local time) */
+function saveFileName(d: Date): string {
+    const p = (n: number) => String(n).padStart(2, "0");
+    return `idle-conquest-${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}.txt`;
+}
+
 export function OptionsPanel() {
     const state = game();
     const [exported, setExported] = useState("");
     const [importText, setImportText] = useState("");
     const [message, setMessage] = useState("");
 
-    const doImport = () => {
+    /** Replaces the current game with a save's text (pasted or from a file); true if it loaded */
+    const loadSave = (text: string, source: string): boolean => {
+        let loaded;
         try {
-            const loaded = importSave(importText);
-            loaded.meta.lastTick = Date.now();
-            setGame(loaded);
-            saveToStorage(loaded);
-            setMessage("Save imported.");
-            setImportText("");
+            loaded = importSave(text);
         } catch (e) {
-            setMessage("Could not read that save: " + (e as Error).message);
+            setMessage(`Could not read that save (${source}): ` + (e as Error).message);
+            return false;
         }
+        if (!confirm("Replace your current game with this save? Your current progress will be lost unless you've exported it.")) {
+            return false;
+        }
+        loaded.meta.lastTick = Date.now();
+        setGame(loaded);
+        saveToStorage(loaded);
+        setMessage(`Save loaded (${source}).`);
+        return true;
+    };
+
+    const doImport = () => {
+        if (loadSave(importText, "pasted text")) setImportText("");
+    };
+
+    const downloadSave = () => {
+        const blob = new Blob([exportSave(state)], { type: "text/plain" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = saveFileName(new Date());
+        a.click();
+        URL.revokeObjectURL(url);
+        setMessage(`Downloaded ${a.download}.`);
+    };
+
+    const loadFile = (input: HTMLInputElement) => {
+        const file = input.files?.[0];
+        input.value = ""; // so choosing the same file again still fires
+        if (!file) return;
+        file.text().then(
+            (text) => loadSave(text, file.name),
+            (e: Error) => setMessage(`Could not read ${file.name}: ${e.message}`),
+        );
     };
 
     const hardReset = () => {
@@ -41,6 +78,11 @@ export function OptionsPanel() {
                 <div class="row">
                     <button onClick={() => (saveToStorage(state), setMessage("Saved."))}>Save now</button>
                     <button onClick={() => setExported(exportSave(state))}>Export</button>
+                    <button onClick={downloadSave}>Download save file</button>
+                    <label class="button">
+                        Load from file
+                        <input type="file" accept=".txt,.json,text/plain,application/json" hidden onChange={(e) => loadFile(e.target as HTMLInputElement)} />
+                    </label>
                     <span class="hint">The game autosaves every {state.settings.autosaveSeconds}s.</span>
                 </div>
                 {exported && (

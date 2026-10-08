@@ -57,6 +57,20 @@ export function hireHero(state: GameState, id: string): boolean {
     return true;
 }
 
+/**
+ * Sends a hero away, freeing their place (and their slot among the heroes kept
+ * through resets) for another. Free: the cost is their experience, and the
+ * hire price doesn't drop back. They may turn up at the Guild again, from 0 xp.
+ */
+export function dismissHero(state: GameState, id: string): boolean {
+    const i = state.run.heroes.findIndex((h) => h.id === id);
+    if (i < 0) return false;
+    state.run.heroes.splice(i, 1);
+    bump(state);
+    log(state, "milestone", `${heroName(id)} leaves your service.`);
+    return true;
+}
+
 export type Hero = { id: string; xp: number };
 
 /** The `n` most experienced heroes (who follow you through a Refound or Ascension) */

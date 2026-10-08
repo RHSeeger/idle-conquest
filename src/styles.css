@@ -460,6 +460,16 @@ td.buy-button button.full:not(:disabled) {
 .hero-stars-empty {
     color: var(--muted);
 }
+.hero-dismiss {
+    text-align: right;
+    font-size: 12px;
+}
+.hero-dismiss button.link {
+    color: var(--muted);
+}
+.hero-dismiss button.link:hover {
+    color: var(--accent);
+}
 .hero-kept {
     display: inline-flex;
     gap: 3px;

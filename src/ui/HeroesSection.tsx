@@ -1,6 +1,6 @@
 import { HEROES, HERO_RANKS, HERO_XP, heroLevel, MAX_HEROES } from "../content/heroes";
 import { heroesKeptOnAscend, insightUpgradeLevel } from "../engine/ascension";
-import { canHire, Hero, heroList, hireCost, hireHero, isTavernOpen, tavernOffers } from "../engine/heroes";
+import { canHire, dismissHero, Hero, heroList, hireCost, hireHero, isTavernOpen, tavernOffers } from "../engine/heroes";
 import { heroesKeptOnRefound, refoundHeroKeeper } from "../engine/prestige";
 import { GameState } from "../engine/state";
 import { Price, ProgressBar } from "./components";
@@ -48,6 +48,15 @@ export function HeroesSection() {
     const keptRefound = heroesKeptOnRefound(state);
     const keptAscend = heroesKeptOnAscend(state);
     const refoundKeeper = refoundHeroKeeper(state).name;
+    const onDismiss = (h: Hero) => {
+        const def = HEROES[h.id];
+        const text =
+            `Dismiss ${def.name} ${def.title} (${HERO_RANKS[heroLevel(h.xp) - 1]}, ${h.xp} xp)?\n\n` +
+            `They leave your service and their experience is lost. Their place, and their place among the heroes ` +
+            `kept when you Refound or Ascend, opens up for another. The hire price doesn't go back down. ` +
+            `They may come to the Adventurers' Guild again, starting over.`;
+        if (confirm(text)) dismissHero(state, h.id);
+    };
     // R/A badges, coloured by the currency of the upgrade doing the keeping
     const keptBadges = (h: Hero) => (
         <span class="hero-kept">
@@ -113,6 +122,11 @@ export function HeroesSection() {
                                 ) : (
                                     <span class="hint">{h.xp} xp · highest rank</span>
                                 )}
+                                <div class="hero-dismiss">
+                                    <button class="link" title="Send this hero away to make room for another" onClick={() => onDismiss(h)}>
+                                        Dismiss
+                                    </button>
+                                </div>
                             </div>
                         );
                     })}

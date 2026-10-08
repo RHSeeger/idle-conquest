@@ -93,6 +93,13 @@ Items you've flagged as needing work. They're recorded here and picked up only w
   - **Checked, already safe:** `fmtPercent`, and the content files' `fmtNum` helpers (`Number(n.toFixed(2))` and `Math.round` above 100).
 - **Tests:** 2 Fame tests in `tests/prestige.test.ts` and 4 formatting tests in `tests/engine.test.ts` (130 in all).
 
+### Dismissing heroes (2026-10-08)
+
+- **Engine:** `dismissHero` in `engine/heroes.ts`. It removes the hero, bumps the stats (their aura goes) and writes a Chronicle line.
+- **UI:** a muted "Dismiss" link at the bottom of each hero card (`HeroesSection.tsx`, `.hero-dismiss`). It asks for confirmation, naming their rank and xp and what's lost.
+- **Effect on keeping:** the next most experienced hero takes over the dismissed hero's slot in Hall of Heroes and Eternal Companions. See the decision row "Dismissing heroes".
+- **Tests:** 1 in `tests/heroes.test.ts` (131 in all).
+
 ### Layer 4: Mastery (2026-10-07)
 
 Built as designed in DESIGN §8, in one go:
@@ -396,6 +403,7 @@ The city table is now grouped by race; "Show every city" brings back the full li
 | **Troop buy amounts buy "up to"**: ×10, ×100 and Next ×2 buy as many of that amount as you can afford, rather than all or nothing. The buy button shows how many it will buy; its text is green when it buys the full amount chosen, plain when it buys only some (with a tooltip "You can afford N of the M chosen"), and grey (disabled) when it can buy none, still showing the full amount and its price | Your design, after two tries: dimmed text for a partial buy looked too much like disabled, and a dashed border didn't read well | Yes (`buyUnits`, `unitsWanted`) |
 | **Auto-buy Myrran works** comes with the Planeshift milestone Eternal Return (2 Planeshifts, with auto-Ascend). It buys whatever is affordable, cheapest first, every automation tick; on by default; the toggle sits in the Myrran works heading. The Planes "!" badge for an affordable work is off while it runs | Your call (decision #2). Planeshift 2, not 1, so the first Myrror campaign's works are bought by hand and learned. The bot uses the same `autoWorks`, so pacing is unchanged | Yes |
 | **New-player introduction** (texts in `content/intro.ts`, UI in `ui/Intro.tsx`): a welcome box on a new game (three short paragraphs); a one-line card at the top of each tab the first time it's opened, shown for that visit until dismissed with "Got it" or the tab is left, with a small "new" label on tabs not yet opened (opening a tab counts as reading it: play-test, the label stayed on tabs already viewed but not dismissed); and How to play (the welcome text plus a short glossary) at the top of the About tab, with a button to show the tab cards again. What's been seen is saved in `meta.introsSeen`; saves from before this count as having seen everything | TODO #14: a light touch, so players aren't dropped in the deep end but aren't lectured either. It builds on the existing goal bar (`Goal.tsx`), which still gives the next step. Old saves skip it because their players already know the game | Yes |
+| **Dismissing heroes** (your request, two options): a "Dismiss" link on each hero card (with a confirm) sends that hero away. It's free: the cost is their experience, and the hire price doesn't go back down (`heroesHired` is unchanged). They return to the Guild's pool and may be offered again, from 0 xp | Chosen over "choose how many to keep" for Hall of Heroes and Eternal Companions: the keepers take the most experienced heroes, so a cap trims from the bottom and can't drop the hero you don't want (who is usually the one with the most xp). Dismissing replaces a specific hero. Not a purchase: a gate before you can fix a hiring mistake adds friction without a meaningful choice. Note: Royal Stewards (Insight) is auto-build, not a hero keeper; Eternal Companions is the Ascension one | Yes (`dismissHero` in `engine/heroes.ts`; a price or unlock could be added) |
 
 ---
 

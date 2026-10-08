@@ -11,7 +11,10 @@ export interface ChangeEntry {
 export const CHANGES: ChangeEntry[] = [
     {
         date: "2026-10-08",
-        items: ["Fixed: amounts could show as -0 (Fame at the start of a challenge, and elsewhere), and rates near zero as tiny negative numbers."],
+        items: [
+            "Dismiss a hero to make room for another, including in the slots kept through Refound and Ascension.",
+            "Fixed: amounts could show as -0 (Fame at the start of a challenge, and elsewhere), and rates near zero as tiny negative numbers.",
+        ],
     },
     {
         date: "2026-10-07",

@@ -4,8 +4,8 @@ import { frontierCity, REGION_SIZE } from "../src/content/frontier";
 import { conquer, currentPlan } from "../src/engine/army";
 import { getStats } from "../src/engine/collect";
 import { D } from "../src/engine/decimal";
-import { canHire, hireCost, hireHero, tavernOffers } from "../src/engine/heroes";
-import { refound } from "../src/engine/prestige";
+import { canHire, dismissHero, hireCost, hireHero, tavernOffers } from "../src/engine/heroes";
+import { heroesKeptOnRefound, refound } from "../src/engine/prestige";
 import { newGame } from "../src/engine/state";
 
 function withTavern() {
@@ -24,6 +24,21 @@ describe("Heroes", () => {
         expect(hireHero(state, offers[0])).toBe(true);
         expect(hireCost(state).gt(first)).toBe(true);
         expect(tavernOffers(state)).not.toContain(offers[0]);
+    });
+
+    it("can be dismissed, which frees their kept slot but not the hire price", () => {
+        const state = withTavern();
+        state.prestige.upgrades = { hallOfHeroes: 1 };
+        state.run.heroes.push({ id: "brax", xp: 50 }, { id: "zaldron", xp: 5 });
+        expect(heroesKeptOnRefound(state).map((h) => h.id)).toEqual(["brax"]);
+        const price = hireCost(state);
+        const auraWith = getStats(state).num("prod.mult");
+        expect(dismissHero(state, "brax")).toBe(true);
+        expect(state.run.heroes.map((h) => h.id)).toEqual(["zaldron"]);
+        expect(heroesKeptOnRefound(state).map((h) => h.id)).toEqual(["zaldron"]);
+        expect(getStats(state).num("prod.mult")).toBeLessThan(auraWith);
+        expect(hireCost(state).eq(price)).toBe(true);
+        expect(dismissHero(state, "brax")).toBe(false);
     });
 
     it("need an Adventurers' Guild", () => {

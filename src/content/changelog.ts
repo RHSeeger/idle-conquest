@@ -16,6 +16,7 @@ export const CHANGES: ChangeEntry[] = [
             "The 14 Challenge Wizards: one Ascension as a rival wizard, under their own rule, for a reward that lasts forever.",
             "Playable on GitHub Pages, with a Tower of Wizardry icon in the browser tab.",
             "A won challenge waits for you: complete it with the new button on the Mastery tab (auto-Ascend does it for you).",
+            "In Sss'ra's challenge, the Fame tab shows that Fame upgrades are off.",
             "Far Scouting: choose how many of its levels to use (from the next Refound), so auto-buy can't force extra regions into a challenge.",
             "Statistics: how long your current Refound, Ascension, Planeshift and Mastery or challenge have lasted, and the last 10 of each.",
             "Rival wizards' domains stand out in the campaign's region list (Army and Planes tabs).",

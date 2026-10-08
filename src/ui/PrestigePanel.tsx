@@ -15,6 +15,7 @@ import {
     tributeSecondsLeft,
     fameUpgradeCost,
     fameUpgradeLevel,
+    fameUpgradesWork,
     scoutingInUse,
     setScoutingUse,
     MAX_RACE_MASTERY,
@@ -165,6 +166,7 @@ function FameTree() {
     const state = game();
     const p = state.prestige;
     const branches: FameBranch[] = ["economy", "warfare", "legacy"];
+    const working = fameUpgradesWork(state);
     return (
         <section>
             <h2>
@@ -180,8 +182,14 @@ function FameTree() {
                     <b class="fame">{fmtInt(p.fameDebt)}</b> still to go before you can buy more.
                 </p>
             )}
+            {!working && (
+                <p class="challenge-off">
+                    <b>Off during {state.mastery.challenge}'s challenge:</b> Fame upgrades do nothing until it ends. You can
+                    still buy them. Fame itself still counts (Renown, above).
+                </p>
+            )}
             <FameAutoBuy />
-            <div class="fame-branches">
+            <div class={"fame-branches" + (working ? "" : " off")}>
                 {branches.map((branch) => (
                     <div key={branch} class="fame-branch">
                         <h3>{FAME_BRANCH_NAMES[branch]}</h3>
@@ -197,6 +205,7 @@ function FameTree() {
                                         <span class="count">
                                             {level}/{u.maxLevel}
                                         </span>
+                                        {!working && level > 0 && <span class="off-tag">off</span>}
                                     </div>
                                     <div class="card-text">
                                         {u.text(level)}

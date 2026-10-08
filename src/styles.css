@@ -558,6 +558,34 @@ td.buy-button button.full:not(:disabled) {
     color: var(--accent);
 }
 
+/* Fame upgrades switched off by a challenge (Sss'ra) */
+.challenge-off {
+    border: 1px solid var(--mastery);
+    background: color-mix(in srgb, var(--mastery) 10%, transparent);
+    border-radius: 5px;
+    padding: 6px 10px;
+    font-size: 13px;
+}
+
+.fame-branches.off .card-text {
+    text-decoration: line-through;
+}
+
+.fame-branches.off .card {
+    opacity: 0.75;
+}
+
+.off-tag {
+    margin-left: 6px;
+    padding: 0 5px;
+    border: 1px solid var(--mastery);
+    border-radius: 4px;
+    color: var(--mastery);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
 /* a card that holds its own buttons: a div styled like a card button */
 div.card.card-button {
     background: var(--button);

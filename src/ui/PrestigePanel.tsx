@@ -28,6 +28,7 @@ import {
     tributeShare,
 } from "../engine/prestige";
 import { SCOUTING_ALL } from "../engine/state";
+import { Tip } from "./components";
 import { game } from "./game";
 import { AutoMode, AutoPrestige, AutoToggle, ModeOption } from "./AutoToggle";
 import { isAutomationUnlocked, nextFameChronicleStep } from "../engine/automation";
@@ -188,13 +189,9 @@ function FameTree() {
                             const u = FAME_UPGRADES[id];
                             const level = fameUpgradeLevel(state, id);
                             const maxed = level >= u.maxLevel;
-                            const card = (
-                                <button
-                                    key={id}
-                                    class="card"
-                                    disabled={!canBuyFameUpgrade(state, id)}
-                                    onClick={() => buyFameUpgrade(state, id)}
-                                >
+                            const buyable = canBuyFameUpgrade(state, id);
+                            const content = (
+                                <>
                                     <div class="card-title">
                                         {u.name}{" "}
                                         <span class="count">
@@ -208,15 +205,25 @@ function FameTree() {
                                     <div class="card-cost">
                                         {maxed ? <span class="hint">maxed</span> : <span class="price fame">✦ {fameUpgradeCost(state, id)}</span>}
                                     </div>
-                                </button>
+                                </>
                             );
-                            return id === "scouting" && level > 0 ? (
-                                <div key={id}>
-                                    {card}
-                                    <ScoutingUse />
-                                </div>
-                            ) : (
-                                card
+                            // Far Scouting holds its own "Using" buttons, which can't sit inside a (possibly disabled) button
+                            if (id === "scouting" && level > 0) {
+                                return (
+                                    <div
+                                        key={id}
+                                        class={"card card-button" + (buyable ? "" : " disabled")}
+                                        onClick={() => buyable && buyFameUpgrade(state, id)}
+                                    >
+                                        {content}
+                                        <ScoutingUse />
+                                    </div>
+                                );
+                            }
+                            return (
+                                <button key={id} class="card" disabled={!buyable} onClick={() => buyFameUpgrade(state, id)}>
+                                    {content}
+                                </button>
                             );
                         })}
                     </div>
@@ -233,20 +240,30 @@ function ScoutingUse() {
     const use = state.prestige.scoutingUse;
     const now = scoutingInUse(state);
     const next = Math.min(owned, use);
+    const regions = (n: number) => `${n} extra region${n === 1 ? "" : "s"}`;
+    const tip = (
+        <>
+            How many of Far Scouting's levels to use. Fewer regions reach the rival wizards sooner (handy for
+            challenges). A change applies from the next Refound (or any reset), not to this realm. This realm:{" "}
+            {regions(now)}.
+        </>
+    );
     return (
-        <div class="scouting-use">
-            <span class="hint">Use:</span>{" "}
-            {Array.from({ length: owned + 1 }, (_, l) => (
-                <button key={l} class={"toggle" + (Math.min(use, owned) === l ? " on" : "")} onClick={() => setScoutingUse(state, l === owned ? SCOUTING_ALL : l)}>
-                    {l === owned ? `all (${l})` : l}
-                </button>
-            ))}
-            <div class="hint">
-                {now === next
-                    ? `${now} extra region${now === 1 ? "" : "s"} this realm.`
-                    : `${now} extra region${now === 1 ? "" : "s"} this realm; ${next} from the next Refound.`}{" "}
-                Fewer regions reach the rival wizards sooner (handy for challenges).
-            </div>
+        // clicks here choose a level; they don't buy the upgrade
+        <div class="scouting-use" onClick={(e) => e.stopPropagation()}>
+            <Tip tip={tip}>
+                <span class="hint">Using:</span>{" "}
+                {Array.from({ length: owned + 1 }, (_, l) => (
+                    <button
+                        key={l}
+                        class={"toggle" + (next === l ? " on" : "")}
+                        onClick={() => setScoutingUse(state, l === owned ? SCOUTING_ALL : l)}
+                    >
+                        {l === owned ? `all (${l})` : l}
+                    </button>
+                ))}
+            </Tip>
+            {now !== next && <div class="hint">This realm: {regions(now)}; {next} from the next Refound.</div>}
         </div>
     );
 }

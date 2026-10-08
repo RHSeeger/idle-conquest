@@ -558,10 +558,31 @@ td.buy-button button.full:not(:disabled) {
     color: var(--accent);
 }
 
-/* Far Scouting: how many levels to use, under its card */
+/* a card that holds its own buttons: a div styled like a card button */
+div.card.card-button {
+    background: var(--button);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+div.card.card-button:hover:not(.disabled) {
+    background: var(--button-hover);
+}
+
+div.card.card-button.disabled {
+    cursor: default;
+    color: var(--disabled);
+}
+
+div.card.card-button.disabled .card-title {
+    color: var(--muted);
+}
+
+/* Far Scouting: how many levels to use, inside its card */
 .scouting-use {
-    margin: -2px 0 8px;
     font-size: 12px;
+    cursor: default;
 }
 
 .scouting-use button.toggle {

@@ -24,7 +24,8 @@ import { getStats, registerCollector } from "./collect";
 import { D, Decimal, ZERO } from "./decimal";
 import { Stats } from "./effects";
 import { bump, GameState, log } from "./state";
-import { banishedCount, currentRival, hasSkillFor, spellPower, strikeWards, towersUnsealed } from "./wards";
+import { fmt } from "./format";
+import { banishedCount, currentRival, enchantmentUpkeep, freeSkill, hasSkillFor, spellPower, strikeWards, towersUnsealed } from "./wards";
 
 /** Ascended at least once, or Planeshifted (you stay a wizard across Planeshifts), or a Master of Magic */
 export function isWizard(state: GameState): boolean {
@@ -377,6 +378,20 @@ export function canCastEnchantment(state: GameState, id: string): boolean {
         hasSkillFor(state, spell) &&
         state.run.mana.gte(enchantmentCost(state, spell))
     );
+}
+
+/** Why a known enchantment can't be cast right now, or null if it can */
+export function enchantmentBlocker(state: GameState, id: string): string | null {
+    const spell = SPELLS[id];
+    if (!spell || spell.kind !== "enchantment" || !knowsSpell(state, id)) return "not known";
+    if (state.run.enchantments.includes(id)) return "already running";
+    if (challengeBans(state, "enchantments")) return "this challenge forbids enchantments";
+    if (!hasSkillFor(state, spell)) {
+        return `needs ${enchantmentUpkeep(spell)} free casting skill (${fmt(freeSkill(state))} free: dispel another enchantment, or train more skill)`;
+    }
+    const cost = enchantmentCost(state, spell);
+    if (state.run.mana.lt(cost)) return `needs ${fmt(cost)} mana (you have ${fmt(state.run.mana)})`;
+    return null;
 }
 
 export function castEnchantment(state: GameState, id: string): boolean {

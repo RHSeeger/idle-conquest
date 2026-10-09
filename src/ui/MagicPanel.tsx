@@ -7,8 +7,8 @@ import { lairTarget } from "../engine/exploration";
 import { fmt, fmtSigned, fmtTime } from "../engine/format";
 import {
     booksIn,
-    canCastEnchantment,
     canCastInstant,
+    enchantmentBlocker,
     canResearch,
     castEnchantment,
     dormantSpells,
@@ -34,7 +34,7 @@ import { enchantmentUpkeep, hasSkillFor, towersUnsealed } from "../engine/wards"
 import { ContestSection } from "./ContestSection";
 import { GameState } from "../engine/state";
 import { AutoToggle } from "./AutoToggle";
-import { INSTANT_RESERVE_SECONDS } from "../engine/automation";
+import { INSTANT_RESERVE_SECONDS, isAutomationUnlocked } from "../engine/automation";
 import { BreakdownView, Price, Tip } from "./components";
 import { game } from "./game";
 import { CurrentProfile } from "./AscensionPanel";
@@ -60,12 +60,16 @@ function SpellAction(props: { state: GameState; spell: SpellDef }) {
     switch (spell.kind) {
         case "enchantment": {
             const upkeep = enchantmentUpkeep(spell);
-            const loadout = (
-                <label class="loadout" title="Auto-cast keeps the enchantments of your loadout running, as far as your casting skill allows">
+            const loadout = isAutomationUnlocked(state, "cast") && (
+                <label
+                    class="loadout"
+                    title="Ticked: Auto-cast (top of this tab) casts it whenever it can, and recasts it in each new kingdom. Unticked: Auto-cast leaves it alone, so its casting skill stays free for the contest."
+                >
                     <input type="checkbox" checked={inLoadout(state, spell.id)} onChange={(e) => setInLoadout(state, spell.id, (e.target as HTMLInputElement).checked)} />{" "}
-                    auto
+                    auto-cast
                 </label>
             );
+            const blocker = enchantmentBlocker(state, spell.id);
             if (state.run.enchantments.includes(spell.id)) {
                 return (
                     <span class="spell-action">
@@ -86,11 +90,12 @@ function SpellAction(props: { state: GameState; spell: SpellDef }) {
             }
             return (
                 <span class="spell-action">
-                    <button disabled={!canCastEnchantment(state, spell.id)} onClick={() => castEnchantment(state, spell.id)}>
+                    <button disabled={blocker !== null} title={blocker ? `Can't cast: ${blocker}` : undefined} onClick={() => castEnchantment(state, spell.id)}>
                         Cast
                     </button>
                     <Price amount={enchantmentCost(state, spell)} currency="mana" have={state.run.mana} />
                     <span class={hasSkillFor(state, spell) ? "hint" : "bad"}> {upkeep} skill</span> {loadout}
+                    {blocker && <span class="bad cast-blocker">{blocker}</span>}
                 </span>
             );
         }
@@ -107,7 +112,7 @@ function SpellAction(props: { state: GameState; spell: SpellDef }) {
                     >
                         {cooldown > 0 ? fmtTime(cooldown) : "Cast"}
                     </button>
-                    <Tip tip={`A fixed price: the more mana you make, the more often you can cast it (up to once every ${fmtTime(instantCooldown(state, spell))}). ${target} Auto-recruit leaves mana for instants you can afford within ${fmtTime(INSTANT_RESERVE_SECONDS)} of income.`}>
+                    <Tip tip={`A fixed price: the more mana you make, the more often you can cast it (up to once every ${fmtTime(instantCooldown(state, spell))}). ${target} Auto-cast casts every instant you know whenever it's ready and affordable. Auto-recruit leaves mana for instants you can afford within ${fmtTime(INSTANT_RESERVE_SECONDS)} of income.`}>
                         <Price amount={instantCost(state, spell)} currency="mana" have={state.run.mana} />
                         <span class="hint"> (every {fmtTime(instantCooldown(state, spell))})</span>
                     </Tip>
@@ -211,7 +216,7 @@ export function MagicPanel() {
                     researched with Knowledge and stay known until you Ascend again
                     {spellMemoryLevel(state) > 0 && " (Spell Memory brings them back after an Ascension, if your profile has the books)"}.
                     Enchantments last until this kingdom ends, and take up casting skill while they run. Auto-cast keeps the
-                    ones ticked "auto" running, as far as your casting skill allows.
+                    ones ticked "auto-cast" running, as far as your casting skill allows, and casts every instant whenever it's ready.
                 </p>
                 <CurrentProfile />
                 <DormantSpells />

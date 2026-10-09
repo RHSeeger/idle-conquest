@@ -9,6 +9,7 @@ Newest information is at the top of each section. The design itself is in `DESIG
 
 | # | Question | Current placeholder | Blocking? |
 |---|---|---|---|
+| 6 | **Lore is bought out at once later on.** Your play-test: as soon as Knowledge starts, you can buy several levels of every Lore. In a fresh game it's paced (sim: 6 levels in the first minute after the Library, 35 after 15 minutes), so it comes from carried Knowledge multipliers (Fame Scholarship ×1.5 per level, retorts, Myrror, Essence, Mastery): Lore prices are fixed (×1.7–2 per level), so a ×1000 Knowledge multiplier is worth ~11 free levels of each. Options: (a) keep it: higher layers may make lower ones trivial (your rule 3), but Fame's Scholarship is the same layer; (b) Lore prices grow with the kingdom (e.g. × cities taken), so carried multipliers buy more levels without buying all of them; (c) steeper Lore growth past some level; (d) fold the carried Knowledge multipliers into the "starting Lore" idea (a few free levels, shown as such). Recommend (b), since it keeps Lore a choice within each kingdom. | Unchanged | No |
 | 5 | **Play-test the new layers (DESIGN.md §15.13).** Do the kingdom's doctrine and route feel like choices? Does the wizards' contest feel like playing as a wizard (books against rivals, which enchantments to keep, how much mana to train skill with)? Does Myrror's Tower-by-Tower pace feel right? The first Mastery now comes several hours later in the sim (the Spell channels from about 13h rather than 9h). The tuning numbers are in §15.13. | First tunings from the simulator | No, but it decides the next tuning |
 | 4 | **Each layer its own mechanic (TODO #29): what's left.** (a) ~~Saves~~: not needed, the saves migrate with nothing reset (DESIGN.md §15.13). (b) The Fortress-plane choice going into a Planeshift (DESIGN §15.6): build it, or leave it out? Not built. | Left out | No |
 | — | ~~Each layer its own mechanic (TODO #29), direction~~ | Answered 2026-10-09: DESIGN.md §15 approved, with every recommendation: the shared shape and power channels (incl. automation follows your plan, P6), Layer 1 doctrine then routes, Layer 2 the wizards' contest (2A), Layer 3 the Towers (3A), meta trees kept for now, challenges decided by the wards. Order as in §15.11, starting with the channel audit and baseline | — |
@@ -77,6 +78,12 @@ Items you've flagged as needing work. They're recorded here and picked up only w
 ---
 
 ## Work done
+
+### Magic tab clarity (2026-10-09, from play-testing)
+
+- An enchantment that can't be cast says why, under its Cast button and in its tooltip: mana short, not enough free casting skill (with how much is free), or a challenge rule (`enchantmentBlocker` in `engine/magic.ts`).
+- Its loadout checkbox reads "auto-cast", with a tooltip saying what ticked and unticked do, and only shows once Auto-cast is unlocked. Instants have no checkbox because Auto-cast casts every known instant when it's ready; the instant tooltip and the tab's help text now say so.
+- Checked: the army budget is unchanged. It's the Quartermasters milestone (3 effective Refounds), so it disappears after a first Ascension until the next Refound. Auto-recruit doesn't starve buildings: in an hour-long sim with auto-recruit on, the first buildings come 2–3× later but the kingdom ends with more buildings (15 vs 12).
 
 ### Each layer its own mechanic (2026-10-09, TODO #29, DESIGN.md §15)
 

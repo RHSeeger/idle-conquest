@@ -382,6 +382,12 @@ label.loadout {
     cursor: pointer;
 }
 
+/* why a spell can't be cast, under its Cast button */
+.cast-blocker {
+    display: block;
+    font-size: 12px;
+}
+
 /* the route: which race each coming region will be */
 .route {
     display: flex;

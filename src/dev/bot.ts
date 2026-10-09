@@ -13,7 +13,7 @@ import { abandonChallenge, canChannel, claimMastery, completeChallenge, setChann
 import { RaceId } from "../content/races";
 import { runAutomation } from "../engine/automation";
 import { hireHero, tavernOffers } from "../engine/heroes";
-import { currentTarget } from "../engine/army";
+import { currentTarget, myrrorShare } from "../engine/army";
 import {
     buyFameUpgrade,
     canBuyFameUpgrade,
@@ -23,6 +23,8 @@ import {
     refound,
 } from "../engine/prestige";
 import { GameState } from "../engine/state";
+import { banishedCount, currentRival, wardSecondsLeft } from "../engine/wards";
+import { getStats } from "../engine/collect";
 import { Realm } from "../content/magic";
 import { INSIGHT_UPGRADE_ORDER } from "../content/wizards";
 import { isBuildingVisible } from "../engine/actions";
@@ -41,6 +43,9 @@ import { spellbookCount } from "../engine/exploration";
 import { ESSENCE_UPGRADE_ORDER } from "../content/myrror";
 import { MYRROR_RING } from "../content/races";
 import {
+    armySentToMyrror,
+    myrrorTarget,
+    planarCapacity,
     autoWorks,
     buyEssenceUpgrade,
     canBuyEssenceUpgrade,
@@ -63,6 +68,9 @@ export function botAct(state: GameState): void {
     completeChallenge(state);
 }
 
+/** The bot Ascends rather than wait longer than this for the next rival's wards to break */
+const BOT_CONTEST_PATIENCE = 3600;
+
 /** A challenge the bot gives up on after this much play (it tries the next one later) */
 const BOT_CHALLENGE_SECONDS = 2 * 3600;
 
@@ -82,6 +90,17 @@ function botMyrror(state: GameState): void {
     // the second option: a race's Myrror boon, or a wizard's spellbooks
     while (m.pendingBoons.length > 0) chooseBoon(state, 0, 1);
     autoWorks(state);
+    // send what the planar links carry and no more (the rest fights better on Arcanus)
+    const target = myrrorTarget(state);
+    if (target) {
+        state.planes.armyShare = 1;
+        const share = myrrorShare(state);
+        const sent = armySentToMyrror(state, getStats(state), target.traits);
+        const capacity = planarCapacity(state, m.index);
+        if (sent.gt(capacity) && share > 0) {
+            state.planes.armyShare = Math.max(0.05, Math.ceil(share * capacity.div(sent).toNumber() * 20) / 20);
+        }
+    }
 }
 
 /** Tracks progress so the bot can tell when a run has stalled */
@@ -205,10 +224,12 @@ export function botEndRun(state: GameState): "mastery" | "challenge" | "abandon"
     if (planeshiftWorthwhile(state) && botPlaneshift(state)) {
         return "planeshift";
     }
-    const worthwhile = state.prestige.refounds >= 2 || state.ascension.ascensions === 0;
-    // a challenge in place of an Ascension, once this run cleared all of Arcanus (the bot is strong enough)
+    // the wizards' contest decides Insight: Ascend once the rivals are banished, or when the next would take long
+    const contestSettled = currentRival(state) === null || wardSecondsLeft(state, getStats(state)) > BOT_CONTEST_PATIENCE;
+    const worthwhile = (state.prestige.refounds >= 2 || state.ascension.ascensions === 0) && contestSettled;
+    // a challenge in place of an Ascension, once this Ascension banished all of Arcanus's rivals (the bot is strong enough)
     const challenge = nextChallenge(state);
-    const strong = state.run.fortressesTaken >= ARCANUS_WIZARDS;
+    const strong = banishedCount(state) >= ARCANUS_WIZARDS;
     if (canAscend(state) && worthwhile && challenge && strong && startChallenge(state, challenge)) {
         spendFame(state);
         return "challenge";

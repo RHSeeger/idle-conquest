@@ -525,7 +525,7 @@ The balance simulator can play the same stretch with different choices (each sta
 
 ## 15. Each layer its own mechanic (TODO #29, direction)
 
-Status: **approved 2026-10-09, with every recommendation below; not built yet.** Still open: the save question and the Fortress-plane choice (15.12). Numbers are placeholders. It builds on your layer notes and on §14.
+Status: **approved 2026-10-09, with every recommendation below, and built the same day as a first pass** (15.13 says how, and where it differs from the text). Still open: the Fortress-plane choice (15.12). The numbers are first tunings from the simulator, waiting on play. It builds on your layer notes and on §14.
 
 ### 15.1 The root cause
 
@@ -668,3 +668,56 @@ Two small things can happen at any time: describing the beachhead races on their
 4. Layer 1: 1A then 1B (recommended), or 1C.
 5. Meta trees: keep for now (recommended), capstones, or a budget.
 6. Saves: is resetting some Layer 2/3 progress acceptable when this lands?
+
+### 15.13 As built (first pass, 2026-10-09)
+
+**Layer 2, the wizards' contest** (`engine/wards.ts`, Magic tab):
+
+- **Rivals are fixed per Ascension** (`ascension.rivals`), seeded by Planeshifts, Masteries and the Ascension number, and shown in the planner for the next Ascension. *Differs from 15.4:* before, the rivals came from each kingdom's starting race, so they changed at every Refound, and the route could pick the wizard. Fixed rivals are what make it possible to choose books against them, so the route no longer decides the wizard.
+- **Wards:** the k-th rival's strength is 3e4 × 20^k (× Kali's rule and reward). Progress and casting skill last the whole Ascension. A broken ward banishes the wizard: their domain opens to the army (a standing domain is a wall even for wizards), their realms are learned, and their Tower is unsealed.
+- **Spell power** = free casting skill × `spell.power` × matchup, where the matchup is each realm's share of your books × its factor. Opposed realms are ×2 (Life and Death, Chaos and Nature); Sorcery is ×1.5 against wards that aren't Sorcery's; the wizard's own realm is ×0.5.
+- **Casting skill** = 5 + log₁.₃₅(1 + mana poured ÷ 100). Mana is poured as a share of income, set by a slider (25% by default).
+- **Enchantments** take up casting skill while they run (1, 2, 4 or 8 by rarity). They can be dispelled, and auto-cast follows a loadout (an "auto" tick per enchantment).
+- **Instants** strike the wards while a rival stands, with N seconds of spell power. Dispel Magic now doubles spell power (and still breaks Myrror's wards).
+- **Spell power is multiplied by** Ward-Breaking (Insight, ×1.3 a level), Astral Sorcery (Essence, ×2 a level) and the Mastery bonus. Fame never touches it.
+- **Insight** = fame part × (1 + 0.25 × books) × (1 + rivals banished, with the current ward as a fraction)². The fame part is √(Fame ÷ 10), softcapped above 30. The old frontier-depth factor is gone: it made a strong kingdom decide Insight.
+- **Gates:** Planeshift needs a Tower unsealed this Ascension plus the Rite; the Tower lair is retired from expeditions. The Mastery gate and a challenge's goal are all four rivals banished in one Ascension.
+- **Auto-Ascend** doesn't fire on a stall while the current ward will break within an hour.
+
+**Layer 3, the Towers** (`engine/planes.ts`, Planes tab):
+
+- **Five Towers of Wizardry on Myrror:** the first city of region 3, and the gate of each Myrran wizard's domain. Each one taken is a link.
+- **The pipe:** planar power = min(army sent, link capacity) × `myrror.power`, where capacity = 3e9 × 1.7^city × links. Myrror's defenses grow ×1.75 a city, so an army too big for the links still meets a slowly stiffening Myrror, which Essence, works, boons and more links answer.
+- **Works:** each level of a work makes the other work of its resource ×1.5 dearer, and auto-buy leaves works whose "auto" is unticked.
+- **The beachhead choice** shows the race's resource, holding bonus and unit.
+
+**Layer 1** (Army tab):
+
+- **Sharper city traits:** Walls ×0.25 to melee, pike and cavalry and ×3 to siege; Archers ×0.5 ranged, ×2 cavalry; Cavalry Screen ×0.25 cavalry, ×3 pike; Shield Wall ×0.4 melee, ×2 ranged. Monster traits are unchanged.
+- **Doctrine:** a 0–10 weight per role. Until set, it follows the last kingdom's army, scaled to 10. Auto-recruit buys the role furthest below its share, with that role's best power per cost, and saves for it rather than buying a role that's already ahead.
+- **Most efficient** (the old greedy mode) unlocks at 2 Ascensions (Legend Never Dies). The bot still uses it, as a stand-in for a player who adapts.
+- **The Army tab** shows aim, army now, and the role multipliers against the next 8 cities, with both the army's and the doctrine's overall fit.
+- **Routes:** `planRoute` offers the two nearest neighbours not met yet at each race region, and untouched it takes the nearer one (the old order). They're chosen for regions not yet entered and remembered per starting race (`prestige.routeMemory`).
+
+**Feedback:**
+
+- **A2:** Fame per minute now and its best this kingdom (Kingdom tab).
+- **A3:** the planner's matchups against the next rivals.
+- Each new mechanic shows its own numbers: wards progress and time left, the pipe's capacity against what you send, the doctrine's fit.
+- **A1** (a report at each reset) isn't built.
+
+**Saves:** nothing is reset. Rivals are taken from the current kingdom's old plan, so wizards banished by taking their Fortress still count. A Tower lair cleared in the current kingdom still counts as unsealed. Myrror keeps its links. "Chronicle" auto-recruit becomes the doctrine. This answers question 6 without a reset.
+
+**Simulator (bot, 16h cap per kingdom; before → after):**
+
+| Milestone | Before | After |
+|---|---|---|
+| First Ascension | 4h22m | 3h43m |
+| First Planeshift | 7h25m | 6h06m |
+| Insight per Ascension | 10 at first, 9.5M by Planeshift 6 | 9 at first, up to 4K in Planeshift 2, 40K–140K late |
+| An Ascension, once strong | 20 s | a few minutes, waiting on the contest |
+| All four rivals in one Ascension | — | first at Planeshift 6, about 11h40m |
+| Myrror fully held | Planeshift 5, 8h52m | Planeshift 8, 12h56m |
+| The Spell of Mastery | channelling at about 9h | channelling at about 13h, so the first Mastery comes several hours later |
+
+Layers 2 and 3 become trivial only late, through Essence (Astral Sorcery, Wellspring), which is the "upper layer may trivialise" rule at work.

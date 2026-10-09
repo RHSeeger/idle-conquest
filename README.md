@@ -12,10 +12,12 @@ The game unfolds in layers. Each one resets what came before it in exchange for 
 
 | Layer | What you do | What you earn |
 |---|---|---|
-| Refound | Start a new kingdom, often of a different race | Fame, spent on Fame upgrades |
-| Ascension | Start over as a wizard, with spellbooks and retorts of your choosing | Insight |
-| Planeshift | Cross a Tower of Wizardry to Myrror, the second world, and conquer it | Planar Essence |
-| Mastery | Defeat every rival wizard on both planes and cast the Spell of Mastery | a permanent bonus, and the 14 Challenge Wizards |
+| Refound | Take cities with an army whose mix suits their defenses, along a route you choose; then start a new kingdom | Fame, spent on Fame upgrades |
+| Ascension | As a wizard, break four rival wizards' wards with spell power, from spellbooks chosen to counter them | Insight |
+| Planeshift | Cross a banished wizard's Tower to Myrror, the second world, and take its Towers of Wizardry to carry more of your power across | Planar Essence |
+| Mastery | Banish every rival wizard on both planes and cast the Spell of Mastery | a permanent bonus, and the 14 Challenge Wizards |
+
+Each layer has an accomplishment of its own, driven by its own power: a stronger kingdom helps the layers above it, but can't make them trivial.
 
 Along the way: lore to study, lairs and ruins to explore, heroes to hire, spells to research and enchantments to cast, Myrror's riches and works, race Masteries, milestones, and a Statistics tab that times every layer. The game saves in your browser, keeps running while you're away (up to 24 hours), and lets you export your save as text or a file.
 

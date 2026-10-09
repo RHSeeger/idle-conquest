@@ -20,10 +20,12 @@ import {
     MyrranResource,
     myrrorEnd,
     myrrorPlan,
+    MYRROR_TOWERS,
     PLANESHIFT_MILESTONES,
     RESOURCE_DEFS,
     RESOURCE_OF_RACE,
     SHARE_PER_LINK,
+    towersTaken,
 } from "../content/myrror";
 import { MyrranRaceId, MYRROR_RING, RACES, RaceId } from "../content/races";
 import { maxMyrrorShare, myrrorShare, planarLinks } from "../engine/army";
@@ -31,6 +33,11 @@ import { planeshiftProgress } from "../engine/ascension";
 import { getStats } from "../engine/collect";
 import { fmt, fmtInt, fmtTime } from "../engine/format";
 import {
+    armySentToMyrror,
+    autoBuysWork,
+    planarCapacity,
+    setAutoBuysWork,
+    SHARED_WORK_GROWTH,
     boonCounts,
     buyEssenceUpgrade,
     buyMyrranWork,
@@ -86,7 +93,7 @@ function PlaneshiftSection() {
                 lasts until the next Planeshift.
             </p>
             <ul class="gate">
-                <li>{check(gate.towerCleared)} Clear a Tower of Wizardry in this kingdom (found by expeditions, wizards only)</li>
+                <li>{check(gate.towerUnsealed)} Banish a rival wizard of Arcanus, which unseals their Tower of Wizardry (Magic tab)</li>
                 <li>{check(gate.riteKnown)} Research the Rite of the Tower (Arcane; Plane Shift halves its cost)</li>
             </ul>
             <h3>Myrran beachhead</h3>
@@ -98,7 +105,11 @@ function PlaneshiftSection() {
                     </button>
                 ))}
             </div>
-            <p class="hint">{RACES[beachhead].description}</p>
+            <p class="hint">
+                {RACES[beachhead].description} Their cities on Myrror yield {RESOURCE_DEFS[RESOURCE_OF_RACE[beachhead]].name}, and
+                each one you hold gives ×{1 + HOLDING_PER_CITY} {HOLDING_STAT[beachhead].text} (stacking). Unit: {MYRRAN_UNIT[beachhead]}.
+                You meet them first, then their neighbours.
+            </p>
             <h3>Arcanus starting race</h3>
             <div class="race-choice">
                 {races.map((r) => (
@@ -131,6 +142,10 @@ function MyrrorSection() {
     const max = maxMyrrorShare(state);
     const share = myrrorShare(state);
     const links = planarLinks(state);
+    const sent = target ? armySentToMyrror(state, stats, target.traits) : null;
+    const capacity = planarCapacity(state, m.index);
+    const capped = sent !== null && sent.gt(capacity);
+    const towersLeft = MYRROR_TOWERS - towersTaken(plan, m.index);
 
     return (
         <section>
@@ -153,17 +168,30 @@ function MyrrorSection() {
                 />
                 <span>Myrror {Math.round(share * 100)}%</span>
             </div>
+            <p>
+                Planar links: <b>{links}</b> of {MAX_LINKS}. They carry at most <b>{fmt(capacity)}</b> power/s to this city
+                {sent !== null && (
+                    <>
+                        ; you send <b class={capped ? "bad" : ""}>{fmt(sent)}</b>
+                        {capped ? ", more than they carry: the rest is wasted, and would fight better on Arcanus" : ""}
+                    </>
+                )}
+                .
+            </p>
             <p class="hint">
-                Planar links: <b>{links}</b> of {MAX_LINKS} (each Tower of Wizardry cleared this Planeshift adds one
-                {myrranWorkLevel(state, "planarGate") > 0 && ", and so does each Planar Gate"}).
-                Each link lets {SHARE_PER_LINK * 100}% of your army fight on Myrror{max > SHARE_PER_LINK * links && ", plus Planar Anchor"}:
-                at most {Math.round(max * 100)}% now. The rest besieges Arcanus and raids its lairs.
+                Your power reaches Myrror only through the Towers of Wizardry. Each Tower you take on Myrror is another
+                link{towersLeft > 0 ? ` (${towersLeft} more to take)` : ""}
+                {myrranWorkLevel(state, "planarGate") > 0 && ", and so is each Planar Gate"}. Each link also lets{" "}
+                {SHARE_PER_LINK * 100}% of your army fight there{max > SHARE_PER_LINK * links && ", plus Planar Anchor"}: at most{" "}
+                {Math.round(max * 100)}% now. The rest besieges Arcanus and raids its lairs. Siege power on Myrror boosts
+                (Essence, works, boons, holdings) act on what gets through.
             </p>
             {target ? (
                 <div class="target orders">
                     <div class="target-head">
                         <span class="orders-verb">Besieging</span> <b>{target.name}</b> · {RACES[target.race].adjective}
                         {target.isRegionCapital && <span class="tag">region capital</span>}
+                        {target.tower && <span class="tag">a new planar link</span>}
                         <span class="traits">
                             {target.traits.map((t) => (
                                 <Tip key={t} tip={TRAITS[t].description}>
@@ -183,8 +211,11 @@ function MyrrorSection() {
                     />
                     {eta > 86400 && power && power.gt(0) && (
                         <p class="hint">
-                            Too strong for now. Myrror moves when your Arcanus army is strong: late in each kingdom, and more
-                            with every Ascension. Siege progress here is never lost between kingdoms.
+                            Too strong for now.{" "}
+                            {capped
+                                ? "Your links are full: more Towers, Planar Gates, and siege power on Myrror (Essence, works, boons) move it."
+                                : "Myrror moves when your Arcanus army is strong: late in each kingdom, and more with every Ascension."}{" "}
+                            Siege progress here is never lost between kingdoms.
                         </p>
                     )}
                 </div>
@@ -289,8 +320,11 @@ function MyrranRiches() {
             <p class="hint">
                 Every Myrran city taken yields {CITY_YIELD} of its race's resource, region capitals and Fortresses{" "}
                 {CAPITAL_YIELD}: Adamantium from {RESOURCE_RACES("adamantium")}, Quork from {RESOURCE_RACES("quork")},
-                Crysx from {RESOURCE_RACES("crysx")}. Works last until the next Planeshift, as the campaign does.
-                {isAutomationUnlocked(state, "works") && " Auto-buy buys whatever is affordable, cheapest first."}
+                Crysx from {RESOURCE_RACES("crysx")}. Works last until the next Planeshift, as the campaign does. Each
+                resource has two works, and every level of one makes the other ×{SHARED_WORK_GROWTH} dearer: choose
+                which to grow.
+                {isAutomationUnlocked(state, "works") &&
+                    " Auto-buy buys the works ticked auto, whatever is affordable, cheapest first: untick the ones you'd rather not grow."}
             </p>
             <div class="cards">
                 {MYRRAN_WORK_ORDER.map((id) => {
@@ -298,7 +332,8 @@ function MyrranRiches() {
                     const level = myrranWorkLevel(state, id);
                     const maxed = level >= w.maxLevel;
                     return (
-                        <button key={id} class="card" disabled={!canBuyMyrranWork(state, id)} onClick={() => buyMyrranWork(state, id)}>
+                        <div key={id} class="card-wrap">
+                        <button class="card" disabled={!canBuyMyrranWork(state, id)} onClick={() => buyMyrranWork(state, id)}>
                             <div class="card-title">
                                 {w.name}{" "}
                                 <span class="count">
@@ -319,6 +354,17 @@ function MyrranRiches() {
                                 )}
                             </div>
                         </button>
+                        {isAutomationUnlocked(state, "works") && (
+                            <label class="loadout">
+                                <input
+                                    type="checkbox"
+                                    checked={autoBuysWork(state, id)}
+                                    onChange={(e) => setAutoBuysWork(state, id, (e.target as HTMLInputElement).checked)}
+                                />{" "}
+                                auto
+                            </label>
+                        )}
+                        </div>
                     );
                 })}
             </div>

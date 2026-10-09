@@ -32,6 +32,44 @@ export const RIVAL_WIZARD_DEFS: Record<string, RivalWizardDef> = {
     Kali: { name: "Kali", realms: ["death", "sorcery"] },
 };
 
+// --- The wizards' contest (Layer 2, engine/wards.ts) ----------------------------
+
+/** Mutable for the balance simulator */
+export const WARD_TUNING = {
+    /** Ward strength of an Ascension's first rival */
+    base: 3e4,
+    /** Each later rival's wards are this many times stronger */
+    growth: 20,
+};
+
+/** Realms whose magic unravels each other's wards */
+export const OPPOSED_REALMS: Partial<Record<Realm, Realm>> = { life: "death", death: "life", chaos: "nature", nature: "chaos" };
+export const MATCHUP_OPPOSED = 2;
+/** A wizard knows the tricks of their own realm */
+export const MATCHUP_SAME = 0.5;
+/** Sorcery is the art of dispelling: ×1.5 against any wards that aren't Sorcery's */
+export const MATCHUP_SORCERY = 1.5;
+
+/** How well your magic of one realm wears down wards woven from `theirs` */
+export function realmMatchup(mine: Realm | "arcane", theirs: readonly Realm[]): number {
+    if (mine === "arcane") return 1;
+    let m = 1;
+    for (const t of theirs) {
+        if (t === mine) m *= MATCHUP_SAME;
+        else if (OPPOSED_REALMS[mine] === t) m *= MATCHUP_OPPOSED;
+    }
+    if (mine === "sorcery" && !theirs.includes("sorcery")) m *= MATCHUP_SORCERY;
+    return m;
+}
+
+/** Casting skill: a base, plus a point for every ×SKILL_GROWTH of mana poured into it (this Ascension) */
+export const SKILL_TUNING = {
+    base: 5,
+    /** Mana that buys the first point */
+    mana: 100,
+    growth: 1.35,
+};
+
 // --- Insight upgrades ---------------------------------------------------------
 
 export interface InsightUpgradeDef {
@@ -75,6 +113,14 @@ const insightList: InsightUpgradeDef[] = [
         cost: (l) => Math.round(1 * Math.pow(1.8, l)) + 1,
         effects: [{ stat: "army.power", op: "mult", value: (l) => Math.pow(2, l) }],
         text: (l) => `×${Math.pow(2, l)} army power`,
+    },
+    {
+        id: "wardBreaking",
+        name: "Ward-Breaking",
+        maxLevel: 100,
+        cost: (l) => Math.round(1 * Math.pow(1.8, l)) + 1,
+        effects: [{ stat: "spell.power", op: "mult", value: (l) => Math.pow(1.3, l) }],
+        text: (l) => `×${fmtNum(Math.pow(1.3, l))} spell power (against rival wizards' wards)`,
     },
     {
         id: "fameEcho",
@@ -151,6 +197,12 @@ export const INSIGHT_UPGRADE_ORDER: string[] = insightList.map((u) => u.id);
 /** Spellbook picks available to every wizard before upgrades */
 export const BASE_PICKS = 5;
 
+function fmtNum(n: number): string {
+    if (n >= 1e6) return n.toExponential(2);
+    if (n >= 100) return Math.round(n).toLocaleString("en-US");
+    return Number(n.toFixed(2)).toString();
+}
+
 // --- Ascension milestones ------------------------------------------------------
 
 export type AscensionMilestoneId = "legacyAutomation" | "legacyRenown" | "keepAnnals" | "grimoire" | "fameEcho";
@@ -173,7 +225,7 @@ export const ASCENSION_MILESTONES: AscensionMilestoneDef[] = [
         id: "legacyRenown",
         ascensions: 2,
         name: "Legend Never Dies",
-        text: "Refound milestones count 4 extra refounds (Renown, Pioneers and Dynasty from the start).",
+        text: "Refound milestones count 4 extra refounds (Renown, Pioneers and Dynasty from the start), and auto-recruit can pick the most efficient troops against each city for you.",
     },
     {
         id: "keepAnnals",

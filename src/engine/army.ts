@@ -7,29 +7,29 @@
  * There is no randomness — the same army always takes the same time.
  */
 import {
-    ARCANUS_WIZARDS,
     BASE_RACE_REGIONS,
     FrontierCity,
     frontierCity,
+    planRoute,
     regionPlan,
     RegionDef,
+    REGION_SIZE,
     wallIndex,
 } from "../content/frontier";
-import { RACES } from "../content/races";
+import { RaceId, RACES } from "../content/races";
 import { Role, ROLES, TraitId, traitRoleMult } from "../content/traits";
 import { DRILL_STEP, UNITS, UNIT_ORDER } from "../content/units";
-import { RIVAL_WIZARD_DEFS } from "../content/wizards";
 import { MAX_LINKS, SHARE_PER_LINK } from "../content/myrror";
 import { XP_PER_CONQUEST } from "../content/heroes";
 import { challengeBans } from "../content/challenges";
 import { grantHeroXp } from "./heroes";
 import { getStats, racesInRealm } from "./collect";
 import { D, Decimal, ONE, ZERO } from "./decimal";
-import { fmtTime } from "./format";
 import { roleStat, Stats, unitPowerStat } from "./effects";
 import { effectiveTraits, isWizard, knowsSpell } from "./magic";
 import { activeFameLevel, renownLimit, scoutingInUse } from "./prestige";
 import { bump, GameState, log } from "./state";
+import { ascensionRivals, isBanished } from "./wards";
 
 export function isUnitAvailable(state: GameState, id: string, races: readonly string[] = racesInRealm(state)): boolean {
     const u = UNITS[id];
@@ -117,7 +117,7 @@ export function maxMyrrorShare(state: GameState): number {
     return Math.min(0.9, SHARE_PER_LINK * (planarLinks(state) + anchor));
 }
 
-/** Planar links in use: Towers cleared this Planeshift plus Planar Gates (Myrran work), at most MAX_LINKS */
+/** Planar links in use: the Towers of Wizardry held this Planeshift plus Planar Gates (Myrran work), at most MAX_LINKS */
 export function planarLinks(state: GameState): number {
     const m = state.planes.myrror;
     if (!m) return 0;
@@ -139,19 +139,80 @@ export function nextRaceRegions(state: GameState): number {
     return BASE_RACE_REGIONS + Math.floor(Math.min(activeFameLevel(state, "scouting"), state.prestige.scoutingUse));
 }
 
-/** Mortals meet one rival wizard (an impassable wall); wizards can fight through all of Arcanus */
+/**
+ * Mortals meet one rival wizard (an impassable wall); wizards meet this
+ * Ascension's four, and can fight through all of Arcanus once their wards fall.
+ */
 export function currentPlan(state: GameState): RegionDef[] {
-    return regionPlan(state.run.startingRace, raceRegions(state), isWizard(state) ? ARCANUS_WIZARDS : 1);
+    const rivals = ascensionRivals(state);
+    return regionPlan(state.run.startingRace, raceRegions(state), isWizard(state) ? rivals : rivals.slice(0, 1), state.run.route);
 }
 
+// --- The route (DESIGN.md §15.4) ---
+
+export interface RouteChoice {
+    /** Which race region (0 = the first after the Borderlands) */
+    raceRegion: number;
+    /** Its index in the plan */
+    region: number;
+    options: RaceId[];
+    chosen: RaceId;
+}
+
+/** The race regions the army hasn't entered yet, with the two races each could be */
+export function upcomingRoute(state: GameState): RouteChoice[] {
+    const plan = currentPlan(state);
+    const current = Math.floor(state.run.frontier.index / REGION_SIZE);
+    const count = plan.filter((r) => r.kind === "race").length;
+    const { options } = planRoute(state.run.startingRace, count, state.run.route);
+    return plan
+        .filter((r) => r.kind === "race" && r.index > current && r.raceRegion !== undefined)
+        .map((r) => ({ raceRegion: r.raceRegion!, region: r.index, options: options[r.raceRegion!], chosen: r.race }));
+}
+
+/**
+ * Chooses the race of a region the army hasn't entered yet. Later choices
+ * that no longer fit fall back to the nearer option. Remembered for the next
+ * kingdom of the same starting race.
+ */
+export function chooseRoute(state: GameState, raceRegion: number, race: RaceId): boolean {
+    const choice = upcomingRoute(state).find((c) => c.raceRegion === raceRegion);
+    if (!choice || !choice.options.includes(race)) return false;
+    const route = [...state.run.route];
+    while (route.length < raceRegion) route.push(null);
+    route[raceRegion] = race;
+    state.run.route = route;
+    state.prestige.routeMemory[state.run.startingRace] = [...route];
+    bump(state);
+    return true;
+}
+
+/**
+ * The frontier city at `index`, or null where the army can't go: past the end,
+ * or inside a rival's domain whose wards still stand (break them with spell
+ * power, engine/wards.ts).
+ */
 export function cityAt(state: GameState, index: number, plan = currentPlan(state)): FrontierCity | null {
-    const city = frontierCity(state.run.startingRace, plan, index, isWizard(state));
+    let city = frontierCity(state.run.startingRace, plan, index, isWizard(state));
     if (!city) return null;
+    if (city.region.kind === "wizard") {
+        if (!city.region.wizard || !isBanished(state, city.region.wizard)) return null;
+        city = { ...city, traits: city.traits.filter((t) => t !== "wards") };
+    }
     // Challenge Wizards' rules and rewards (Ariel, Kali)
     const stats = getStats(state);
     const mult =
         city.region.kind === "wizard" ? stats.get("defense.domain") : city.isRegionCapital ? ONE : stats.get("defense.ordinary");
     return mult.eq(1) ? city : { ...city, defense: city.defense.times(mult) };
+}
+
+/** The rival whose wards halt the army right now (null if it isn't waiting at a domain) */
+export function blockingRival(state: GameState): string | null {
+    const plan = currentPlan(state);
+    const index = state.run.frontier.index;
+    const region = plan[Math.floor(index / REGION_SIZE)];
+    if (!region || region.kind !== "wizard" || !region.wizard) return null;
+    return isBanished(state, region.wizard) ? null : region.wizard;
 }
 
 export function currentTarget(state: GameState): FrontierCity | null {
@@ -248,25 +309,8 @@ export function conquer(state: GameState, target: FrontierCity, quiet = false, s
         const best = state.records.fastestToWall;
         if (best === null || run.time < best) state.records.fastestToWall = run.time;
     }
-    if (target.fortressOf) {
-        defeatWizard(state, target.fortressOf);
-        run.fortressesTaken++;
-        // a challenge's goal: every rival Fortress of Arcanus in one run (then it can be completed, Mastery tab; it stays won through Refounds)
-        const m = state.mastery;
-        if (m.challenge && !m.challengeDone && run.fortressesTaken >= ARCANUS_WIZARDS) {
-            m.challengeDone = true;
-            m.challengeWonIn = state.meta.playtime - m.challengeStartedAt;
-            const best = m.challengeBest[m.challenge];
-            const record = best === undefined || m.challengeWonIn < best;
-            if (record) m.challengeBest[m.challenge] = m.challengeWonIn;
-            log(
-                state,
-                "milestone",
-                `${m.challenge}'s challenge is won, in ${fmtTime(m.challengeWonIn)}` +
-                    (best === undefined ? "." : record ? ` (a new best, from ${fmtTime(best)}).` : ` (best ${fmtTime(best)}).`),
-            );
-        }
-    }
+    // a banished wizard's Fortress (the wizard fell when their wards broke, engine/wards.ts)
+    if (target.fortressOf) run.fortressesTaken++;
     bump(state);
     if (quiet && !isNewRace) {
         return;
@@ -284,20 +328,4 @@ function addFreeTroops(state: GameState, n: number): void {
     if (n <= 0) return;
     const best = availableUnits(state).sort((a, b) => UNITS[b].power - UNITS[a].power)[0];
     if (best) state.run.units[best] = (state.run.units[best] ?? 0) + Math.floor(n);
-}
-
-function defeatWizard(state: GameState, wizard: string): void {
-    const a = state.ascension;
-    const first = !a.wizardsDefeated.includes(wizard);
-    if (first) a.wizardsDefeated.push(wizard);
-    if (!a.wizardsDefeatedThisAscension.includes(wizard)) a.wizardsDefeatedThisAscension.push(wizard);
-    const realms = RIVAL_WIZARD_DEFS[wizard]?.realms ?? [];
-    const learned = realms.filter((r) => !state.prestige.realmsSeen.includes(r));
-    state.prestige.realmsSeen.push(...learned);
-    log(
-        state,
-        "prestige",
-        `${wizard} is banished from Arcanus!` +
-            (learned.length > 0 ? ` Their libraries teach you ${learned.join(" and ")} magic.` : ""),
-    );
 }

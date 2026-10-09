@@ -11,6 +11,7 @@ import {
     earnsMastery,
     effectiveRefounds,
     fameOnRefound,
+    fameRate,
     fameWithFullTribute,
     tributeSecondsLeft,
     fameUpgradeCost,
@@ -36,6 +37,29 @@ import { isAutomationUnlocked, nextFameChronicleStep } from "../engine/automatio
 import { heroRefoundText } from "./HeroesSection";
 import { KingdomSections } from "./KingdomSections";
 import { GameState } from "../engine/state";
+import { ascensionRivals } from "../engine/wards";
+
+/**
+ * When to Refound: Fame per minute of this kingdom if you Refounded now, against
+ * its best so far. Past the peak, each minute here earns less than a fresh
+ * kingdom would (§14 A2).
+ */
+function FameRate() {
+    const state = game();
+    const run = state.run;
+    const now = fameRate(state) * 60;
+    const best = run.bestFameRate * 60;
+    const past = now < best * 0.9;
+    return (
+        <Tip tip="Fame on Refound ÷ how long this kingdom has lasted. It usually climbs, peaks, then falls as cities get harder: Refounding around the peak gets the most Fame per minute (auto-Refound uses its own threshold).">
+            <span class="hint">
+                {" "}
+                · <b>{fmt(now)}</b> Fame/min now, best <b>{fmt(best)}</b> at {fmtTime(run.bestFameRateAt)}
+                {past ? <span class="insight"> (past its peak: a good time to Refound)</span> : ""}
+            </span>
+        </Tip>
+    );
+}
 
 function RefoundSection() {
     const state = game();
@@ -46,7 +70,7 @@ function RefoundSection() {
     // races conquered this run become available too
     const options = [...new Set([...p.annals, ...(ok ? state.run.racesConquered : [])])];
     const raceForPlan = options.includes(choice) ? choice : options[0];
-    const plan = regionPlan(raceForPlan, nextRaceRegions(state));
+    const plan = regionPlan(raceForPlan, nextRaceRegions(state), ascensionRivals(state).slice(0, 1), p.routeMemory[raceForPlan] ?? []);
 
     const doRefound = () => {
         const full = fameWithFullTribute(state);
@@ -75,6 +99,7 @@ function RefoundSection() {
                 <span>
                     Fame on Refound: <b class="fame">{fmtInt(fame)}</b>
                 </span>
+                {ok && run.bestFameRate > 0 && <FameRate />}
             </div>
             <ul class="fame-sources hint">
                 <li>

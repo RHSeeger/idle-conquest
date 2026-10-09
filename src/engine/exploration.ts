@@ -42,7 +42,7 @@ export function generateSite(state: GameState, k: number): Site {
         return { index: k, kind: "node", type: id, traits: [], defense: null, cleared: true };
     }
     const wizard = isWizard(state);
-    const lairs = Object.values(LAIRS).filter((l) => l.minSite <= k && (wizard || !l.wizardOnly));
+    const lairs = Object.values(LAIRS).filter((l) => l.minSite <= k && !l.retired && (wizard || !l.wizardOnly));
     const lair = k === 1 ? LAIRS.ruins : weightedPick(lairs, hashFloat("lair", ...s, k));
     const traits = hashPick(lair.traitOptions, "lairTraits", ...s, k);
     const defense = baseDefense(state.run.frontier.index + lair.tierOffset);

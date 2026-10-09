@@ -128,7 +128,7 @@ export function claimMastery(state: GameState, startRace: RaceId = state.run.sta
     log(
         state,
         "prestige",
-        `Mastery ${m.masteries} claimed. The worlds begin anew, but they remember their Master: ×${fmtInt(masteryBonus(state))} production, gold, knowledge and mana.` +
+        `Mastery ${m.masteries} claimed. The worlds begin anew, but they remember their Master: ×${fmtInt(masteryBonus(state))} production, gold, knowledge, mana, spell power and planar power.` +
             (m.masteries === 1 ? " The Challenge Wizards await you (Mastery tab): they're easier once you've powered up again." : ""),
     );
     state.run = newRun(startRace);
@@ -136,6 +136,9 @@ export function claimMastery(state: GameState, startRace: RaceId = state.run.sta
     bump(state);
     return true;
 }
+
+/** What the Mastery bonus multiplies */
+const MASTERY_STATS = ["prod.mult", "gold.mult", "knowledge.mult", "mana.mult", "spell.power", "myrror.power"];
 
 /** The permanent bonus from every Mastery claimed */
 export function masteryBonus(state: GameState): number {
@@ -268,7 +271,8 @@ registerCollector((state, stats) => {
     const m = state.mastery;
     if (m.masteries > 0) {
         const value = D(masteryBonus(state));
-        for (const stat of ["prod.mult", "gold.mult", "knowledge.mult", "mana.mult"]) {
+        // every layer's power (DESIGN.md §15.3): the economy, spell power and planar power
+        for (const stat of MASTERY_STATS) {
             stats.addModifier(stat, { source: `Mastery ×${m.masteries}`, op: "mult", value });
         }
     }

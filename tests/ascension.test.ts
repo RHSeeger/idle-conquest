@@ -1,14 +1,31 @@
 import { describe, expect, it } from "vitest";
-import { frontierCity, regionPlan, REGION_SIZE, wallIndex } from "../src/content/frontier";
-import { conquer, cityAt, currentPlan, siegePower } from "../src/engine/army";
+import { frontierCity, regionPlan, REGION_SIZE, rivalsFor, wallIndex } from "../src/content/frontier";
+import { blockingRival, conquer, cityAt, currentPlan } from "../src/engine/army";
+import { realmMatchup, RIVAL_WIZARD_DEFS } from "../src/content/wizards";
+import {
+    ascensionRivals,
+    castingSkill,
+    currentRival,
+    freeSkill,
+    matchupFor,
+    nextRivals,
+    spellPower,
+    strikeWards,
+    tickWards,
+    towersUnsealed,
+    wardStrength,
+} from "../src/engine/wards";
 import { ascend, buyInsightUpgrade, canAscend, insightOnAscend, planeshiftProgress } from "../src/engine/ascension";
 import { RETORTS, RETORT_ORDER } from "../src/content/retorts";
 import { getStats } from "../src/engine/collect";
 import { D } from "../src/engine/decimal";
 import {
     blockedByOpposed,
+    canCastEnchantment,
     castEnchantment,
     castInstant,
+    dispelEnchantment,
+    tickMagic,
     checkRetortUnlocks,
     currentFamiliar,
     dormantSpells,
@@ -209,14 +226,21 @@ describe("Magic", () => {
         expect(castEnchantment(state, "heroism")).toBe(false); // already active
     });
 
-    it("instants add siege and go on cooldown", () => {
+    it("instants strike the current rival's wards and go on cooldown; once every rival is banished, they add siege", () => {
         const state = wizard();
         state.run.knowledge = D(1e6);
         state.run.mana = D(1e6);
         research(state, "fireBolt");
+        const power = spellPower(state, getStats(state));
+        expect(power.gt(0)).toBe(true);
+        expect(castInstant(state, "fireBolt", D(100))).toBe(true);
+        expect(state.ascension.wardProgress.toNumber()).toBeCloseTo(power.toNumber() * 30); // 30s of spell power
+        expect(state.run.frontier.siege.toNumber()).toBe(0);
+        expect(castInstant(state, "fireBolt", D(100))).toBe(false);
+        state.ascension.wizardsDefeatedThisAscension = [...ascensionRivals(state)];
+        state.run.cooldowns = {};
         expect(castInstant(state, "fireBolt", D(100))).toBe(true);
         expect(state.run.frontier.siege.toNumber()).toBe(3000); // 30s x 100
-        expect(castInstant(state, "fireBolt", D(100))).toBe(false);
     });
 
     it("instants have a fixed mana price, whatever your income", () => {
@@ -397,20 +421,27 @@ describe("Retorts", () => {
         const state = readyToAscend();
         ascend(state, { life: 3, chaos: 2 }, "highMen");
         expect(state.ascension.unlockedRetorts).not.toContain("warlord");
-        const plan = currentPlan(state);
-        conquer(state, cityAt(state, wallIndex(plan) + REGION_SIZE - 1, plan)!, true);
+        banishFirstRival(state);
         checkRetortUnlocks(state);
         expect(state.ascension.unlockedRetorts).toContain("warlord");
     });
 });
 
+/** Breaks the current rival's wards at once */
+function banishFirstRival(state: GameState): string {
+    const rival = currentRival(state)!;
+    strikeWards(state, wardStrength(state, rival));
+    return rival;
+}
+
 describe("Layer 3 gate", () => {
-    it("needs a cleared Tower of Wizardry and the Rite of the Tower", () => {
+    it("needs a banished rival (their Tower unsealed) and the Rite of the Tower", () => {
         const state = readyToAscend();
         ascend(state, { life: 3, chaos: 2 }, "highMen");
         expect(spellAvailable(state, SPELLS.riteOfTheTower)).toBe(false);
         expect(planeshiftProgress(state).ready).toBe(false);
-        state.run.sites.push({ index: 0, kind: "lair", type: "towerOfWizardry", traits: [], defense: D(1), cleared: true });
+        banishFirstRival(state);
+        expect(towersUnsealed(state)).toBe(1);
         expect(spellAvailable(state, SPELLS.riteOfTheTower)).toBe(true);
         state.run.knowledge = D(1e12);
         const full = researchCost(state, getStats(state), SPELLS.riteOfTheTower);
@@ -421,47 +452,147 @@ describe("Layer 3 gate", () => {
     });
 });
 
-describe("Rival wizards", () => {
-    it("their domains are a wall for mortals but not for wizards", () => {
-        const mortal = newGame(0);
-        const plan = currentPlan(mortal);
-        expect(cityAt(mortal, wallIndex(plan))).toBeNull();
-
+describe("Rival wizards (the wizards' contest)", () => {
+    function wizard(books: Partial<Record<Realm, number>> = { life: 3, chaos: 2 }): GameState {
         const state = readyToAscend();
-        ascend(state, { life: 3, chaos: 2 }, "highMen");
-        const domainCity = cityAt(state, wallIndex(currentPlan(state)))!;
+        ascend(state, books, "highMen");
+        return state;
+    }
+
+    it("their domains are a wall for mortals, and for wizards until the wards break", () => {
+        const mortal = newGame(0);
+        expect(cityAt(mortal, wallIndex(currentPlan(mortal)))).toBeNull();
+
+        const state = wizard();
+        const wall = wallIndex(currentPlan(state));
+        expect(cityAt(state, wall)).toBeNull();
+        expect(blockingRival(state)).toBeNull(); // the army isn't there yet
+        state.run.frontier.index = wall;
+        const rival = banishFirstRival(state);
+        expect(blockingRival(state)).toBeNull();
+        const domainCity = cityAt(state, wall)!;
         expect(domainCity).not.toBeNull();
-        expect(domainCity.traits).toContain("wards");
+        expect(domainCity.region.wizard).toBe(rival);
+        expect(domainCity.traits).not.toContain("wards");
+        // the next rival's domain still holds
+        const next = currentPlan(state).filter((r) => r.kind === "wizard")[1];
+        expect(cityAt(state, next.index * REGION_SIZE)).toBeNull();
     });
 
-    it("Dispel Magic breaks the wards", () => {
-        const state = readyToAscend();
-        ascend(state, { life: 3, chaos: 2 }, "highMen");
-        state.run.units.spearmen = 100;
-        state.run.buildings.push("barracks");
-        const weak = siegePower(state, getStats(state), ["wards"]);
+    it("breaking the wards banishes the wizard, teaches their realms and unseals their Tower; their Fortress is then the army's", () => {
+        const state = wizard();
+        const rival = banishFirstRival(state);
+        expect(state.ascension.wizardsDefeated).toContain(rival);
+        expect(state.ascension.wizardsDefeatedThisAscension).toContain(rival);
+        for (const r of RIVAL_WIZARD_DEFS[rival].realms) expect(state.prestige.realmsSeen).toContain(r);
+        expect(towersUnsealed(state)).toBe(1);
+        expect(state.ascension.wardProgress.toNumber()).toBe(0);
+        expect(currentRival(state)).toBe(ascensionRivals(state)[1]);
+        const plan = currentPlan(state);
+        const fortress = cityAt(state, wallIndex(plan) + REGION_SIZE - 1, plan)!;
+        expect(fortress.fortressOf).toBe(rival);
+        conquer(state, fortress, true);
+        expect(state.run.fortressesTaken).toBe(1);
+    });
+
+    it("spell power wears the wards down over time, and the progress lasts through Refounds", () => {
+        const state = wizard();
+        const power = spellPower(state, getStats(state));
+        tickWards(state, getStats(state), 10);
+        expect(state.ascension.wardProgress.toNumber()).toBeCloseTo(power.toNumber() * 10);
+        const progress = state.ascension.wardProgress;
+        state.run.racesConquered = ["halfling"];
+        expect(refound(state, "highMen")).toBe(true);
+        expect(state.ascension.wardProgress.eq(progress)).toBe(true);
+    });
+
+    it("an Ascension faces new rivals (the ones the planner showed) and starts the contest over", () => {
+        const state = wizard();
+        banishFirstRival(state);
+        state.ascension.skillMana = D(1e6);
+        const shown = nextRivals(state);
+        expect(shown).toHaveLength(4);
+        readyFor(state);
+        expect(ascend(state, { life: 3, chaos: 2 }, "highMen")).toBe(true);
+        expect(state.ascension.rivals).toEqual(shown);
+        expect(state.ascension.wizardsDefeatedThisAscension).toEqual([]);
+        expect(state.ascension.skillMana.toNumber()).toBe(0);
+        expect(currentRival(state)).toBe(shown[0]);
+    });
+
+    it("realms match up: opposed ×2, Sorcery ×1.5 against others, a wizard's own realm ×0.5", () => {
+        expect(realmMatchup("death", ["life", "nature"])).toBe(2);
+        expect(realmMatchup("chaos", ["life", "nature"])).toBe(2);
+        expect(realmMatchup("sorcery", ["life", "nature"])).toBe(1.5);
+        expect(realmMatchup("sorcery", ["sorcery"])).toBe(0.5);
+        expect(realmMatchup("life", ["life", "nature"])).toBe(0.5);
+        expect(realmMatchup("arcane", ["life"])).toBe(1);
+        // a profile counts each realm by its share of the books
+        expect(matchupFor({ death: 3, chaos: 1 }, "Merlin")).toBe(2);
+        expect(matchupFor({ life: 2, sorcery: 2 }, "Merlin")).toBe(1);
+    });
+
+    it("casting skill grows with the mana poured into it; enchantments take some of it up", () => {
+        const state = wizard();
+        const base = castingSkill(state);
+        state.ascension.skillShare = 0.5;
+        const before = state.run.mana;
+        tickMagic(state, getStats(state), 10);
+        const income = manaRate(state, getStats(state)).times(10);
+        expect(state.ascension.skillMana.toNumber()).toBeCloseTo(income.toNumber() / 2);
+        expect(state.run.mana.minus(before).toNumber()).toBeCloseTo(income.toNumber() / 2);
+        state.ascension.skillMana = D(1e6);
+        expect(castingSkill(state)).toBeGreaterThan(base + 20);
+        // a running enchantment leaves less for the contest, and one that doesn't fit can't be cast
+        state.run.knowledge = D(1e6);
+        state.run.mana = D(1e9);
+        research(state, "heroism");
+        const free = freeSkill(state);
+        expect(castEnchantment(state, "heroism")).toBe(true);
+        expect(freeSkill(state)).toBeCloseTo(free - 1);
+        state.ascension.skillMana = D(0);
+        state.run.enchantments = [];
+        expect(canCastEnchantment(state, "heroism")).toBe(true); // 5 skill, 1 upkeep
+        state.run.enchantments = ["crusade", "eternalNight"]; // 16 upkeep
+        expect(canCastEnchantment(state, "heroism")).toBe(false);
+        expect(freeSkill(state)).toBe(0);
+        expect(dispelEnchantment(state, "crusade")).toBe(true);
+        expect(canCastEnchantment(state, "heroism")).toBe(false); // 8 still taken
+        expect(dispelEnchantment(state, "eternalNight")).toBe(true);
+        expect(canCastEnchantment(state, "heroism")).toBe(true);
+    });
+
+    it("Dispel Magic doubles spell power (and still breaks the wards of Myrror's domains)", () => {
+        const state = wizard();
+        const before = spellPower(state, getStats(state));
         state.run.knowledge = D(1e9);
         research(state, "dispelMagic");
+        expect(spellPower(state, getStats(state)).toNumber()).toBeCloseTo(before.toNumber() * 2);
         expect(effectiveTraits(state, ["wards", "walls"])).toEqual(["walls"]);
-        expect(siegePower(state, getStats(state), ["wards"]).gt(weak.times(50))).toBe(true);
     });
 
-    it("taking a fortress banishes the wizard and teaches their realms", () => {
-        const state = readyToAscend();
-        ascend(state, { life: 3, chaos: 2 }, "highMen");
-        const plan = currentPlan(state);
-        const fortressIndex = wallIndex(plan) + REGION_SIZE - 1;
-        const fortress = cityAt(state, fortressIndex, plan)!;
-        expect(fortress.fortressOf).toBeDefined();
-        conquer(state, fortress, true);
-        expect(state.ascension.wizardsDefeated).toContain(fortress.fortressOf);
-        expect(state.ascension.wizardsDefeatedThisAscension).toContain(fortress.fortressOf);
+    it("Insight grows with the rivals banished", () => {
+        const state = wizard();
+        readyFor(state);
+        const none = insightOnAscend(state).toNumber();
+        banishFirstRival(state);
+        expect(insightOnAscend(state).toNumber()).toBeCloseTo(none * 4, -1); // (1 + 1)²
+        banishFirstRival(state);
+        expect(insightOnAscend(state).toNumber()).toBeCloseTo(none * 9, -1); // (1 + 2)²
     });
 
     it("wizards see four domains on Arcanus", () => {
-        const plan = regionPlan("highMen", 4, 4);
+        const plan = regionPlan("highMen", 4, rivalsFor([0, 0, 1]));
         expect(plan.filter((r) => r.kind === "wizard")).toHaveLength(4);
         const names = plan.filter((r) => r.kind === "wizard").map((r) => r.wizard);
         expect(new Set(names).size).toBe(4);
+        expect(rivalsFor([0, 0, 1], names[0])).not.toContain(names[0]);
     });
 });
+
+/** Meets the Ascension gate again in a wizard's kingdom (keeps everything else) */
+function readyFor(state: GameState): void {
+    state.run.buildings.push("wizardsGuild");
+    state.run.spellbooks = { life: 3, chaos: 2, nature: 1 };
+    state.ascension.fameEarned = D(250);
+}

@@ -363,6 +363,67 @@ button.danger {
     gap: 10px;
 }
 
+/* a card with a control under it (a work's auto-buy box) */
+.card-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.card-wrap .card {
+    flex: 1;
+}
+
+/* "auto" boxes: an enchantment in the auto-cast loadout, a work auto-buy grows */
+label.loadout {
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+/* the route: which race each coming region will be */
+.route {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 8px 0;
+}
+
+.route-choice {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+/* the doctrine: weights per troop role */
+table.doctrine td,
+table.doctrine th {
+    padding: 2px 10px 2px 0;
+}
+
+table.doctrine tr.unavailable td {
+    color: var(--muted);
+}
+
+/* the wizards' contest: rivals and their wards */
+table.rivals td {
+    padding: 2px 10px 2px 0;
+}
+
+table.rivals tr.done td {
+    color: var(--muted);
+}
+
+table.rivals tr.current td:first-child {
+    color: var(--accent);
+}
+
+.progress.wards .progress-fill {
+    background: var(--mana, #7a5cc4);
+}
+
 div.panel-card {
     background: var(--panel);
     border: 1px solid var(--border);

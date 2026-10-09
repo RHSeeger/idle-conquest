@@ -44,6 +44,9 @@ import { game } from "./game";
 import { AutoPrestige } from "./AutoToggle";
 import { heroAscendText } from "./HeroesSection";
 import { fameUpgradesValue } from "../engine/prestige";
+import { ARCANUS_WIZARDS } from "../content/frontier";
+import { banishedCount, nextRivals } from "../engine/wards";
+import { RivalMatchups } from "./ContestSection";
 
 /** Enduring Legacy (Essence): whether the next Ascension keeps the Fame upgrades */
 function KeepFameToggle() {
@@ -303,6 +306,8 @@ function ProfilePicker() {
                 })}
             </div>
             <FamiliarPicker />
+            <h4>The next Ascension's rivals</h4>
+            <RivalMatchups books={books} rivals={nextRivals(state)} />
             {error && <p class="bad">{error}</p>}
         </div>
     );
@@ -316,11 +321,14 @@ function BeyondArcanus() {
         <section>
             <h2>Beyond Arcanus</h2>
             <p class="hint">
-                Towers of Wizardry stand where the walls between the worlds are thin. Through them lies Myrror, home of
-                the Beastmen, Dark Elves, Draconians, Dwarves, Klackons and Trolls.
+                Towers of Wizardry stand where the walls between the worlds are thin, each sealed by a rival wizard. Through
+                them lies Myrror, home of the Beastmen, Dark Elves, Draconians, Dwarves, Klackons and Trolls.
             </p>
             <ul class="gate">
-                <li>{check(p.towerCleared)} Clear a Tower of Wizardry in this kingdom (found by expeditions)</li>
+                <li>
+                    {check(p.towerUnsealed)} Banish a rival wizard, which unseals their Tower of Wizardry ({banishedCount(state)} of{" "}
+                    {ARCANUS_WIZARDS} banished this Ascension; Magic tab)
+                </li>
                 <li>{check(p.riteKnown)} Research the Rite of the Tower (Arcane; Plane Shift halves its cost)</li>
             </ul>
             {p.ready && (
@@ -366,14 +374,16 @@ export function AscensionPanel() {
                     {!isWizard(state) ? (
                         <>
                             Leave the throne and become a <b>Wizard</b>. Every kingdom after this has mana, spells, magic nodes
-                            and summoned creatures, and you can break the wards of rival wizards and fight through their
-                            domains.{" "}
+                            and summoned creatures, and with spell power you can break the wards of rival wizards, so your
+                            army can fight through their domains.{" "}
                         </>
                     ) : (
-                        <>Ascend again to choose a new wizard profile and start a fresh Ascension. </>
+                        <>Ascend again to choose a new wizard profile and face new rivals. </>
                     )}
-                    Insight is based on the Fame earned this Ascension ({fmtInt(a.fameEarned)} so far, plus what refounding now
-                    would give), the spellbooks you hold in this kingdom, and the rival wizards you defeated.
+                    Insight comes mostly from the rival wizards you banish this Ascension (and how far you've worn down the
+                    current one's wards): ×(1 + banished)². The Fame earned this Ascension ({fmtInt(a.fameEarned)} so far, plus
+                    what refounding now would give) and the spellbooks you hold in this kingdom add to it, the Fame with
+                    diminishing returns.
                 </p>
                 {isWizard(state) && <h3>This Ascension</h3>}
                 <CurrentProfile />
@@ -409,7 +419,7 @@ export function AscensionPanel() {
                         Not during {state.mastery.challenge}'s challenge.{" "}
                         {state.mastery.challengeDone
                             ? "It's won: complete it on the Mastery tab, which Ascends you back to your own profile."
-                            : "Completing it (Mastery tab, once every rival Fortress of Arcanus has fallen) Ascends you instead, or you can abandon it there."}
+                            : "Completing it (Mastery tab, once all four rival wizards of Arcanus are banished) Ascends you instead, or you can abandon it there."}
                     </span>
                 )}
                 {planError && <span class="bad"> Can't Ascend with this profile: {planError}.</span>}

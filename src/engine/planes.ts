@@ -24,6 +24,7 @@ import {
     MYRRAN_WORK_ORDER,
     MYRRAN_WORKS,
     MyrranResource,
+    MYRROR_TUNING,
     myrrorCity,
     MyrrorCity,
     myrrorPlan,
@@ -47,6 +48,7 @@ import { effectiveTraits } from "./magic";
 import { applyRunStart, closeFameChronicle } from "./prestige";
 import { bump, GameState, log, newCampaign, newRun, recordRun } from "./state";
 import { traitRoleMult, ROLES } from "../content/traits";
+import { beginContest } from "./wards";
 
 /** A Master of Magic (any Mastery claimed) keeps every Planeshift milestone */
 export function hasPlaneshiftMilestone(state: GameState, id: PlaneshiftMilestoneId): boolean {
@@ -72,8 +74,8 @@ export function myrrorTarget(state: GameState): MyrrorCity | null {
     return city;
 }
 
-/** Siege power per second on Myrror against a city with the given traits */
-export function myrrorPower(state: GameState, stats: Stats, traits: MyrrorCity["traits"]): Decimal {
+/** The army power sent to Myrror against a city with the given traits, before the links' limit */
+export function armySentToMyrror(state: GameState, stats: Stats, traits: MyrrorCity["traits"]): Decimal {
     const share = myrrorShare(state);
     if (share <= 0) return ZERO;
     const byRole = powerByRole(state, stats);
@@ -82,7 +84,28 @@ export function myrrorPower(state: GameState, stats: Stats, traits: MyrrorCity["
     for (const role of ROLES) {
         total = total.plus(byRole[role].times(traitRoleMult(applied, role)));
     }
-    return total.times(share).times(stats.get("myrror.power"));
+    return total.times(share);
+}
+
+/**
+ * What the planar links can carry to Myrror's city `index` (army power per
+ * second): a narrow pipe, so a huge Arcanus army only helps so far (DESIGN.md
+ * §15.6). More links (Towers taken, Planar Gates) carry more.
+ */
+export function planarCapacity(state: GameState, index: number): Decimal {
+    const t = MYRROR_TUNING;
+    return D(t.linkCapacity).times(Decimal.pow(t.linkGrowth, index)).times(planarLinks(state));
+}
+
+/**
+ * Planar power: siege power per second on Myrror. The army sent, up to what
+ * the links carry, × the Myrror multipliers (Essence, works, boons, holdings),
+ * which act after the links.
+ */
+export function myrrorPower(state: GameState, stats: Stats, traits: MyrrorCity["traits"], index = state.planes.myrror?.index ?? 0): Decimal {
+    const sent = armySentToMyrror(state, stats, traits);
+    if (sent.lte(0)) return ZERO;
+    return sent.min(planarCapacity(state, index)).times(stats.get("myrror.power"));
 }
 
 export function tickMyrror(state: GameState, stats: Stats, dt: number): void {
@@ -93,7 +116,7 @@ export function tickMyrror(state: GameState, stats: Stats, dt: number): void {
         m.siege = ZERO;
         return;
     }
-    let power = myrrorPower(state, stats, target.traits);
+    let power = myrrorPower(state, stats, target.traits, target.index);
     let remaining = dt;
     // as on Arcanus, overflow time carries on to the next city
     while (target && remaining > 0 && power.gt(0)) {
@@ -106,7 +129,7 @@ export function tickMyrror(state: GameState, stats: Stats, dt: number): void {
         conquerMyrror(state, target, false);
         m.siege = ZERO;
         target = myrrorTarget(state);
-        if (target) power = myrrorPower(state, getStats(state), target.traits);
+        if (target) power = myrrorPower(state, getStats(state), target.traits, target.index);
     }
 }
 
@@ -119,7 +142,14 @@ export function conquerMyrror(state: GameState, city: MyrrorCity, surrendered: b
     const firstOfRace = m.holdings[city.race] === 1;
     const resource = RESOURCE_OF_RACE[city.race];
     m.resources[resource] += cityYield(city) * getStats(state).num("myrror.resources");
-    if (city.fortressOf) {
+    if (city.tower) {
+        if (m.links < MAX_LINKS) m.links++;
+        log(
+            state,
+            "milestone",
+            `Myrror: the Tower of Wizardry in the ${city.region.name} is yours. ${planarLinks(state)} planar link${planarLinks(state) === 1 ? "" : "s"} now carry your power across.`,
+        );
+    } else if (city.fortressOf) {
         const w = city.fortressOf;
         if (!m.wizardsDefeated.includes(w)) m.wizardsDefeated.push(w);
         if (!state.planes.wizardsDefeated.includes(w)) state.planes.wizardsDefeated.push(w);
@@ -202,8 +232,28 @@ export function myrranWorkLevel(state: GameState, id: string): number {
     return state.planes.myrror?.works[id] ?? 0;
 }
 
+/** Each level of a work makes the other works of its resource this much dearer (so levelling one is a choice) */
+export const SHARED_WORK_GROWTH = 1.5;
+
+/** A work's price: its own level's cost, ×1.5 for every level of the other works on the same resource */
 export function myrranWorkCost(state: GameState, id: string): number {
-    return MYRRAN_WORKS[id].cost(myrranWorkLevel(state, id));
+    const w = MYRRAN_WORKS[id];
+    const partners = MYRRAN_WORK_ORDER.filter((o) => o !== id && MYRRAN_WORKS[o].resource === w.resource);
+    const partnerLevels = partners.reduce((sum, o) => sum + myrranWorkLevel(state, o), 0);
+    return Math.round(w.cost(myrranWorkLevel(state, id)) * Math.pow(SHARED_WORK_GROWTH, partnerLevels));
+}
+
+/** Whether auto-buy levels this work (works switched off are left for you) */
+export function autoBuysWork(state: GameState, id: string): boolean {
+    return !state.automation.worksOff.includes(id);
+}
+
+export function setAutoBuysWork(state: GameState, id: string, on: boolean): void {
+    const off = state.automation.worksOff;
+    const i = off.indexOf(id);
+    if (on && i >= 0) off.splice(i, 1);
+    if (!on && i < 0) off.push(id);
+    bump(state);
 }
 
 export function canBuyMyrranWork(state: GameState, id: string): boolean {
@@ -223,10 +273,10 @@ export function buyMyrranWork(state: GameState, id: string): boolean {
     return true;
 }
 
-/** Auto-buy Myrran works (Eternal Return): whatever is affordable, cheapest first */
+/** Auto-buy Myrran works (Eternal Return): the works you left on, whatever is affordable, cheapest first */
 export function autoWorks(state: GameState): void {
     for (let guard = 0; guard < 100; guard++) {
-        const affordable = MYRRAN_WORK_ORDER.filter((id) => canBuyMyrranWork(state, id)).sort(
+        const affordable = MYRRAN_WORK_ORDER.filter((id) => autoBuysWork(state, id) && canBuyMyrranWork(state, id)).sort(
             (a, b) => myrranWorkCost(state, a) - myrranWorkCost(state, b),
         );
         if (affordable.length === 0 || !buyMyrranWork(state, affordable[0])) return;
@@ -389,6 +439,7 @@ export function resetLayersBelowPlanes(state: GameState, startRace: RaceId): voi
     a.fameEarned = D(0);
     a.lastFameEarned = D(0);
     a.wizardsDefeatedThisAscension = [];
+    beginContest(state);
 
     // Layer 1 resets (the Annals are kept: Planewalker counts as 3 Ascensions)
     p.fame = D(0);

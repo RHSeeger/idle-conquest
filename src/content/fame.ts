@@ -225,7 +225,7 @@ export const MILESTONES: MilestoneDef[] = [
         id: "autoRecruit",
         refounds: 2,
         name: "Standing Orders",
-        text: "Unlock auto-recruit (follows your last kingdom's army mix), auto-study (Lore) and auto-raid (lairs).",
+        text: "Unlock auto-recruit (follows your doctrine: the army mix you set, at first your last kingdom's), auto-study (Lore) and auto-raid (lairs).",
     },
     {
         id: "renown",

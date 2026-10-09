@@ -22,10 +22,20 @@ import {
     tickMastery,
 } from "../src/engine/mastery";
 import { canPlaneshift, hasPlaneshiftMilestone } from "../src/engine/planes";
-import { hasMilestone } from "../src/engine/prestige";
+import { hasMilestone, refound } from "../src/engine/prestige";
 import { deserialize, serialize } from "../src/engine/save";
 import { GameState, newCampaign, newGame } from "../src/engine/state";
 import { tick } from "../src/engine/tick";
+import { ascensionRivals, banishedCount, currentRival, strikeWards, wardStrength } from "../src/engine/wards";
+
+/** Breaks every remaining rival's wards in a challenge but the last */
+function banishAllButOne(state: GameState): void {
+    for (let i = banishedCount(state); i < 3; i++) strikeWards(state, wardStrength(state, currentRival(state)!));
+}
+
+function banishLast(state: GameState): void {
+    strikeWards(state, wardStrength(state, currentRival(state)!));
+}
 
 /** A wizard in a Planeshift whose Myrror and current Arcanus run meet the Mastery gate */
 function atTheGate(): GameState {
@@ -40,7 +50,7 @@ function atTheGate(): GameState {
     state.planes.myrror = m;
     state.planes.bestMyrror = 128;
     state.planes.armyShare = 0.5;
-    state.run.fortressesTaken = 4;
+    state.ascension.wizardsDefeatedThisAscension = [...ascensionRivals(state)];
     state.run.buildings = ["barracks"];
     state.run.units = { spearmen: 100 };
     state.prestige.fame = D(500);
@@ -67,9 +77,11 @@ describe("The Spell of Mastery", () => {
         const spell = SPELLS[SPELL_OF_MASTERY];
         expect(masteryGate(state).ready).toBe(true);
         expect(spellAvailable(state, spell)).toBe(true);
-        state.run.fortressesTaken = 3;
+        const banished = state.ascension.wizardsDefeatedThisAscension;
+        state.ascension.wizardsDefeatedThisAscension = banished.slice(0, 3);
+        expect(masteryGate(state).arcanus).toBe(3);
         expect(spellAvailable(state, spell)).toBe(false);
-        state.run.fortressesTaken = 4;
+        state.ascension.wizardsDefeatedThisAscension = banished;
         state.planes.myrror!.wizardsDefeated.pop();
         expect(spellAvailable(state, spell)).toBe(false);
     });
@@ -172,12 +184,17 @@ describe("Challenge Wizards", () => {
         expect(canPlaneshift(state)).toBe(false);
     });
 
-    it("end when every rival Fortress of Arcanus falls in one run, with a lasting reward", () => {
+    it("end when all four rivals of Arcanus are banished in the challenge's Ascension, with a lasting reward", () => {
         const state = master();
         startChallenge(state, "Raven");
+        expect(ascensionRivals(state)).not.toContain("Raven"); // you play as Raven
         const before = getStats(state).num("explore.speed");
-        state.run.fortressesTaken = 3;
-        conquer(state, { ...currentTarget(state)!, fortressOf: "Kali" });
+        banishAllButOne(state);
+        // the progress lasts through Refounds
+        state.run.racesConquered = ["halfling"];
+        refound(state, "highMen");
+        expect(state.mastery.challengeDone).toBe(false);
+        banishLast(state);
         expect(state.mastery.challengeDone).toBe(true);
         // it waits to be completed by hand (no auto-Ascend here)
         state.automation.ascend = false;
@@ -197,8 +214,8 @@ describe("Challenge Wizards", () => {
         const win = (seconds: number) => {
             startChallenge(state, "Raven");
             state.meta.playtime += seconds;
-            state.run.fortressesTaken = 3;
-            conquer(state, { ...currentTarget(state)!, fortressOf: "Kali" });
+            banishAllButOne(state);
+            banishLast(state);
             expect(state.mastery.challengeWonIn).toBe(seconds);
             // the clock stops at the win, not when it's completed
             state.meta.playtime += 500;
@@ -258,10 +275,14 @@ describe("Challenge Wizards", () => {
 
     it("rules: Kali halves rival wizards' domains; Sss'ra's Fame upgrades don't work", () => {
         const state = master();
+        const normalWards = wardStrength(state, ascensionRivals(state)[0]);
+        startChallenge(state, "Kali");
+        // her rivals' wards, and their domains once the wards are broken, are half as strong
+        expect(wardStrength(state, ascensionRivals(state)[0]).toNumber()).toBeCloseTo(normalWards.toNumber() / 2);
         const plan = currentPlan(state);
         const domain = plan.findIndex((r) => r.kind === "wizard") * 8;
-        const normal = cityAt(state, domain)!.defense;
-        startChallenge(state, "Kali");
+        banishLast(state);
+        const normal = frontierCity(state.run.startingRace, plan, domain, true)!.defense;
         expect(cityAt(state, domain)!.defense.toNumber()).toBeCloseTo(normal.toNumber() / 2);
         abandonChallenge(state);
         state.prestige.upgrades = { scholars: 5 };

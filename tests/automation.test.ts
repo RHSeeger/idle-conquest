@@ -3,7 +3,19 @@ import { canBuyBuilding, canRushBuilding, rushPrice } from "../src/engine/action
 import { frontierCity, REGION_SIZE } from "../src/content/frontier";
 import { conquer, currentPlan } from "../src/engine/army";
 import { canAscend } from "../src/engine/ascension";
-import { autoBuild, buildQueue, nextFameChronicleStep, runAutomation, stallAction } from "../src/engine/automation";
+import {
+    activeDoctrine,
+    autoBuild,
+    buildQueue,
+    doctrineShares,
+    isEfficientRecruitUnlocked,
+    nextFameChronicleStep,
+    runAutomation,
+    setDoctrineWeight,
+    stallAction,
+} from "../src/engine/automation";
+import { powerByRole } from "../src/engine/army";
+import { getStats } from "../src/engine/collect";
 import { buyFameUpgrade, closeFameChronicle } from "../src/engine/prestige";
 import { D } from "../src/engine/decimal";
 import { newGame } from "../src/engine/state";
@@ -54,6 +66,55 @@ describe("Army budget", () => {
         state.run.gold = D(10000);
         runAutomation(state);
         expect(state.run.production.plus(state.run.gold).toNumber()).toBeLessThan(15000);
+    });
+});
+
+describe("Doctrine (auto-recruit)", () => {
+    function army() {
+        const state = newGame(0);
+        state.prestige.refounds = 2; // Standing Orders
+        state.automation = { ...state.automation, buildings: false, lore: false, settlers: false, lairs: false, units: true };
+        state.run.buildings.push("barracks", "smithy", "sawmill", "stables", "fightersGuild");
+        return state;
+    }
+
+    it("keeps the army's power close to the mix you set", () => {
+        const state = army();
+        state.automation.doctrine = { melee: 0, pike: 0, ranged: 3, cavalry: 1, siege: 0 };
+        for (let i = 0; i < 40; i++) {
+            state.run.production = state.run.production.plus(5e4);
+            runAutomation(state);
+        }
+        const byRole = powerByRole(state, getStats(state));
+        const total = byRole.ranged.plus(byRole.cavalry).plus(byRole.melee).plus(byRole.pike);
+        expect(byRole.melee.toNumber()).toBe(0);
+        expect(byRole.pike.toNumber()).toBe(0);
+        // drill doublings make it lumpy, but it stays near the aim of 75%
+        const ranged = byRole.ranged.div(total).toNumber();
+        expect(ranged).toBeGreaterThan(0.6);
+        expect(ranged).toBeLessThan(0.9);
+    });
+
+    it("until you set one, follows the last kingdom's army (balanced without one)", () => {
+        const state = army();
+        expect(activeDoctrine(state).melee).toBe(activeDoctrine(state).siege);
+        state.prestige.chronicle.unitMix = { bowmen: 10 }; // 60 ranged power
+        expect(doctrineShares(state).ranged).toBe(1);
+        setDoctrineWeight(state, "cavalry", 2);
+        expect(state.automation.doctrine).not.toBeNull();
+        expect(state.automation.doctrine).toEqual({ melee: 0, pike: 0, ranged: 10, cavalry: 2, siege: 0 }); // on a 0–10 scale
+    });
+
+    it("Most efficient is a later unlock: until then auto-recruit follows the doctrine", () => {
+        const state = army();
+        expect(isEfficientRecruitUnlocked(state)).toBe(false);
+        state.automation.unitMode = "efficient";
+        state.automation.doctrine = { melee: 1, pike: 0, ranged: 0, cavalry: 0, siege: 0 };
+        state.run.production = D(5e4);
+        runAutomation(state);
+        expect(Object.keys(state.run.units).every((id) => ["spearmen", "swordsmen"].includes(id))).toBe(true);
+        state.ascension.ascensions = 2;
+        expect(isEfficientRecruitUnlocked(state)).toBe(true);
     });
 });
 

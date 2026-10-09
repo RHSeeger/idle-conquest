@@ -40,6 +40,8 @@ export interface LairDef {
     wizardOnly?: boolean;
     /** A Tower of Wizardry: the link to Myrror (Layer 3 gate) */
     tower?: boolean;
+    /** No longer found by expeditions (kept so older saves still read) */
+    retired?: boolean;
 }
 
 export const NODES: Record<string, NodeDef> = {
@@ -185,6 +187,8 @@ export const LAIRS: Record<string, LairDef> = {
         realms: REALMS,
         wizardOnly: true,
         tower: true,
+        // Towers are now unsealed by banishing a rival wizard (engine/wards.ts)
+        retired: true,
     },
 };
 

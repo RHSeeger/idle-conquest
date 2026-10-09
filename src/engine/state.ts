@@ -2,12 +2,12 @@
  * The complete game state: one plain, JSON-serializable object (Decimals are
  * converted by save.ts). No class instances, no DOM references.
  */
-import { cityName } from "../content/frontier";
+import { cityName, rivalsFor } from "../content/frontier";
 import { FamiliarChoice } from "../content/familiars";
 import { Realm } from "../content/magic";
 import type { MyrranResource } from "../content/myrror";
 import { MyrranRaceId, RaceId } from "../content/races";
-import { TraitId } from "../content/traits";
+import { Role, TraitId } from "../content/traits";
 import { D, Decimal } from "./decimal";
 
 export const SAVE_VERSION = 2;
@@ -68,6 +68,8 @@ export interface RunState {
         /** Siege progress against the current target */
         siege: Decimal;
     };
+    /** The race chosen for each race region (null: the nearer option), content/frontier.ts planRoute */
+    route: (RaceId | null)[];
 
     /** Exploration progress toward the next site */
     exploreProgress: number;
@@ -95,6 +97,9 @@ export interface RunState {
     racesConquered: RaceId[];
     /** Highest siege power reached this run */
     peakPower: Decimal;
+    /** The best Fame per second a Refound would have given this run (Fame on Refound ÷ run time), and when */
+    bestFameRate: number;
+    bestFameRateAt: number;
     /** Run time of the last Arcanus conquest (auto-Refound's "stalled" check) */
     lastConquestAt: number;
     /** Rival wizards' Fortresses taken this run (all of them: the Mastery gate and a challenge's goal) */
@@ -137,6 +142,8 @@ export interface PrestigeState {
     realmsSeen: Realm[];
     /** What the last completed run did, replayed by automation ("Follow the Chronicle") */
     chronicle: ChronicleState;
+    /** The route last chosen for kingdoms of each starting race, taken up by the next one (kept through every reset) */
+    routeMemory: Partial<Record<RaceId, (RaceId | null)[]>>;
 }
 
 export interface ChronicleState {
@@ -178,9 +185,17 @@ export interface AscensionState {
     fameEarned: Decimal;
     /** Fame earned during the previous Ascension */
     lastFameEarned: Decimal;
-    /** Rival wizards ever defeated, and those defeated during this Ascension */
+    /** Rival wizards ever banished, and those banished during this Ascension (their wards broken) */
     wizardsDefeated: string[];
     wizardsDefeatedThisAscension: string[];
+    /** The four rival wizards of Arcanus for this Ascension, in frontier order (engine/wards.ts) */
+    rivals: string[];
+    /** Spell power spent on the current rival's wards */
+    wardProgress: Decimal;
+    /** Mana poured into casting skill this Ascension */
+    skillMana: Decimal;
+    /** Share (0..1) of mana income poured into casting skill (the player's choice, kept through resets) */
+    skillShare: number;
 }
 
 /** Layer 3 (Planeshift) state. Everything here survives Refounds and Ascensions. */
@@ -214,7 +229,7 @@ export interface MyrrorCampaign {
     beachhead: MyrranRaceId;
     index: number;
     siege: Decimal;
-    /** Planar links: Towers of Wizardry cleared this Planeshift */
+    /** Planar links: the Tower(s) you came through, plus Towers of Wizardry taken on Myrror this Planeshift */
     links: number;
     /** Myrran cities held, by race */
     holdings: Partial<Record<MyrranRaceId, number>>;
@@ -366,10 +381,20 @@ export interface Automation {
     fameMode: "chronicle" | "cheapest";
     /** Auto-buy Myrran works (Eternal Return, Planeshift milestone) */
     works: boolean;
+    /** Myrran works auto-buy leaves alone (kept through every reset) */
+    worksOff: string[];
     /** Myrror boons: repeat the choice last made for the same race or wizard instead of asking */
     repeatBoons: boolean;
-    /** How auto-recruit picks troops */
-    unitMode: "chronicle" | "efficient";
+    /**
+     * How auto-recruit picks troops: your doctrine (a mix of roles you set), or
+     * the most efficient troops against the current target (a later unlock)
+     */
+    unitMode: "doctrine" | "efficient";
+    /**
+     * The doctrine: a weight per troop role that auto-recruit keeps the army's
+     * power close to. null until you set it: then it follows the last kingdom's army.
+     */
+    doctrine: Partial<Record<Role, number>> | null;
     /** How auto-build orders buildings: the last run's build order, or cheapest first */
     buildMode: "chronicle" | "cheapest";
     /** Army budget (Quartermasters): share of production, gold and mana gained that auto-recruit may spend (1 = no limit) */
@@ -383,6 +408,8 @@ export interface Automation {
      * share of current Knowledge on any one study (1 = no limit)
      */
     loreSpendCap: number;
+    /** Enchantments auto-cast leaves alone (your loadout is every other one you know); kept through every reset */
+    loadoutOff: string[];
 }
 
 export interface GameState {
@@ -436,6 +463,7 @@ export function newRun(startingRace: RaceId): RunState {
         lore: {},
         settlersFounded: 0,
         frontier: { index: 0, siege: D(0) },
+        route: [],
         exploreProgress: 0,
         sites: [],
         armyTarget: null,
@@ -450,6 +478,8 @@ export function newRun(startingRace: RaceId): RunState {
         surrenderedPop: 0,
         racesConquered: [],
         peakPower: D(0),
+        bestFameRate: 0,
+        bestFameRateAt: 0,
         lastConquestAt: 0,
         fortressesTaken: 0,
         scoutingCap: SCOUTING_ALL,
@@ -478,6 +508,7 @@ export function newGame(now = Date.now()): GameState {
             bestPower: D(0),
             realmsSeen: [],
             chronicle: { buildOrder: [], unitMix: {}, lore: {} },
+            routeMemory: {},
         },
         ascension: {
             ascensions: 0,
@@ -498,6 +529,10 @@ export function newGame(now = Date.now()): GameState {
             lastFameEarned: D(0),
             wizardsDefeated: [],
             wizardsDefeatedThisAscension: [],
+            rivals: rivalsFor([0, 0, 0]),
+            wardProgress: D(0),
+            skillMana: D(0),
+            skillShare: 0.25,
         },
         planes: {
             planeshifts: 0,
@@ -540,13 +575,16 @@ export function newGame(now = Date.now()): GameState {
             keepFame: true,
             fameMode: "chronicle",
             works: true,
+            worksOff: [],
             repeatBoons: true,
-            unitMode: "chronicle",
+            unitMode: "doctrine",
+            doctrine: null,
             buildMode: "chronicle",
             recruitShare: 1,
             refoundAt: 1,
             ascendAt: 1,
             loreSpendCap: 0.1,
+            loadoutOff: [],
         },
         settings: { buyAmount: 1, autosaveSeconds: 15, devSpeed: 1, showDevTools: false },
         meta: { created: now, lastTick: now, playtime: 0, introsSeen: [] },

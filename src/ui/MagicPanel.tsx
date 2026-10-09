@@ -25,8 +25,13 @@ import {
     researchCost,
     spellAvailable,
     spellMemoryLevel,
-    towerCleared,
+    dispelEnchantment,
+    inLoadout,
+    instantStrikesWards,
+    setInLoadout,
 } from "../engine/magic";
+import { enchantmentUpkeep, hasSkillFor, towersUnsealed } from "../engine/wards";
+import { ContestSection } from "./ContestSection";
 import { GameState } from "../engine/state";
 import { AutoToggle } from "./AutoToggle";
 import { INSTANT_RESERVE_SECONDS } from "../engine/automation";
@@ -53,9 +58,31 @@ function SpellAction(props: { state: GameState; spell: SpellDef }) {
         );
     }
     switch (spell.kind) {
-        case "enchantment":
+        case "enchantment": {
+            const upkeep = enchantmentUpkeep(spell);
+            const loadout = (
+                <label class="loadout" title="Auto-cast keeps the enchantments of your loadout running, as far as your casting skill allows">
+                    <input type="checkbox" checked={inLoadout(state, spell.id)} onChange={(e) => setInLoadout(state, spell.id, (e.target as HTMLInputElement).checked)} />{" "}
+                    auto
+                </label>
+            );
             if (state.run.enchantments.includes(spell.id)) {
-                return <span class="good">Active</span>;
+                return (
+                    <span class="spell-action">
+                        <span class="good">Active</span>{" "}
+                        <button
+                            class="toggle"
+                            title="End it, freeing its casting skill for the contest (the mana isn't returned). It also leaves your auto-cast loadout."
+                            onClick={() => {
+                                dispelEnchantment(state, spell.id);
+                                setInLoadout(state, spell.id, false);
+                            }}
+                        >
+                            Dispel
+                        </button>
+                        <span class="hint"> {upkeep} skill</span> {loadout}
+                    </span>
+                );
             }
             return (
                 <span class="spell-action">
@@ -63,12 +90,15 @@ function SpellAction(props: { state: GameState; spell: SpellDef }) {
                         Cast
                     </button>
                     <Price amount={enchantmentCost(state, spell)} currency="mana" have={state.run.mana} />
+                    <span class={hasSkillFor(state, spell) ? "hint" : "bad"}> {upkeep} skill</span> {loadout}
                 </span>
             );
+        }
         case "instant": {
             const cooldown = state.run.cooldowns[spell.id] ?? 0;
             const lair = lairTarget(state);
             const traits = lair ? lair.traits : (currentTarget(state)?.traits ?? []);
+            const target = instantStrikesWards(state) ? "It strikes the current rival's wards with your spell power." : "It bursts against your army's target with your army's power.";
             return (
                 <span class="spell-action">
                     <button
@@ -77,7 +107,7 @@ function SpellAction(props: { state: GameState; spell: SpellDef }) {
                     >
                         {cooldown > 0 ? fmtTime(cooldown) : "Cast"}
                     </button>
-                    <Tip tip={`A fixed price: the more mana you make, the more often you can cast it (up to once every ${fmtTime(instantCooldown(state, spell))}). Its siege burst grows with your army. Auto-recruit leaves mana for instants you can afford within ${fmtTime(INSTANT_RESERVE_SECONDS)} of income.`}>
+                    <Tip tip={`A fixed price: the more mana you make, the more often you can cast it (up to once every ${fmtTime(instantCooldown(state, spell))}). ${target} Auto-recruit leaves mana for instants you can afford within ${fmtTime(INSTANT_RESERVE_SECONDS)} of income.`}>
                         <Price amount={instantCost(state, spell)} currency="mana" have={state.run.mana} />
                         <span class="hint"> (every {fmtTime(instantCooldown(state, spell))})</span>
                     </Tip>
@@ -124,8 +154,8 @@ function RealmSpells(props: { realm: SpellRealm }) {
                                             )}
                                             {s.requiresMastery
                                                 ? "needs every rival wizard on both planes (Mastery tab)"
-                                                : s.requiresTower && !towerCleared(state)
-                                                  ? "needs a Tower of Wizardry cleared in this kingdom"
+                                                : s.requiresTower && towersUnsealed(state) === 0
+                                                  ? "needs a Tower of Wizardry unsealed (banish a rival wizard)"
                                                   : `needs ${RARITY_BOOKS[s.rarity]} books`}
                                         </span>
                                     )}
@@ -180,7 +210,8 @@ export function MagicPanel() {
                     Cathedrals add mana in every city; the Wizards' Guild and melded magic nodes multiply it. Spells are
                     researched with Knowledge and stay known until you Ascend again
                     {spellMemoryLevel(state) > 0 && " (Spell Memory brings them back after an Ascension, if your profile has the books)"}.
-                    Enchantments last until this kingdom ends.
+                    Enchantments last until this kingdom ends, and take up casting skill while they run. Auto-cast keeps the
+                    ones ticked "auto" running, as far as your casting skill allows.
                 </p>
                 <CurrentProfile />
                 <DormantSpells />
@@ -191,6 +222,7 @@ export function MagicPanel() {
                     </p>
                 )}
             </section>
+            <ContestSection />
             {realms.map((r) => (
                 <RealmSpells key={r} realm={r} />
             ))}

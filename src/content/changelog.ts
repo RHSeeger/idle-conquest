@@ -10,6 +10,21 @@ export interface ChangeEntry {
 
 export const CHANGES: ChangeEntry[] = [
     {
+        date: "2026-10-09",
+        items: [
+            "Every layer now has a mechanic of its own, and the choices you make in it matter. A stronger kingdom still helps the layers above, but it can't make them trivial.",
+            "Kingdoms: city defenses are sharper (Walls ×0.25 to melee, ×3 to siege, and so on). Set your army's doctrine, the mix of troop roles auto-recruit keeps to, and see how it fares against the cities ahead (Army tab). Most efficient recruiting now unlocks at 2 Ascensions.",
+            "Kingdoms: choose your route. At each region boundary, pick which of two neighbouring races comes next (Army tab); the choice is kept for later kingdoms of that race.",
+            "Kingdom tab: Fame per minute if you Refound now, and its best this kingdom, so you can tell when it has peaked.",
+            "Ascensions: the wizards' contest. Each Ascension faces four rival wizards, shown while you plan it. Your spell power wears down their wards one by one, and the progress lasts through Refounds; banishing a wizard opens their domain to your army and unseals their Tower of Wizardry (Magic tab).",
+            "Spell power is your free casting skill × spell power bonuses × how well your books counter the rival: opposed realms ×2, Sorcery ×1.5, their own realm ×0.5. Casting skill grows with the share of mana you train it with; enchantments take some of it up, so choose which to keep running (auto-cast follows your loadout). Instants strike the wards. Dispel Magic doubles spell power.",
+            "Insight now comes mostly from the rivals you banish; the Fame part has diminishing returns. New upgrades: Ward-Breaking (Insight) and Astral Sorcery (Essence). Each Mastery multiplies spell and planar power too.",
+            "Planeshift needs a banished rival's Tower and the Rite of the Tower; expeditions no longer find Towers. A challenge is won by banishing all four rivals, and the Spell of Mastery needs all four banished in one Ascension.",
+            "Myrror: five Towers of Wizardry stand on its frontier, and each one you take is another planar link. The links carry only so much of your army across, so past that point Myrror's own bonuses (Essence, works, boons) decide its pace. The two works of each resource now make each other dearer, and you can choose which ones auto-buy grows. The beachhead choice says what each race gives.",
+            "Older saves keep their progress: wizards already defeated count as banished, and Myrror keeps its links.",
+        ],
+    },
+    {
         date: "2026-10-08",
         items: [
             "Clearer words: the stretch from founding (or Refounding) to the next reset is now a Kingdom, everywhere, and \"realm\" means only the realms of magic.",

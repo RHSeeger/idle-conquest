@@ -9,7 +9,9 @@ import { deserialize, exportSave, importSave, serialize } from "../src/engine/sa
 import { newGame } from "../src/engine/state";
 import { simulate } from "../src/engine/tick";
 import { neighborOrder } from "../src/content/races";
-import { frontierCity, regionPlan, wallIndex } from "../src/content/frontier";
+import { frontierCity, planRoute, regionPlan, wallIndex } from "../src/content/frontier";
+import { chooseRoute, currentPlan, upcomingRoute } from "../src/engine/army";
+import { refound } from "../src/engine/prestige";
 
 describe("Number formatting", () => {
     const negZero = D(0).minus(D(0)); // break_infinity's 0 - 0 is -0
@@ -93,8 +95,14 @@ describe("Save", () => {
         delete state.automation;
         delete state.prestige.chronicle;
         const loaded = deserialize(serialize(state));
-        expect(loaded.automation.unitMode).toBe("chronicle");
+        expect(loaded.automation.unitMode).toBe("doctrine");
         expect(loaded.prestige.chronicle.buildOrder).toEqual([]);
+    });
+
+    it("turns the old Chronicle mode for auto-recruit into the doctrine", () => {
+        const state = newGame(0) as any;
+        state.automation.unitMode = "chronicle";
+        expect(deserialize(serialize(state)).automation.unitMode).toBe("doctrine");
     });
 
     it("shows the introduction to new games only, not to saves from before it", () => {
@@ -197,6 +205,39 @@ describe("Frontier", () => {
         const plan = regionPlan("orc");
         expect(frontierCity("orc", plan, wallIndex(plan) - 1)).not.toBeNull();
         expect(frontierCity("orc", plan, wallIndex(plan))).toBeNull();
+    });
+
+    it("routes: each region is one of the two nearest races not met yet; untouched, the nearer one", () => {
+        const order = neighborOrder("highMen");
+        const { picks, options } = planRoute("highMen", 4);
+        expect(picks).toEqual(order.slice(0, 4));
+        expect(options[0]).toEqual(order.slice(0, 2));
+        // turning to the second option: no race comes twice, and the next choice follows from it
+        const turned = planRoute("highMen", 4, [order[1]]);
+        expect(turned.picks[0]).toBe(order[1]);
+        expect(new Set(turned.picks).size).toBe(4);
+        expect(turned.options[1]).toEqual([order[0], order[2]]);
+        // an invalid choice falls back to the nearer option
+        expect(planRoute("highMen", 1, ["orc"]).picks).toEqual([order[0]]);
+        expect(regionPlan("highMen", 4, undefined, [order[1]])[1].race).toBe(order[1]);
+    });
+
+    it("routes are chosen ahead of the army and remembered for the next kingdom of that race", () => {
+        const state = newGame(0);
+        const next = upcomingRoute(state)[0];
+        expect(next.raceRegion).toBe(0);
+        expect(chooseRoute(state, 0, next.options[1])).toBe(true);
+        expect(currentPlan(state)[1].race).toBe(next.options[1]);
+        expect(next.options).not.toContain("orc");
+        expect(chooseRoute(state, 0, "orc")).toBe(false); // not one of the options
+        // once the army is in that region, its race is settled
+        state.run.frontier.index = 9;
+        expect(upcomingRoute(state).some((c) => c.raceRegion === 0)).toBe(false);
+        expect(chooseRoute(state, 0, next.options[0])).toBe(false);
+        // the next kingdom of High Men takes the same road
+        state.run.racesConquered = [next.options[1]];
+        refound(state, "highMen");
+        expect(currentPlan(state)[1].race).toBe(next.options[1]);
     });
 
     it("is the same every time", () => {

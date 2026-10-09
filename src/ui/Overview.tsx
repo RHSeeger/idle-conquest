@@ -14,6 +14,7 @@ import { heroesAllowed, hireCost, isTavernOpen } from "../engine/heroes";
 import { masteryCost, masterySecondsLeft, SPELL_OF_MASTERY } from "../engine/mastery";
 import { masteryGate } from "../engine/magic";
 import { isMasteryTabVisible } from "./MasteryPanel";
+import { banishedCount, currentRival, wardSecondsLeft, wardStrength } from "../engine/wards";
 import { BUILDINGS } from "../content/buildings";
 import { LORE, LORE_ORDER } from "../content/lore";
 import { isBuildingVisible, isLoreUnlocked, isSettlersUnlocked } from "../engine/actions";
@@ -204,6 +205,11 @@ export function Overview() {
                         {` · ${run.enchantments.length} enchantment${run.enchantments.length === 1 ? "" : "s"} active`}
                     </Line>
                 )}
+                {isWizard(state) && (
+                    <Line icon="♜" label="Rivals">
+                        {contestLine(state, stats)}
+                    </Line>
+                )}
                 {(asc.books > 0 || asc.wizardsGuild || isWizard(state)) && (
                     <Line icon="◈" label="Ascension">
                         {canAscend(state)
@@ -221,6 +227,16 @@ export function Overview() {
     );
 }
 
+/** The wizards' contest: whose wards are falling, and how soon */
+function contestLine(state: GameState, stats: Stats): string {
+    const rival = currentRival(state);
+    const done = `${banishedCount(state)}/${ARCANUS_WIZARDS} banished`;
+    if (!rival) return `${done}: every rival of this Ascension has fallen`;
+    const pct = Math.floor(state.ascension.wardProgress.div(wardStrength(state, rival)).toNumber() * 100);
+    const left = wardSecondsLeft(state, stats);
+    return `${done} · ${rival}'s wards ${pct}% worn down, ${left === Infinity ? "no casting skill free" : `${fmtTime(left)} left`} (Magic tab)`;
+}
+
 /** What the Mastery layer is waiting on: a challenge, the Spell's channel, or the gate */
 function masteryLine(state: GameState, stats: Stats): string {
     const m = state.mastery;
@@ -228,14 +244,14 @@ function masteryLine(state: GameState, stats: Stats): string {
     if (m.challenge) {
         return m.challengeDone
             ? `${m.challenge}'s challenge is won: complete it (Mastery tab)`
-            : `${m.challenge}'s challenge · Fortresses ${state.run.fortressesTaken}/${ARCANUS_WIZARDS} in this kingdom`;
+            : `${m.challenge}'s challenge · rivals banished ${gate.arcanus}/${ARCANUS_WIZARDS}`;
     }
     if (m.cast) return "the Spell is cast: claim your Mastery (Mastery tab)";
     const pct = Math.floor(m.progress.div(masteryCost(state)).toNumber() * 100);
     if (m.channelling) return `channelling the Spell: ${pct}% · ${fmtTime(masterySecondsLeft(state, stats))} left`;
     if (m.progress.gt(0)) return `the Spell is ${pct}% channelled (paused)`;
     if (gate.ready) return knowsSpell(state, SPELL_OF_MASTERY) ? "every rival wizard has fallen: channel the Spell" : "every rival wizard has fallen: research the Spell";
-    return `Myrran wizards ${gate.myrran}/${MYRROR_WIZARDS} · Arcanus Fortresses ${gate.fortresses}/${ARCANUS_WIZARDS} in this kingdom`;
+    return `Myrran wizards ${gate.myrran}/${MYRROR_WIZARDS} · Arcanus rivals ${gate.arcanus}/${ARCANUS_WIZARDS} this Ascension`;
 }
 
 /** Heroes: how many serve, and when the next can be hired */

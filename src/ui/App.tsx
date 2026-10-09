@@ -86,7 +86,7 @@ const TABS: TabDef[] = [
         visible: () => {
             const s = game();
             const gate = planeshiftProgress(s);
-            return s.planes.planeshifts > 0 || gate.towerCleared || gate.riteKnown;
+            return s.planes.planeshifts > 0 || gate.towerUnsealed || gate.riteKnown;
         },
         render: () => <PlanesPanel />,
     },

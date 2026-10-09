@@ -2,7 +2,24 @@
 
 **[Play Idle Conquest in your browser](https://rhseeger.github.io/idle-conquest/)**
 
-An incremental (idle) fantasy strategy game, written in TypeScript and Preact: grow a settlement into a realm, become a wizard, fight rival wizards across two worlds. It is a tribute to **Master of Magic** (1994); see below.
+An incremental (idle) fantasy strategy game, written in TypeScript and Preact: grow a settlement into a kingdom, become a wizard, fight rival wizards across two worlds. It is a tribute to **Master of Magic** (1994); see below.
+
+## The game
+
+You start with one city. Your army takes the cities ahead of it, one at a time, and each one joins your kingdom: more citizens, more Production, Gold and Food, a bigger army. You build, recruit and study, and as the game goes on the Auto- toggles take over the routine, so the choices that matter are the ones left to you.
+
+The game unfolds in layers. Each one resets what came before it in exchange for a reward that makes the next attempt faster:
+
+| Layer | What you do | What you earn |
+|---|---|---|
+| Refound | Start a new kingdom, often of a different race | Fame, spent on Fame upgrades |
+| Ascension | Start over as a wizard, with spellbooks and retorts of your choosing | Insight |
+| Planeshift | Cross a Tower of Wizardry to Myrror, the second world, and conquer it | Planar Essence |
+| Mastery | Defeat every rival wizard on both planes and cast the Spell of Mastery | a permanent bonus, and the 14 Challenge Wizards |
+
+Along the way: lore to study, lairs and ruins to explore, heroes to hire, spells to research and enchantments to cast, Myrror's riches and works, race Masteries, milestones, and a Statistics tab that times every layer. The game saves in your browser, keeps running while you're away (up to 24 hours), and lets you export your save as text or a file.
+
+New players get a short welcome and a card the first time they open each tab. The **About** tab in the game has How to play, a glossary, the list of changes and what's planned.
 
 ## A tribute to Master of Magic
 
@@ -53,15 +70,40 @@ There is no AI-generated art: the game uses only text and symbols.
 
 The same text is in the game (About → Credits & links, in `src/ui/AboutPanel.tsx`); keep the two in step.
 
-## Running it
+## Development
+
+Built with [TypeScript](https://www.typescriptlang.org/), [Preact](https://preactjs.com/) and [Vite](https://vitejs.dev/), with [break_infinity.js](https://github.com/Patashu/break_infinity.js) for the big numbers and [Vitest](https://vitest.dev/) for the tests. It runs entirely in the browser, with no server.
+
+### Running it
 
 ```
 npm install
 npm run dev      # dev server
 npm test         # unit tests
 npm run build    # typecheck and build to dist/
+npm run sim      # balance simulator: a bot plays and reports the pacing
 ```
 
-Publishing: every push to `master` is tested, built and published to GitHub Pages by `.github/workflows/deploy-pages.yml` (if the tests or the typecheck fail, nothing is published). It can also be run by hand from the Actions tab. One-time setup: Settings > Pages > Source: "GitHub Actions".
+More commands (simulator options, dev URL modes) are in [PROGRESS.md](PROGRESS.md#how-to-run).
 
-More commands (the balance simulator, dev URL modes) are in [PROGRESS.md](PROGRESS.md#how-to-run). The design is in [DESIGN.md](DESIGN.md), and the running record of work and decisions in [PROGRESS.md](PROGRESS.md).
+### Layout
+
+- `src/content/`: the game's data and words: buildings, races, units, spells, retorts, upgrades, wizards, challenges, intro texts and the changelog.
+- `src/engine/`: the rules, with no UI: state and saving, the tick, economy, army, magic, the prestige layers and automation.
+- `src/ui/`: the Preact components, one panel per tab.
+- `src/dev/`: the bot the simulator and dev modes use.
+- `sim/`: the balance and performance simulators.
+- `tests/`: unit tests for the engine.
+- `legacy/`: an earlier, abandoned attempt at the game, kept for reference.
+
+### Publishing
+
+Every push to `master` is tested, built and published to GitHub Pages by `.github/workflows/deploy-pages.yml` (if the tests or the typecheck fail, nothing is published). It can also be run by hand from the Actions tab. One-time setup: Settings > Pages > Source: "GitHub Actions".
+
+### Design notes
+
+The design is in [DESIGN.md](DESIGN.md), and the running record of work, decisions and the to-do list in [PROGRESS.md](PROGRESS.md).
+
+## License
+
+Copyright Robert Seeger. The source is available for review and commentary only; see [LICENSE](LICENSE).

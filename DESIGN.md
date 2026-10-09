@@ -429,3 +429,94 @@ Content volume grows by phase; mechanics come before content. One race done well
 4. **Layer 3 direction:** the "two planes at once" idea above, or a more conventional "new world, harder numbers, new races" layer?
 5. **Active play:** should there be any click or active-boost mechanic (for example, instant spells with cooldowns), or should the game be purely idle with decisions?
 6. **Session target:** the run lengths in section 5 assume a game that takes weeks. Shorter or longer?
+
+---
+
+## 14. Meaningful choices (TODO #29)
+
+Status: **analysis and proposals, for discussion.** Nothing here is built yet.
+
+The goal: the game should feel like you're *playing* it, not watching it, and playing well should feel like success. Your five criteria for choices:
+
+1. Optimal choices aren't required, but they make things obviously faster.
+2. A wrong choice can be recognised without a huge time sink.
+3. Choices can be changed or redone.
+4. The right choices make sense: you can see what isn't working and choose better, with no guide.
+5. On reaching the next layer, earlier choices are easy to repeat or remember, or matter less by then.
+
+### 14.1 What the game asks of the player today
+
+| Layer | Choice | Real choice? | Why or why not |
+|---|---|---|---|
+| Kingdom | Buildings | No | Everything gets built; only the order differs, and auto-build's Cheapest is close to optimal |
+| Kingdom | Lore | No | Same: all bought eventually, auto-study buys the cheapest |
+| Kingdom | Troops against city traits | Solved for you | The one designed Layer 0 puzzle (§4.5). Auto-recruit's Efficient mode buys the best power per cost against the current city's traits, and the army only grows, so the mix matters only at the margin |
+| Kingdom | Lairs, Settlers | No | Auto-raid takes the quickest lair; auto-settle founds whenever it can |
+| Refound | Starting race | Yes, weakly | Sets the region order and Fame variety, but its effect is hard to see, and auto-Refound picks the least-mastered race |
+| Refound | When to Refound | Yes, hidden | Set once as the auto threshold; nothing shows the rate (Fame per minute) to judge it by |
+| Refound | Fame upgrades | No | All capped, all bought eventually; only the order differs (auto-buy) |
+| Refound | Far Scouting levels | Yes, narrow | Mostly matters in challenges |
+| Ascension | Spellbooks and retorts | Yes, the strongest | The designed Layer 2 puzzle (§6.2), but see 14.2 (2): a retort's ×1.5–×3 is small next to the uncapped Insight lines |
+| Ascension | Spells, enchantments | No | Research is cheapest first, and every affordable enchantment gets cast |
+| Ascension | Insight upgrades | Mostly no | The exponential lines (Battle Magic, Arcane Power) are the obvious buys |
+| Planes | Army share for Myrror | Yes | One slider |
+| Planes | Boons (one of two) | Yes, small | ×1.3–×1.5, lasting one Planeshift |
+| Planes | Works, Essence upgrades | No | Auto-buy; exponential lines again |
+| Mastery | Challenges | Little | See TODO #22 and #28 |
+
+### 14.2 Why it feels like watching
+
+1. **Most purchases are a to-do list, not a choice.** Buildings, Lore, spells, enchantments and the Fame tree are all bought in the end. Only the order differs, and buying the cheapest first is close to optimal. The player's part is to click the next affordable thing, and automation soon takes that over.
+2. **Uncapped exponentials drown the real choices.** Battle Magic (×2 army power per level, 100 levels), Arcane Power, Echo of Arcanus (×2 per level), Veteran Officers and the like multiply power by ×1.5–×2 per level, at costs growing ×1.6–×1.8 per level. Most of each layer's currency goes into them, so a few more levels (a little more waiting) outweigh any ×1.5–×3 choice. Criterion 1 fails: the right choice isn't obviously faster, and the wrong one costs nothing that waiting doesn't fix.
+3. **Automation solves the puzzles before the player does.** Pillar 3 (§2) says what you've figured out becomes automation. But the automations are greedy optimisers (best power per cost, cheapest first), unlocked by counting resets rather than by the player having solved anything. Even troops against traits, the puzzle Layer 0 was built around, is solved by auto-recruit.
+4. **Little feedback to judge a choice by.** Criterion 4 needs the game to show what isn't working. It shows the current state, but not why the last kingdom was slow, or what Refounding now would earn per minute. The Statistics times are a start.
+
+The layers make this worse: each one multiplies everything below it, so lower-layer choices fade. Criterion 5 accepts that, as long as they're remembered or matter less by then.
+
+### 14.3 Principles
+
+| # | Principle | Criteria |
+|---|---|---|
+| P1 | **Fewer, bigger choices.** A good choice should be worth ×2 or more, not ×1.1. | 1 |
+| P2 | **Exclusive or budgeted.** Picking A means not picking B, at least for now. A list you'll finish anyway isn't a choice. | 1 |
+| P3 | **Cheap to change.** Choices are made at resets or can be respecced, and a wrong one shows within minutes. | 2, 3 |
+| P4 | **Readable cause and effect.** The game reports how a choice did (at each reset, with before and after numbers). | 2, 4 |
+| P5 | **Remembered.** A choice made once is offered again as the default, as the planned profile and the Chronicle are now. This keeps §5's replay rule: replays stay free of re-thinking. | 5 |
+| P6 | **Automation carries out your plan, not its own.** Automation follows the choices you made instead of making them for you. | the feel of playing |
+| P7 | **Waiting doesn't replace thinking.** Grinding can catch up, but much more slowly than choosing well; otherwise P1 fails. | 1 |
+
+### 14.4 Proposals
+
+**A. Feedback** (low risk, and useful whatever else changes)
+
+- **A1. A kingdom report at each reset:** how long it took, where it stalled (which city, its traits, how your army matched them), and what grew fastest. Kept in Statistics. (2, 4)
+- **A2. Prestige timing:** "Fame per minute if you Refound now" and when it peaked, and the same for Insight and Essence. The auto thresholds could offer "at the best rate". A classic incremental tool. (4)
+- **A3. Profile preview:** the Ascension planner shows what the planned profile changes (×mana, ×army power and so on) compared with the current one. (4)
+
+**B. Make the existing choices matter more**
+
+- **B1. Routes:** at each region boundary, choose which of two neighbouring races' regions comes next, instead of a fixed order set by the starting race. The race and army mix then matter for the path you pick, and the Chronicle remembers it. Medium effort. (1, 3, 5)
+- **B2. Sharper traits and an army doctrine:** stronger trait multipliers (e.g. ×0.25 and ×3), and auto-recruit follows a mix you set (e.g. 40% siege) instead of choosing greedily. The greedy Efficient mode becomes a later unlock. (1, 2, 6)
+- **B3. Rein in the exponential lines:** cap or slow Battle Magic, Arcane Power, Echo of Arcanus, Veteran Officers and the like, and move that power into choice-dependent bonuses (retorts, books, races and boons that grow with the layer). The big rebalance; needs the simulator. High risk. (1, 7)
+
+**C. New choices of the right shape**
+
+- **C1. Kingdom focus:** at each Refound, pick one of 3–4 focuses (Conquest, Trade, Scholarship, Settlement), e.g. ×4 to its area and ×0.75 to the rest. Free to change each Refound, remembered, and reported by A1. (1, 2, 3, 5)
+- **C2. The Fame tree as a budget:** Fame buys ranks you allocate and can respec at each Refound, instead of buying everything. Changes a core loop. (1, 2, 3, 5)
+- **C3. Boons with weight:** Myrror boons that last until Mastery, or are bigger (×2), so the pick is felt. (1)
+
+**D. Measuring it** (the answer to "no real way to measure success")
+
+The balance simulator can play the same stretch with different choices (each starting race, each wizard profile, each army doctrine) and report how long each takes. That gives a **choice spread** per choice: how much faster the best option is than the worst. Targets, from P1 and P7: the best option is ×1.5–×3 faster, and the worst still progresses. This doesn't measure feel, but it shows whether a choice *can* matter, and repeating it after each change shows whether the change worked.
+
+### 14.5 Suggested order
+
+1. **D:** measure the choice spread of what exists now (race, wizard profile, army mix). That says whether B3 is needed, and how much.
+2. **A1 and A2:** the feedback. Cheap, safe, and it makes every later choice readable.
+3. **One new choice as a play experiment:** C1 (kingdom focus) or B1 (routes). Keep it if it feels like playing.
+4. **Then decide on B3 or C2**, the bigger rebalances, from the measurements and the experiment.
+
+### 14.6 Open questions
+
+1. Is it acceptable that automation stops making choices for you (P6)? Some automations (Efficient recruit, Cheapest build) would become later unlocks or follow your settings, so the game gets a little less idle.
+2. How much active play is wanted (§13, question 5)? These proposals keep decisions at resets and in settings, never time-critical.

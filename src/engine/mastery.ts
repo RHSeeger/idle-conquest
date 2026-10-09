@@ -18,7 +18,7 @@ import { insightOnAscend, performAscension } from "./ascension";
 import { registerCollector } from "./collect";
 import { D, Decimal } from "./decimal";
 import { Stats } from "./effects";
-import { fmtInt } from "./format";
+import { fmtInt, fmtTime } from "./format";
 import { freeRetortSlots, knowsSpell, manaRate, retortPicks, totalPicks, validateBooks } from "./magic";
 import { fitProfile, resetLayersBelowPlanes } from "./planes";
 import { applyRunStart } from "./prestige";
@@ -178,6 +178,7 @@ export function startChallenge(state: GameState, wizard: string): boolean {
     m.challenge = wizard;
     m.challengeStartedAt = state.meta.playtime;
     m.challengeDone = false;
+    m.challengeWonIn = null;
     const { books, retorts } = challengeProfile(state, def);
     performAscension(state, books, state.run.startingRace, retorts, {
         insight,
@@ -221,14 +222,20 @@ function endChallenge(state: GameState, completed: boolean): void {
     const wizard = m.challenge!;
     const def = CHALLENGES[wizard];
     const insight = insightOnAscend(state);
+    const wonIn = m.challengeWonIn;
     m.challenge = null;
     m.challengeDone = false;
+    m.challengeWonIn = null;
     if (completed) {
         const replay = m.completed.includes(wizard);
         if (!replay) m.completed.push(wizard);
-        m.notice = replay
-            ? `${wizard}'s challenge is complete again! Its reward (${def.reward}) was already yours.`
-            : `${wizard}'s challenge is complete! Your reward, for good: ${def.reward}.`;
+        const best = m.challengeBest[wizard];
+        const time =
+            wonIn === null ? "" : ` Won in ${fmtTime(wonIn)}` + (replay ? (wonIn <= best ? ", your best yet." : `; your best is ${fmtTime(best)}.`) : ".");
+        m.notice =
+            (replay
+                ? `${wizard}'s challenge is complete again! Its reward (${def.reward}) was already yours.`
+                : `${wizard}'s challenge is complete! Your reward, for good: ${def.reward}.`) + time;
     }
     const a = state.ascension;
     let books = a.planBooks;

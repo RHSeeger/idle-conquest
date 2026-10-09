@@ -25,6 +25,7 @@ import { challengeBans } from "../content/challenges";
 import { grantHeroXp } from "./heroes";
 import { getStats, racesInRealm } from "./collect";
 import { D, Decimal, ONE, ZERO } from "./decimal";
+import { fmtTime } from "./format";
 import { roleStat, Stats, unitPowerStat } from "./effects";
 import { effectiveTraits, isWizard, knowsSpell } from "./magic";
 import { activeFameLevel, renownLimit, scoutingInUse } from "./prestige";
@@ -251,7 +252,20 @@ export function conquer(state: GameState, target: FrontierCity, quiet = false, s
         defeatWizard(state, target.fortressOf);
         run.fortressesTaken++;
         // a challenge's goal: every rival Fortress of Arcanus in one run (then it can be completed, Mastery tab; it stays won through Refounds)
-        if (state.mastery.challenge && run.fortressesTaken >= ARCANUS_WIZARDS) state.mastery.challengeDone = true;
+        const m = state.mastery;
+        if (m.challenge && !m.challengeDone && run.fortressesTaken >= ARCANUS_WIZARDS) {
+            m.challengeDone = true;
+            m.challengeWonIn = state.meta.playtime - m.challengeStartedAt;
+            const best = m.challengeBest[m.challenge];
+            const record = best === undefined || m.challengeWonIn < best;
+            if (record) m.challengeBest[m.challenge] = m.challengeWonIn;
+            log(
+                state,
+                "milestone",
+                `${m.challenge}'s challenge is won, in ${fmtTime(m.challengeWonIn)}` +
+                    (best === undefined ? "." : record ? ` (a new best, from ${fmtTime(best)}).` : ` (best ${fmtTime(best)}).`),
+            );
+        }
     }
     bump(state);
     if (quiet && !isNewRace) {

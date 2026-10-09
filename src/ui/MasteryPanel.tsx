@@ -208,6 +208,7 @@ function ChallengesSection() {
                             <div class="card-text">
                                 <b>Reward:</b> <span class={done ? "good" : ""}>{c.reward}</span>.
                             </div>
+                            {m.challengeBest[w] !== undefined && <div class="card-text hint">Best time: {fmtTime(m.challengeBest[w])}</div>}
                             {!active && (
                                 <div class="card-cost">
                                     <button disabled={!canStartChallenge(state, w)} title={blocked ?? undefined} onClick={() => doStart(w)}>
@@ -239,7 +240,9 @@ function CurrentChallenge() {
     return (
         <div class="challenge-current">
             <p>
-                <b>{c.wizard}'s challenge</b> · {fmtTime(state.meta.playtime - m.challengeStartedAt)} so far · Fortresses in this kingdom:{" "}
+                <b>{c.wizard}'s challenge</b> ·{" "}
+                {m.challengeWonIn !== null ? `won in ${fmtTime(m.challengeWonIn)}` : `${fmtTime(state.meta.playtime - m.challengeStartedAt)} so far`}
+                {m.challengeBest[c.wizard] !== undefined && ` (best ${fmtTime(m.challengeBest[c.wizard])})`} · Fortresses in this kingdom:{" "}
                 <b>
                     {state.run.fortressesTaken} of {ARCANUS_WIZARDS}
                 </b>

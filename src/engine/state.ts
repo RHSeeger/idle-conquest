@@ -263,8 +263,12 @@ export interface MasteryState {
     challengeStartedAt: number;
     /** The challenge's goal was reached; it ends (an Ascension back) at the next tick */
     challengeDone: boolean;
+    /** How long the current challenge took to win (seconds from accepting it), once won */
+    challengeWonIn: number | null;
     /** Challenges completed */
     completed: string[];
+    /** The fastest win of each challenge, in seconds (a reason to replay one) */
+    challengeBest: Record<string, number>;
     /** A message for the player, shown once (a challenge completed) */
     notice: string | null;
 }
@@ -516,7 +520,9 @@ export function newGame(now = Date.now()): GameState {
             challenge: null,
             challengeStartedAt: 0,
             challengeDone: false,
+            challengeWonIn: null,
             completed: [],
+            challengeBest: {},
             notice: null,
         },
         records: { totalRefounds: 0, totalAscensions: 0, totalPlaneshifts: 0, fastestToWall: null, history: [], layers: newLayerTimes() },

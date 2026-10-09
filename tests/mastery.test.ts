@@ -192,6 +192,32 @@ describe("Challenge Wizards", () => {
         expect(getStats(state).num("explore.speed")).toBeCloseTo((before / 2) * 1.5);
     });
 
+    it("keep the fastest win of each, and say when a replay beats it", () => {
+        const state = master();
+        const win = (seconds: number) => {
+            startChallenge(state, "Raven");
+            state.meta.playtime += seconds;
+            state.run.fortressesTaken = 3;
+            conquer(state, { ...currentTarget(state)!, fortressOf: "Kali" });
+            expect(state.mastery.challengeWonIn).toBe(seconds);
+            // the clock stops at the win, not when it's completed
+            state.meta.playtime += 500;
+            completeChallenge(state);
+        };
+        win(3000);
+        expect(state.mastery.challengeBest).toEqual({ Raven: 3000 });
+        expect(state.mastery.notice).toContain("Won in");
+        win(4000);
+        expect(state.mastery.challengeBest.Raven).toBe(3000);
+        expect(state.mastery.notice).toContain("your best is");
+        win(2000);
+        expect(state.mastery.challengeBest.Raven).toBe(2000);
+        expect(state.mastery.notice).toContain("your best yet");
+        expect(state.mastery.challengeWonIn).toBeNull();
+        // kept in saves
+        expect(deserialize(serialize(state)).mastery.challengeBest).toEqual({ Raven: 2000 });
+    });
+
     it("can't be completed before the goal is met; auto-Ascend completes a won one", () => {
         const state = master();
         startChallenge(state, "Raven");

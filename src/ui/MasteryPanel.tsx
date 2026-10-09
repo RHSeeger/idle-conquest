@@ -153,7 +153,8 @@ function ChallengesSection() {
                 <h2>Challenge Wizards</h2>
                 <p class="hint">
                     After your first Mastery, each of the 14 rival wizards offers a challenge: one Ascension as that wizard,
-                    under their rule, for a reward that lasts forever.
+                    under their rule, for a reward that lasts forever. They're easier once you've powered up again after
+                    the Mastery.
                 </p>
             </section>
         );
@@ -165,7 +166,7 @@ function ChallengesSection() {
         const text = [
             replay ? `Replay ${wizard}'s challenge?` : `Accept ${wizard}'s challenge?`,
             c.lore,
-            `This is an Ascension: your current Ascension ends (with Insight if its gate is met), and a new one begins as ${wizard}, with their books and retort.`,
+            `This is an Ascension: your current Ascension ends (with Insight if its gate is met), and a new one begins as ${wizard}, with their books and retort. You keep your Insight, Planar Essence and their upgrades: the more of them you've built up, the easier it is.`,
             `Rule: ${c.rule}.`,
             `Goal: take all ${ARCANUS_WIZARDS} rival Fortresses of Arcanus in one kingdom. Refounds are allowed; Ascending and Planeshifting aren't. Myrror pauses meanwhile.`,
             replay ? `Reward: ${c.reward} (already yours; a replay doesn't give it again).` : `Reward: ${c.reward}.`,
@@ -181,6 +182,12 @@ function ChallengesSection() {
                 One Ascension as a rival wizard, with their books, retort and rule. Goal: take all {ARCANUS_WIZARDS} rival
                 Fortresses of Arcanus in one kingdom. Refounds are allowed; Ascending and Planeshifting aren't, and Myrror
                 pauses (its holdings, works and boons still count). Rewards last forever.
+            </p>
+            <p class="hint">
+                <b>Power up first.</b> A challenge isn't a fresh start like claiming a Mastery: you take your Insight, Planar
+                Essence and their upgrades into it, and they're what carry you through. Right after a Mastery you have
+                little of them, so challenges are slow and hard. Ascend and Planeshift a few times first, and come back
+                stronger.
             </p>
             {m.challenge && <CurrentChallenge />}
             <div class="cards challenges">

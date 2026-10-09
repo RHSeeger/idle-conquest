@@ -129,7 +129,7 @@ export function claimMastery(state: GameState, startRace: RaceId = state.run.sta
         state,
         "prestige",
         `Mastery ${m.masteries} claimed. The worlds begin anew, but they remember their Master: ×${fmtInt(masteryBonus(state))} production, gold, knowledge and mana.` +
-            (m.masteries === 1 ? " The Challenge Wizards await you (Mastery tab)." : ""),
+            (m.masteries === 1 ? " The Challenge Wizards await you (Mastery tab): they're easier once you've powered up again." : ""),
     );
     state.run = newRun(startRace);
     applyRunStart(state);

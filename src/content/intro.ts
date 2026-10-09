@@ -48,7 +48,7 @@ export const TAB_INTROS: Record<string, { title: string; text: string }> = {
     },
     mastery: {
         title: "Mastery",
-        text: "The end of the journey: once every rival wizard on both planes has fallen, research and channel the Spell of Mastery to win. Then claim a Mastery, start the worlds anew, and take on the Challenge Wizards.",
+        text: "The end of the journey: once every rival wizard on both planes has fallen, research and channel the Spell of Mastery to win. Then claim a Mastery, start the worlds anew, power up again, and take on the Challenge Wizards.",
     },
     stats: {
         title: "Statistics",

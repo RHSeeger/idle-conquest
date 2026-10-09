@@ -79,6 +79,13 @@ Items you've flagged as needing work. They're recorded here and picked up only w
 
 ## Work done
 
+### At a glance and Doctrine layout (2026-10-09, from play-testing)
+
+- **At a glance** lines no longer shift: two fixed lists, the kingdom's systems (Army, Building, Lore, Settlers, Heroes, Expeditions) on the left and the layers above (Refound, Magic, Rivals, Ascension, Myrror, Mastery) on the right. Before, one grid filled row by row, so any line appearing moved every line after it to the other column. The Refound line also stays once you're a wizard (it vanished after each Ascension).
+- Each line's name is a link to its tab; the "(X tab)" notes in the lines are gone.
+- **Next building was wrong before any Refound.** With no Chronicle, Chronicle-mode auto-build (and the glance line) followed the fixed `BUILDING_ORDER`, so it named the Adventurers' Guild while cheaper buildings were coming sooner. `buildQueue` in Chronicle mode now lists the Chronicle's buildings and then the rest cheapest-soonest first, so with no Chronicle it's the Cheapest order. Before auto-build is unlocked, the glance line uses the Cheapest order. Tested.
+- **Doctrine** is its own section on the Army tab, collapsible by its heading. It starts collapsed while auto-recruit is on Most efficient; once toggled, the choice is remembered per browser (`useStoredOpen` in `ui/components.tsx`, which At a glance now uses too, so its old open/closed memory resets once).
+
 ### Magic tab clarity (2026-10-09, from play-testing)
 
 - An enchantment that can't be cast says why, under its Cast button and in its tooltip: mana short, not enough free casting skill (with how much is free), or a challenge rule (`enchantmentBlocker` in `engine/magic.ts`).

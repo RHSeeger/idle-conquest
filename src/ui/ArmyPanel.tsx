@@ -37,7 +37,7 @@ import { isExplorationUnlocked, lairPower, lairTarget, setArmyTarget, siteName }
 import { isWizard } from "../engine/magic";
 import { AutoMode, AutoToggle } from "./AutoToggle";
 import { HeroesSection } from "./HeroesSection";
-import { BreakdownView, Price, ProgressBar, RegionList, Tip } from "./components";
+import { BreakdownView, Price, ProgressBar, RegionList, Tip, useStoredOpen } from "./components";
 import { game } from "./game";
 
 const BUY_AMOUNTS: Settings["buyAmount"][] = [1, 10, 100, "next", "max"];
@@ -503,7 +503,6 @@ function Troops() {
                     Army power ×{fmt(stats.get("army.power"))}
                 </Tip>
             </div>
-            <Doctrine />
         </section>
     );
 }
@@ -531,15 +530,22 @@ function Doctrine() {
     const fare = (mix: Record<Role, number>) => ROLES.reduce((s, r) => s + mix[r] * avg[r], 0);
     const trainable = new Set(units.map((id) => UNITS[id].role));
     const best = ROLES.filter((r) => trainable.has(r)).sort((a, b) => avg[b] - avg[a])[0];
-    const following = isAutomationUnlocked(state, "units") && !(state.automation.unitMode === "efficient" && isEfficientRecruitUnlocked(state));
+    const efficient = state.automation.unitMode === "efficient" && isEfficientRecruitUnlocked(state);
+    const following = isAutomationUnlocked(state, "units") && !efficient;
+    // closed by default while auto-recruit is on Most efficient; the player's own choice is remembered
+    const [open, setOpen] = useStoredOpen("doctrine", !efficient);
+    if (units.length === 0) return null;
     return (
-        <>
-            <h3>
-                Doctrine{" "}
-                <span class="count">
-                    · {state.automation.doctrine ? "your mix" : "following your last kingdom's army until you change it"}
-                </span>
-            </h3>
+        <details class="section" open={open} onToggle={(e) => setOpen((e.currentTarget as HTMLDetailsElement).open)}>
+            <summary>
+                <h2>
+                    Doctrine{" "}
+                    <span class="count">
+                        · {state.automation.doctrine ? "your mix" : "following your last kingdom's army until you change it"}
+                        {efficient && " · auto-recruit is on Most efficient"}
+                    </span>
+                </h2>
+            </summary>
             <p class="hint">
                 City defenses favour some troops and punish others (hover a trait). Set how much of your army's power each
                 role should have
@@ -585,7 +591,7 @@ function Doctrine() {
                     {best && <span class="hint">Best here: {ROLE_NAMES[best]} (×{fmt(avg[best])} on average).</span>}
                 </p>
             )}
-        </>
+        </details>
     );
 }
 
@@ -606,6 +612,7 @@ export function ArmyPanel() {
         <div class="panel">
             <Campaign />
             <Troops />
+            <Doctrine />
             <HeroesSection />
         </div>
     );

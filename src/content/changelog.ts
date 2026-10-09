@@ -22,6 +22,8 @@ export const CHANGES: ChangeEntry[] = [
             "Planeshift needs a banished rival's Tower and the Rite of the Tower; expeditions no longer find Towers. A challenge is won by banishing all four rivals, and the Spell of Mastery needs all four banished in one Ascension.",
             "Myrror: five Towers of Wizardry stand on its frontier, and each one you take is another planar link. The links carry only so much of your army across, so past that point Myrror's own bonuses (Essence, works, boons) decide its pace. The two works of each resource now make each other dearer, and you can choose which ones auto-buy grows. The beachhead choice says what each race gives.",
             "Older saves keep their progress: wizards already defeated count as banished, and Myrror keeps its links.",
+            "At a glance: lines keep their places (your kingdom on the left, the layers above on the right), and each line's name takes you to its tab. Its next building is now the one you'll get soonest, rather than a fixed order, until a Chronicle says otherwise; auto-build's Chronicle mode does the same once the Chronicle's buildings are built.",
+            "Army tab: Doctrine has its own section, which you can collapse (it starts collapsed while auto-recruit is on Most efficient).",
             "Magic tab: an enchantment you can't cast says why (mana, free casting skill, or a challenge rule). Its checkbox is now labelled \"auto-cast\" and only appears once Auto-cast is unlocked; instants have none because Auto-cast casts them all whenever they're ready.",
         ],
     },

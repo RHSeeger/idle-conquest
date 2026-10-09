@@ -277,12 +277,36 @@ h3 {
     }
 }
 
-.panel section {
+.panel section,
+.panel details.section {
     background: var(--panel);
     border: 1px solid var(--border);
     border-radius: 6px;
     padding: 10px 12px;
     margin-bottom: 10px;
+}
+
+/* a collapsible section: its heading is the toggle */
+details.section > summary {
+    cursor: pointer;
+    list-style: none;
+}
+details.section > summary::-webkit-details-marker {
+    display: none;
+}
+details.section > summary h2 {
+    display: inline;
+    margin: 0;
+}
+details.section > summary h2::before {
+    content: "▸ ";
+    color: var(--muted);
+}
+details.section[open] > summary h2::before {
+    content: "▾ ";
+}
+details.section[open] > summary {
+    margin-bottom: 8px;
 }
 
 .row {
@@ -1157,16 +1181,21 @@ button.toggle.auto {
 .glance[open] summary {
     margin-bottom: 4px;
 }
-/* two columns on wide screens, to keep it short */
-.glance .overview {
+/* two columns on wide screens, to keep it short: the kingdom, then the layers above */
+.glance .overview-columns {
     display: grid;
     grid-template-columns: 1fr 1fr;
     column-gap: 24px;
+    align-items: start;
 }
 @media (max-width: 900px) {
-    .glance .overview {
+    .glance .overview-columns {
         grid-template-columns: 1fr;
     }
+}
+/* each line's label links to its tab */
+.glance button.ov-label {
+    text-align: left;
 }
 .glance .overview li {
     border-bottom: none;

@@ -254,7 +254,7 @@ export function App(props: { offline: OfflineSummary | null; initialTab?: string
                 </button>
             </header>
             <ResourceBar />
-            <Overview />
+            <Overview onOpen={(t) => setTab(t as TabId)} />
             <nav class="tabs">
                 {visible.map((t) => {
                     const attention = tabAttention(state, t.id);

@@ -244,22 +244,23 @@ function secondsToAffordBuilding(state: GameState, econ: { production: Decimal; 
 
 /**
  * Building order for auto-build:
- *  - "chronicle": the last run's build order first, then everything else
+ *  - "chronicle": the last run's build order first, then the rest as "cheapest"
+ *    orders them (so with no Chronicle yet, it's the same as "cheapest")
  *  - "cheapest": whatever can be bought (or rushed) now, cheapest first; then
  *    the rest by how soon current income affords them. So it always buys
  *    something when anything is affordable, and otherwise saves for the
  *    building it can get soonest.
+ * Only buildings not yet built and visible are listed.
  */
 export function buildQueue(state: GameState, mode = state.automation.buildMode): string[] {
-    if (mode === "cheapest") {
-        const econ = realmEconomy(state, getStats(state));
-        return BUILDING_ORDER.filter((id) => !state.run.buildings.includes(id) && isBuildingVisible(state, id))
-            .map((id) => ({ id, seconds: secondsToAffordBuilding(state, econ, id), price: rushPrice(state, id) }))
-            .sort((a, b) => a.seconds - b.seconds || a.price.cmp(b.price))
-            .map((x) => x.id);
-    }
-    const chronicle = state.prestige.chronicle.buildOrder.filter((id) => BUILDING_ORDER.includes(id));
-    return [...chronicle, ...BUILDING_ORDER.filter((id) => !chronicle.includes(id))];
+    const econ = realmEconomy(state, getStats(state));
+    const cheapest = BUILDING_ORDER.filter((id) => !state.run.buildings.includes(id) && isBuildingVisible(state, id))
+        .map((id) => ({ id, seconds: secondsToAffordBuilding(state, econ, id), price: rushPrice(state, id) }))
+        .sort((a, b) => a.seconds - b.seconds || a.price.cmp(b.price))
+        .map((x) => x.id);
+    if (mode === "cheapest") return cheapest;
+    const chronicle = state.prestige.chronicle.buildOrder.filter((id) => cheapest.includes(id));
+    return [...chronicle, ...cheapest.filter((id) => !chronicle.includes(id))];
 }
 
 /**

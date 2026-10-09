@@ -186,12 +186,19 @@ describe("Stall rule", () => {
 });
 
 describe("Auto-build order", () => {
-    it("follows the Chronicle first, then the default order", () => {
+    it("follows the Chronicle first, then the cheapest order", () => {
         const state = newGame(0);
         state.prestige.chronicle.buildOrder = ["smithy", "barracks"];
         const queue = buildQueue(state, "chronicle");
         expect(queue.slice(0, 2)).toEqual(["smithy", "barracks"]);
         expect(new Set(queue).size).toBe(queue.length);
+        expect(queue.slice(2)).toEqual(buildQueue(state, "cheapest").filter((id) => id !== "smithy" && id !== "barracks"));
+    });
+
+    it("with no Chronicle yet, is the cheapest order", () => {
+        const state = newGame(0);
+        state.prestige.chronicle.buildOrder = [];
+        expect(buildQueue(state, "chronicle")).toEqual(buildQueue(state, "cheapest"));
     });
 
     it("in cheapest mode, lists what is affordable now first, cheapest first", () => {

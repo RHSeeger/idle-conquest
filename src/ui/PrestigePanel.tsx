@@ -39,6 +39,7 @@ import { heroRefoundText } from "./HeroesSection";
 import { KingdomSections } from "./KingdomSections";
 import { GameState } from "../engine/state";
 import { ascensionRivals } from "../engine/wards";
+import { fameEchoAmount } from "../engine/ascension";
 
 /**
  * When to Refound: Fame per minute of this kingdom if you Refounded now, against
@@ -199,6 +200,8 @@ function FameTree() {
     const p = state.prestige;
     const branches: FameBranch[] = ["economy", "warfare", "legacy"];
     const working = fameUpgradesWork(state);
+    // only until the first Refound: after that the starting Fame is long mixed in
+    const echo = p.refounds === 0 && state.ascension.ascensions > 0 ? fameEchoAmount(state) : null;
     return (
         <section>
             <h2>
@@ -208,6 +211,13 @@ function FameTree() {
                     gold, knowledge and army power
                 </span>
             </h2>
+            {echo?.gt(0) && (
+                <p class="hint">
+                    Echo of Glory (Ascension milestone): this Ascension began with <b class="fame">{fmtInt(echo)}</b> Fame, a
+                    quarter of the {fmtInt(state.ascension.lastFameEarned)} you earned in the last one. It's yours to spend,
+                    but it wasn't earned in this Ascension, so it doesn't count toward the total or its bonus.
+                </p>
+            )}
             {p.fameDebt.gt(0) && (
                 <p class="hint">
                     Enduring Legacy: your Fame upgrades were kept through the Ascension. Earned Fame repays them first:{" "}

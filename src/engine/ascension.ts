@@ -145,6 +145,11 @@ export function hasAscensionMilestone(state: GameState, id: AscensionMilestoneId
     return !!m && effectiveAscensions(state) >= m.ascensions;
 }
 
+/** Echo of Glory: the Fame an Ascension starts with, a quarter of the Fame earned in the one before it */
+export function fameEchoAmount(state: GameState): Decimal {
+    return hasAscensionMilestone(state, "fameEcho") ? state.ascension.lastFameEarned.times(0.25).floor() : D(0);
+}
+
 /** Not during a challenge: completing or abandoning it is its own Ascension (Mastery tab) */
 export function canAscend(state: GameState): boolean {
     return !state.mastery.challenge && ascensionProgress(state).ready && insightOnAscend(state).gt(0);
@@ -238,12 +243,16 @@ export function performAscension(
         p.fameDebt = D(0);
     }
     p.fame = D(0);
-    if (hasAscensionMilestone(state, "fameEcho")) gainFame(state, a.lastFameEarned.times(0.25).floor());
+    const echo = fameEchoAmount(state);
+    gainFame(state, echo);
     p.refounds = 0;
     p.annals = annals;
     p.ascensionBestFrontier = 0;
 
     log(state, "prestige", opts.text);
+    if (echo.gt(0)) {
+        log(state, "milestone", `Echo of Glory: you begin with ${fmtInt(echo)} Fame, a quarter of the ${fmtInt(a.lastFameEarned)} you earned in the last Ascension.`);
+    }
     if (spellMemoryLevel(state) > 0) {
         const dormant = dormantSpells(state).length;
         log(

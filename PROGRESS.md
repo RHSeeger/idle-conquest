@@ -123,6 +123,10 @@ Items you've flagged as needing work. They're recorded here and picked up only w
 
 - The Heroes section printed the Refound sentence and the Ascend sentence, which are identical once Eternal Companions is also the Refound keeper (`refoundHeroKeeper`: it keeps at least as many as Hall of Heroes). `heroCarryText` now says it once, "when you Refound or Ascend". The Refound and Ascension panels still show their own sentence.
 
+### Echo of Glory's Fame unexplained (2026-10-10, from play-testing)
+
+- After an Ascension the Kingdom tab read "Fame 8 · 0 earned in total", which looked like a bug. It's Echo of Glory (Ascension milestone at 4, reached with 1 Ascension after a Planeshift via Planewalker's +3): 25% of last Ascension's Fame earned, given but not counted in `fameTotal`. Nothing said so. Now `fameEchoAmount` (ascension.ts) computes it, the Ascension logs "Echo of Glory: you begin with N Fame…", and the Kingdom tab's Fame heading has a note until the first Refound. No behaviour change.
+
 ### At a glance and Doctrine layout (2026-10-09, from play-testing)
 
 - **At a glance** lines no longer shift: two fixed lists, the kingdom's systems (Army, Building, Lore, Settlers, Heroes, Expeditions) on the left and the layers above (Refound, Research, Casting, Rivals, Ascension, Myrror, Mastery) on the right. Before, one grid filled row by row, so any line appearing moved every line after it to the other column. The Refound line also stays once you're a wizard (it vanished after each Ascension).

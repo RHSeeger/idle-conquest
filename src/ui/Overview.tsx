@@ -61,6 +61,7 @@ const AUTO_NAMES: Partial<Record<AutomationKind, string>> = {
     settlers: "Auto-settle",
     lairs: "Auto-raid",
     research: "Auto-research",
+    cast: "Auto-cast",
     refound: "Auto-Refound",
     ascend: "Auto-Ascend",
     works: "Myrran works auto-buy",
@@ -191,7 +192,7 @@ export function Overview(props: { onOpen: OpenTab }) {
                     </Line>
                 )}
                 {isWizard(state) && (
-                    <Line icon="✧" label="Magic" tab="magic" onOpen={onOpen} auto="research">
+                    <Line icon="✧" label="Research" tab="magic" onOpen={onOpen} auto="research">
                         {nextSpell ? (
                             <>
                                 next spell: <b>{nextSpell.name}</b>,{" "}
@@ -206,7 +207,11 @@ export function Overview(props: { onOpen: OpenTab }) {
                         ) : (
                             "every spell you can research is known"
                         )}
-                        {` · ${run.enchantments.length} enchantment${run.enchantments.length === 1 ? "" : "s"} active`}
+                    </Line>
+                )}
+                {isWizard(state) && (
+                    <Line icon="✺" label="Casting" tab="magic" onOpen={onOpen} auto="cast">
+                        {run.enchantments.length} enchantment{run.enchantments.length === 1 ? "" : "s"} active
                     </Line>
                 )}
                 {isWizard(state) && (

@@ -30,7 +30,7 @@ import { tabAttention } from "./attention";
 import { isWizard, manaRate } from "../engine/magic";
 import { Overview } from "./Overview";
 import { PlanesPanel } from "./PlanesPanel";
-import { planeshiftProgress } from "../engine/ascension";
+import { insightOnAscend, planeshiftProgress } from "../engine/ascension";
 import { essenceOnPlaneshift, isMyrrorOpen } from "../engine/planes";
 
 type TabId =
@@ -179,14 +179,14 @@ function ResourceBar() {
                 <div class="resource fame">
                     <span class="resource-name">✦ Fame</span>
                     <span class="resource-amount">{fmtInt(state.prestige.fame)}</span>
-                    <span class="resource-rate">+{fmtInt(fameOnRefound(state))} on refound</span>
+                    <span class="resource-rate">+{fmtInt(fameOnRefound(state))} on Refound</span>
                 </div>
             )}
             {(state.ascension.insightTotal.gt(0) || state.planes.planeshifts > 0) && (
                 <div class="resource insight">
                     <span class="resource-name">◈ Insight</span>
                     <span class="resource-amount">{fmtInt(state.ascension.insight)}</span>
-                    <span class="resource-rate">{state.ascension.ascensions} Ascension{state.ascension.ascensions === 1 ? "" : "s"}</span>
+                    <span class="resource-rate">+{fmtInt(insightOnAscend(state))} on Ascension</span>
                 </div>
             )}
             {state.planes.planeshifts > 0 && (

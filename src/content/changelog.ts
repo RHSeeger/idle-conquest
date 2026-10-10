@@ -35,7 +35,7 @@ export const CHANGES: ChangeEntry[] = [
             "Fixed: the Ascension tab's \"next Ascension's rivals\" showed every rival's wards at the first rival's strength; each is now as strong as it will be in that Ascension.",
             "Fixed: the Heroes section said the same Eternal Companions sentence twice, once for Refound and once for Ascend; it now says it once, for both.",
             "The Fame that Echo of Glory (Ascension milestone) starts an Ascension with is now explained: a line in the log when you Ascend, and a note on the Kingdom tab until your first Refound, since it isn't counted in Fame earned.",
-            "Fixed: the Fame box at the top of the page disappeared after an Ascension until you could Refound, even with Fame to spend. It now stays once you have Ascended or Planeshifted. The Insight box says \"1 Ascension\", not \"1 ascensions\".",
+            "Fixed: the Fame box at the top of the page disappeared after an Ascension until you could Refound, even with Fame to spend. It now stays once you have Ascended or Planeshifted. The Insight box now shows the Insight you'd get if you Ascended now, as the Fame and Essence boxes do for Refound and Planeshift, instead of your number of Ascensions.",
         ],
     },
     {

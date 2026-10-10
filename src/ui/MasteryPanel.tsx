@@ -35,6 +35,7 @@ import {
 import { GameState } from "../engine/state";
 import { banishedCount } from "../engine/wards";
 import { Price, ProgressBar } from "./components";
+import { askConfirm } from "./Confirm";
 import { game } from "./game";
 
 const check = (ok: boolean) => <span class={ok ? "good" : "bad"}>{ok ? "✓" : "✗"}</span>;
@@ -44,7 +45,7 @@ const CLAIM_TEXT =
     "Every milestone counts as earned, so automation runs from the start.";
 
 function doClaim(state: GameState) {
-    if (confirm(`Claim your Mastery?\n\n${CLAIM_TEXT}`)) claimMastery(state);
+    askConfirm({ title: "Claim your Mastery?", tone: "mastery", confirm: "Claim Mastery", body: [CLAIM_TEXT], onConfirm: () => claimMastery(state) });
 }
 
 export function isMasteryTabVisible(state: GameState): boolean {
@@ -164,15 +165,27 @@ function ChallengesSection() {
     const doStart = (wizard: string) => {
         const c = CHALLENGES[wizard];
         const replay = m.completed.includes(wizard);
-        const text = [
-            replay ? `Replay ${wizard}'s challenge?` : `Accept ${wizard}'s challenge?`,
-            c.lore,
-            `This is an Ascension: your current Ascension ends (with Insight if its gate is met), and a new one begins as ${wizard}, with their books and retort. You keep your Insight, Planar Essence and their upgrades: the more of them you've built up, the easier it is.`,
-            `Rule: ${c.rule}.`,
-            `Goal: banish all ${ARCANUS_WIZARDS} rival wizards of Arcanus by breaking their wards (Magic tab). Refounds are allowed and keep the progress; Ascending and Planeshifting aren't. Myrror pauses meanwhile.`,
-            replay ? `Reward: ${c.reward} (already yours; a replay doesn't give it again).` : `Reward: ${c.reward}.`,
-        ].join("\n\n");
-        if (confirm(text)) startChallenge(state, wizard);
+        askConfirm({
+            title: replay ? `Replay ${wizard}'s challenge?` : `Accept ${wizard}'s challenge?`,
+            tone: "mastery",
+            confirm: replay ? "Replay challenge" : "Accept challenge",
+            body: [
+                <p class="challenge-lore">{c.lore}</p>,
+                `This is an Ascension: your current Ascension ends (with Insight if its gate is met), and a new one begins as ${wizard}, with their books and retort. You keep your Insight, Planar Essence and their upgrades: the more of them you've built up, the easier it is.`,
+                <p>
+                    <b>Rule:</b> {c.rule}.
+                </p>,
+                <p>
+                    <b>Goal:</b> banish all {ARCANUS_WIZARDS} rival wizards of Arcanus by breaking their wards (Magic tab). Refounds are allowed and
+                    keep the progress; Ascending and Planeshifting aren't. Myrror pauses meanwhile.
+                </p>,
+                <p>
+                    <b>Reward:</b> {c.reward}
+                    {replay ? " (already yours; a replay doesn't give it again)." : "."}
+                </p>,
+            ],
+            onConfirm: () => startChallenge(state, wizard),
+        });
     };
     return (
         <section>
@@ -238,9 +251,13 @@ function CurrentChallenge() {
     const m = state.mastery;
     const c = CHALLENGES[m.challenge!];
     const doAbandon = () => {
-        if (confirm(`Abandon ${c.wizard}'s challenge? You Ascend back to your own profile (with Insight if the Ascension gate is met).`)) {
-            abandonChallenge(state);
-        }
+        askConfirm({
+            title: `Abandon ${c.wizard}'s challenge?`,
+            danger: true,
+            confirm: "Abandon",
+            body: ["You Ascend back to your own profile (with Insight if the Ascension gate is met)."],
+            onConfirm: () => abandonChallenge(state),
+        });
     };
     const won = canCompleteChallenge(state);
     const insight = insightOnAscend(state);
@@ -313,9 +330,8 @@ export function Victory() {
     const m = state.mastery;
     if (!m.cast || m.victorySeen || !m.victory) return null;
     const v = m.victory;
-    const claim = () => {
-        if (confirm(`Claim your Mastery now?\n\n${CLAIM_TEXT}`)) claimMastery(state);
-    };
+    const claim = () =>
+        askConfirm({ title: "Claim your Mastery now?", tone: "mastery", confirm: "Claim Mastery", body: [CLAIM_TEXT], onConfirm: () => claimMastery(state) });
     return (
         <div class="modal-backdrop">
             <div class="modal victory">

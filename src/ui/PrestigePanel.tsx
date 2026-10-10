@@ -31,6 +31,7 @@ import {
 } from "../engine/prestige";
 import { SCOUTING_ALL } from "../engine/state";
 import { Tip } from "./components";
+import { askConfirm } from "./Confirm";
 import { game } from "./game";
 import { AutoMode, AutoPrestige, AutoToggle, ModeOption } from "./AutoToggle";
 import { isAutomationUnlocked, nextFameChronicleStep } from "../engine/automation";
@@ -74,13 +75,17 @@ function RefoundSection() {
 
     const doRefound = () => {
         const full = fameWithFullTribute(state);
-        const gain =
-            (fame.gt(0) ? `for +${fmtInt(fame)} Fame` : "for no Fame") +
-            (full.gt(fame) ? ` (waiting ${fmtTime(tributeSecondsLeft(state))} for the full tribute would give ${fmtInt(full)})` : "") +
-            (earnsMastery(state) ? "" : `, and no Mastery for the ${RACES[state.run.startingRace].plural} (no city taken by force)`);
-        if (confirm(`Refound your civilization as ${RACES[raceForPlan].plural}? This kingdom's progress will be reset ${gain}.`)) {
-            refound(state, raceForPlan);
-        }
+        askConfirm({
+            title: `Refound as ${RACES[raceForPlan].plural}?`,
+            tone: "refound",
+            confirm: fame.gt(0) ? `Refound (+${fmtInt(fame)} Fame)` : "Refound (no Fame)",
+            body: [
+                `This kingdom's progress is reset ${fame.gt(0) ? `for +${fmtInt(fame)} Fame` : "for no Fame"}.`,
+                full.gt(fame) ? `Waiting ${fmtTime(tributeSecondsLeft(state))} for the full tribute would give ${fmtInt(full)}.` : "",
+                earnsMastery(state) ? "" : `No Mastery for the ${RACES[state.run.startingRace].plural}: no city was taken by force.`,
+            ],
+            onConfirm: () => refound(state, raceForPlan),
+        });
     };
     const run = state.run;
     const tribute = tributeShare(state);

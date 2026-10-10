@@ -59,6 +59,7 @@ import {
 } from "../engine/planes";
 import { profileText } from "./AscensionPanel";
 import { ProgressBar, RegionList, Tip } from "./components";
+import { askConfirm } from "./Confirm";
 import { game } from "./game";
 import { TRAITS } from "../content/traits";
 
@@ -75,12 +76,17 @@ function PlaneshiftSection() {
     const check = (ok: boolean) => <span class={ok ? "good" : "bad"}>{ok ? "✓" : "✗"}</span>;
 
     const doShift = () => {
-        const text = [
-            `Planeshift, opening Myrror among the ${RACES[beachhead].plural}?`,
-            `Your kingdom, Fame, refounds, Insight, Insight upgrades, Ascensions and spells reset${pl.myrror ? ", and so does this Myrror campaign (with its resources, works and boons)" : ""}.`,
-            `You stay a Wizard (${profileText(profile.books, profile.retorts)}) and gain ${fmtInt(essence)} Planar Essence.`,
-        ].join("\n\n");
-        if (confirm(text)) planeshift(state, beachhead, startRace);
+        askConfirm({
+            title: "Planeshift?",
+            tone: "planeshift",
+            confirm: `Planeshift (+${fmtInt(essence)} Essence)`,
+            body: [
+                `Myrror opens among the ${RACES[beachhead].plural}.`,
+                `Your kingdom, Fame, refounds, Insight, Insight upgrades, Ascensions and spells reset${pl.myrror ? ", and so does this Myrror campaign (with its resources, works and boons)" : ""}.`,
+                `You stay a Wizard (${profileText(profile.books, profile.retorts)}) and gain ${fmtInt(essence)} Planar Essence.`,
+            ],
+            onConfirm: () => planeshift(state, beachhead, startRace),
+        });
     };
 
     return (

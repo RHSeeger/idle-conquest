@@ -3,6 +3,7 @@ import { D } from "../engine/decimal";
 import { clearStorage, exportSave, importSave, saveToStorage } from "../engine/save";
 import { bump, newGame } from "../engine/state";
 import { simulate } from "../engine/tick";
+import { askConfirm } from "./Confirm";
 import { game, setGame } from "./game";
 
 /** e.g. "idle-conquest-2026-10-08-1105.txt" (local time) */
@@ -17,28 +18,31 @@ export function OptionsPanel() {
     const [importText, setImportText] = useState("");
     const [message, setMessage] = useState("");
 
-    /** Replaces the current game with a save's text (pasted or from a file); true if it loaded */
-    const loadSave = (text: string, source: string): boolean => {
-        let loaded;
+    /** Replaces the current game with a save's text (pasted or from a file), once confirmed; then runs `onLoaded` */
+    const loadSave = (text: string, source: string, onLoaded?: () => void): void => {
+        let loaded: ReturnType<typeof importSave>;
         try {
             loaded = importSave(text);
         } catch (e) {
             setMessage(`Could not read that save (${source}): ` + (e as Error).message);
-            return false;
+            return;
         }
-        if (!confirm("Replace your current game with this save? Your current progress will be lost unless you've exported it.")) {
-            return false;
-        }
-        loaded.meta.lastTick = Date.now();
-        setGame(loaded);
-        saveToStorage(loaded);
-        setMessage(`Save loaded (${source}).`);
-        return true;
+        askConfirm({
+            title: "Replace your current game?",
+            danger: true,
+            confirm: "Load this save",
+            body: [`Loading the save (${source}) replaces your current game. Your current progress will be lost unless you've exported it.`],
+            onConfirm: () => {
+                loaded.meta.lastTick = Date.now();
+                setGame(loaded);
+                saveToStorage(loaded);
+                setMessage(`Save loaded (${source}).`);
+                onLoaded?.();
+            },
+        });
     };
 
-    const doImport = () => {
-        if (loadSave(importText, "pasted text")) setImportText("");
-    };
+    const doImport = () => loadSave(importText, "pasted text", () => setImportText(""));
 
     const downloadSave = () => {
         const blob = new Blob([exportSave(state)], { type: "text/plain" });
@@ -62,13 +66,19 @@ export function OptionsPanel() {
     };
 
     const hardReset = () => {
-        if (confirm("Erase ALL progress, including prestige? This cannot be undone.")) {
-            clearStorage();
-            const fresh = newGame();
-            setGame(fresh);
-            saveToStorage(fresh);
-            setMessage("Game reset.");
-        }
+        askConfirm({
+            title: "Erase all progress?",
+            danger: true,
+            confirm: "Erase everything",
+            body: ["Everything goes, including every prestige layer, Mastery and challenge. This cannot be undone. Export your save first if you might want it back."],
+            onConfirm: () => {
+                clearStorage();
+                const fresh = newGame();
+                setGame(fresh);
+                saveToStorage(fresh);
+                setMessage("Game reset.");
+            },
+        });
     };
 
     return (

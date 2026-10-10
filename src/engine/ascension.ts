@@ -79,17 +79,48 @@ export const INSIGHT_WARD_POWER = 2;
  * The contest is how well you did as a wizard, so it weighs the most.
  */
 export function insightOnAscend(state: GameState): Decimal {
-    if (!ascensionProgress(state).ready) {
-        return D(0);
-    }
+    return insightBreakdown(state).total;
+}
+
+/** Every factor of insightOnAscend, for showing the sum beside the Ascend button */
+export interface InsightBreakdown {
+    /** Fame earned this Ascension, plus what refounding now would give */
+    fame: number;
+    /** √(fame / 10), softcapped above INSIGHT_FAME_SOFTCAP */
+    famePart: number;
+    fameSoftcapped: boolean;
+    spellbooks: number;
+    /** 1 + 0.25 × spellbooks */
+    booksMult: number;
+    /** Rivals banished, plus the share of the current rival's wards worn down */
+    contest: number;
+    /** (1 + contest)^INSIGHT_WARD_POWER */
+    contestMult: number;
+    /** famePart × booksMult × contestMult, before the softcap */
+    raw: number;
+    softcapped: boolean;
+    /** Insight multipliers (upgrades, retorts, Mastery…) */
+    mult: number;
+    ready: boolean;
+    total: Decimal;
+}
+
+export function insightBreakdown(state: GameState): InsightBreakdown {
     const a = state.ascension;
     // Fame that would be earned by refounding now counts too
     const fame = a.fameEarned.plus(fameOnRefound(state)).toNumber();
-    const raw = Math.sqrt(Math.max(0, fame) / 10);
-    const famePart = raw <= INSIGHT_FAME_SOFTCAP ? raw : INSIGHT_FAME_SOFTCAP * Math.pow(raw / INSIGHT_FAME_SOFTCAP, INSIGHT_FAME_SOFTCAP_POWER);
-    const books = 1 + 0.25 * spellbookCount(state);
-    const wards = Math.pow(1 + contestScore(state), INSIGHT_WARD_POWER);
-    return softcapInsight(D(famePart * books * wards)).times(getStats(state).get("insight.mult")).floor();
+    const root = Math.sqrt(Math.max(0, fame) / 10);
+    const fameSoftcapped = root > INSIGHT_FAME_SOFTCAP;
+    const famePart = fameSoftcapped ? INSIGHT_FAME_SOFTCAP * Math.pow(root / INSIGHT_FAME_SOFTCAP, INSIGHT_FAME_SOFTCAP_POWER) : root;
+    const spellbooks = spellbookCount(state);
+    const booksMult = 1 + 0.25 * spellbooks;
+    const contest = contestScore(state);
+    const contestMult = Math.pow(1 + contest, INSIGHT_WARD_POWER);
+    const raw = famePart * booksMult * contestMult;
+    const mult = getStats(state).get("insight.mult").toNumber();
+    const ready = ascensionProgress(state).ready;
+    const total = ready ? softcapInsight(D(raw)).times(mult).floor() : D(0);
+    return { fame, famePart, fameSoftcapped, spellbooks, booksMult, contest, contestMult, raw, softcapped: raw > INSIGHT_SOFTCAP, mult, ready, total };
 }
 
 /** Rivals banished this Ascension, plus the share of the current rival's wards worn down */

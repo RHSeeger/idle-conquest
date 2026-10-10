@@ -4,6 +4,7 @@ import { canHire, dismissHero, Hero, heroList, hireCost, hireHero, isTavernOpen,
 import { heroesKeptOnRefound, refoundHeroKeeper } from "../engine/prestige";
 import { GameState } from "../engine/state";
 import { Price, ProgressBar } from "./components";
+import { askConfirm } from "./Confirm";
 import { game } from "./game";
 
 /** One reset's effect on the current heroes, e.g. "Hall of Heroes keeps your 2 most experienced heroes when you Refound: …" */
@@ -50,12 +51,18 @@ export function HeroesSection() {
     const refoundKeeper = refoundHeroKeeper(state).name;
     const onDismiss = (h: Hero) => {
         const def = HEROES[h.id];
-        const text =
-            `Dismiss ${def.name} ${def.title} (${HERO_RANKS[heroLevel(h.xp) - 1]}, ${h.xp} xp)?\n\n` +
-            `They leave your service and their experience is lost. Their place, and their place among the heroes ` +
-            `kept when you Refound or Ascend, opens up for another. The hire price doesn't go back down. ` +
-            `They may come to the Adventurers' Guild again, starting over.`;
-        if (confirm(text)) dismissHero(state, h.id);
+        askConfirm({
+            title: `Dismiss ${def.name} ${def.title}?`,
+            danger: true,
+            confirm: "Dismiss",
+            body: [
+                `${HERO_RANKS[heroLevel(h.xp) - 1]}, ${h.xp} xp.`,
+                `They leave your service and their experience is lost. Their place, and their place among the heroes ` +
+                    `kept when you Refound or Ascend, opens up for another. The hire price doesn't go back down. ` +
+                    `They may come to the Adventurers' Guild again, starting over.`,
+            ],
+            onConfirm: () => dismissHero(state, h.id),
+        });
     };
     // R/A badges, coloured by the currency of the upgrade doing the keeping
     const keptBadges = (h: Hero) => (

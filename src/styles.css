@@ -965,6 +965,37 @@ tr.cleared td {
     overflow-y: auto;
 }
 
+/* the game's confirmation dialog (ui/Confirm.tsx), above any other modal */
+.confirm-backdrop {
+    z-index: 60;
+}
+.modal.confirm h2 {
+    margin-top: 0;
+}
+.modal.confirm p {
+    margin: 0 0 10px;
+    line-height: 1.45;
+}
+.confirm-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 14px;
+}
+.confirm-buttons button {
+    padding: 6px 14px;
+}
+.confirm-ok {
+    font-weight: 600;
+}
+.confirm-ok.danger {
+    border-color: var(--bad);
+}
+.modal.confirm .warning {
+    color: var(--bad);
+    font-weight: 600;
+}
+
 .offline-log {
     font-size: 12px;
     color: var(--muted);
@@ -1016,6 +1047,27 @@ tr.cleared td {
 
 .prestige-button.ascend {
     border-color: var(--insight);
+}
+
+/* the Insight sum beside the Ascend button */
+table.insight-sum {
+    border-collapse: collapse;
+    margin: 8px 0;
+    font-size: 13px;
+}
+table.insight-sum td {
+    padding: 2px 10px 2px 0;
+    vertical-align: baseline;
+}
+table.insight-sum td.num {
+    text-align: right;
+    font-family: var(--mono);
+    white-space: nowrap;
+}
+table.insight-sum tr.total td {
+    border-top: 1px solid var(--border);
+    padding-top: 4px;
+    font-weight: 600;
 }
 
 ul.gate {

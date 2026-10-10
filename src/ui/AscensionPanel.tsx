@@ -12,7 +12,10 @@ import {
     buyInsightUpgrade,
     canAscend,
     canBuyInsightUpgrade,
-    insightOnAscend,
+    insightBreakdown,
+    InsightBreakdown,
+    INSIGHT_FAME_SOFTCAP,
+    INSIGHT_SOFTCAP,
     insightUpgradeCost,
     insightUpgradeLevel,
     planeshiftProgress,
@@ -39,7 +42,8 @@ import { FAMILIARS, FamiliarChoice } from "../content/familiars";
 import { GameState } from "../engine/state";
 import { BASE_PICKS } from "../content/wizards";
 import { RETORTS, RETORT_ORDER } from "../content/retorts";
-import { fmtInt } from "../engine/format";
+import { fmt, fmtInt } from "../engine/format";
+import { askConfirm } from "./Confirm";
 import { game } from "./game";
 import { AutoPrestige } from "./AutoToggle";
 import { heroAscendText } from "./HeroesSection";
@@ -340,6 +344,55 @@ function BeyondArcanus() {
     );
 }
 
+/** How the Insight on Ascending is worked out, factor by factor */
+function InsightSum(props: { b: InsightBreakdown }) {
+    const b = props.b;
+    return (
+        <table class="insight-sum">
+            <tbody>
+                <tr>
+                    <td>Fame this Ascension</td>
+                    <td class="hint">
+                        √({fmtInt(b.fame)} / 10){b.fameSoftcapped && `, softened above ${INSIGHT_FAME_SOFTCAP}`}
+                    </td>
+                    <td class="num">{fmt(b.famePart)}</td>
+                </tr>
+                <tr>
+                    <td>Spellbooks in this kingdom</td>
+                    <td class="hint">1 + 0.25 × {b.spellbooks}</td>
+                    <td class="num">×{fmt(b.booksMult)}</td>
+                </tr>
+                <tr>
+                    <td>Rivals banished</td>
+                    <td class="hint">(1 + {fmt(b.contest)})², counting the current rival's wards worn down</td>
+                    <td class="num">×{fmt(b.contestMult)}</td>
+                </tr>
+                {b.softcapped && (
+                    <tr>
+                        <td>Softened</td>
+                        <td class="hint">
+                            {fmt(b.raw)} is above {fmtInt(INSIGHT_SOFTCAP)}
+                        </td>
+                        <td class="num" />
+                    </tr>
+                )}
+                {Math.abs(b.mult - 1) > 1e-9 && (
+                    <tr>
+                        <td>Insight bonuses</td>
+                        <td class="hint">upgrades, retorts, Mastery</td>
+                        <td class="num">×{fmt(b.mult)}</td>
+                    </tr>
+                )}
+                <tr class="total">
+                    <td>Insight on Ascending</td>
+                    <td class="hint">{b.ready ? "" : "once the requirements above are met"}</td>
+                    <td class="num insight">{fmtInt(b.total)}</td>
+                </tr>
+            </tbody>
+        </table>
+    );
+}
+
 export function AscensionPanel() {
     const state = game();
     const a = state.ascension;
@@ -348,22 +401,29 @@ export function AscensionPanel() {
     const races = ascensionRaceOptions(state);
     const [race, setRace] = useState<RaceId>(state.run.startingRace);
     const chosenRace = races.includes(race) ? race : races[0];
-    const insight = insightOnAscend(state);
+    const breakdown = insightBreakdown(state);
+    const insight = breakdown.total;
     const planError = validateBooks(state, books, retorts);
     const ok = canAscend(state) && planError === null;
     const unspent = totalPicks(state) - picksUsed(books, retorts, freeRetortSlots(state));
     const changes = isWizard(state) ? profileChanges(state) : [];
 
     const doAscend = () => {
-        const lines = [
-            `Ascend as: ${profileText(books, retorts)}, starting as ${RACES[chosenRace].plural}.` +
-                (familiarLevel(state) > 0 ? ` Familiar: ${familiarName(resolveFamiliar(a.planFamiliar, books))}.` : ""),
-            unspent > 0 ? `WARNING: ${unspent} pick${unspent === 1 ? " is" : "s are"} unspent.` : "",
-            `Your kingdom, Fame, Fame upgrades and refounds reset${a.ascensions >= 2 ? "" : ", and the Annals are cleared"}. You gain ${fmtInt(insight)} Insight.`,
-        ];
-        if (confirm(lines.filter(Boolean).join("\n\n"))) {
-            ascend(state, books, chosenRace, retorts);
-        }
+        askConfirm({
+            title: "Ascend?",
+            tone: "ascend",
+            confirm: `Ascend (+${fmtInt(insight)} Insight)`,
+            body: [
+                <p>
+                    As <b>{profileText(books, retorts)}</b>, starting as {RACES[chosenRace].plural}.
+                    {familiarLevel(state) > 0 && ` Familiar: ${familiarName(resolveFamiliar(a.planFamiliar, books))}.`}
+                </p>,
+                unspent > 0 && <p class="warning">{`${unspent} pick${unspent === 1 ? " is" : "s are"} unspent.`}</p>,
+                `Your kingdom, Fame, Fame upgrades and refounds reset${a.ascensions >= 2 ? "" : ", and the Annals are cleared"}.`,
+                <InsightSum b={breakdown} />,
+            ],
+            onConfirm: () => ascend(state, books, chosenRace, retorts),
+        });
     };
 
     return (
@@ -380,10 +440,8 @@ export function AscensionPanel() {
                     ) : (
                         <>Ascend again to choose a new wizard profile and face new rivals. </>
                     )}
-                    Insight comes mostly from the rival wizards you banish this Ascension (and how far you've worn down the
-                    current one's wards): ×(1 + banished)². The Fame earned this Ascension ({fmtInt(a.fameEarned)} so far, plus
-                    what refounding now would give) and the spellbooks you hold in this kingdom add to it, the Fame with
-                    diminishing returns.
+                    Insight comes mostly from the rival wizards you banish this Ascension; the Fame you earn and the
+                    spellbooks you hold add to it. The sum is beside the Ascend button, below.
                 </p>
                 {isWizard(state) && <h3>This Ascension</h3>}
                 <CurrentProfile />
@@ -410,6 +468,7 @@ export function AscensionPanel() {
                             : `Next Ascension changes: ${changes.join(", ")}.`}
                     </p>
                 )}
+                <InsightSum b={breakdown} />
                 <button class="prestige-button ascend" disabled={!ok} onClick={doAscend}>
                     Ascend (+{fmtInt(insight)} Insight)
                 </button>

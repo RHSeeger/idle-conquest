@@ -9,6 +9,7 @@ import { fmt, fmtInt, fmtSigned, fmtTime } from "../engine/format";
 import { ArmyPanel, armyActivity } from "./ArmyPanel";
 import { BuildingsPanel } from "./BuildingsPanel";
 import { BreakdownView, CURRENCY_ICON, Tip } from "./components";
+import { ConfirmHost } from "./Confirm";
 import { game, useTicker } from "./game";
 import { LorePanel } from "./LorePanel";
 import { OfflineSummary, OfflineReport } from "./OfflineReport";
@@ -289,6 +290,7 @@ export function App(props: { offline: OfflineSummary | null; initialTab?: string
             {!offline && <Welcome />}
             {!offline && <Victory />}
             {!offline && <MasteryNotice />}
+            <ConfirmHost />
         </div>
     );
 }

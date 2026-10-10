@@ -20,7 +20,7 @@ export const TAB_INTROS: Record<string, { title: string; text: string }> = {
     },
     army: {
         title: "Army",
-        text: "Troops besiege the next city on the frontier: the more siege power, the faster it falls. City defenses favour some troops and punish others, so the mix matters: set your doctrine here, and choose which race's lands to march into next. Heroes join later and grow with experience.",
+        text: "Troops besiege the next city on the frontier: the more army power, the faster it falls. City defenses favour some troops and punish others, so the mix matters: set your doctrine here, and choose which race's lands to march into next. Heroes join later and grow with experience.",
     },
     lore: {
         title: "Lore",
@@ -60,7 +60,7 @@ export const TAB_INTROS: Record<string, { title: string; text: string }> = {
 export const GLOSSARY: [string, string][] = [
     ["Kingdom", "Your cities, from founding (or Refounding) to the next reset. Each Refound, Ascension, Planeshift or Mastery starts a new one."],
     ["Frontier", "The line of cities ahead of your army. Taking one adds it to your kingdom."],
-    ["Siege power", "How fast your army wears down the current city. Shown as ⚔ Army in the top bar."],
+    ["Army power", "How fast your army wears down the current city. Shown as ⚔ Army in the top bar."],
     ["Doctrine", "The mix of troop roles you want. City defenses favour some roles and punish others; auto-recruit keeps your army close to your doctrine."],
     ["Route", "At each region boundary the frontier turns to one of two neighbouring races. Choose ahead on the Army tab; it's kept for later kingdoms."],
     ["Automation", "The Auto- toggles recruit, build and study for you, following the choices you've made. They unlock as you Refound and Ascend."],

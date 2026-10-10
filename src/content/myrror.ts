@@ -196,7 +196,7 @@ export const HOLDING_STAT: Record<MyrranRaceId, { stat: string; text: string }> 
     draconian: { stat: "army.power", text: "army power" },
     dwarf: { stat: "prod.mult", text: "production" },
     klackon: { stat: "gold.mult", text: "gold" },
-    troll: { stat: "myrror.power", text: "siege power on Myrror" },
+    troll: { stat: "myrror.power", text: "army power on Myrror" },
 };
 
 // --- Myrran resources and works ------------------------------------------------------
@@ -257,7 +257,7 @@ const workList: MyrranWorkDef[] = [
         maxLevel: 20,
         cost: workCost,
         effects: [{ stat: "myrror.power", op: "mult", value: (l) => Math.pow(1.5, l) }],
-        text: (l) => `×${fmtNum(Math.pow(1.5, l))} siege power on Myrror`,
+        text: (l) => `×${fmtNum(Math.pow(1.5, l))} army power on Myrror`,
     },
     {
         id: "quorkFoci",
@@ -336,7 +336,7 @@ export const CAPITAL_DEFENSE_BOON = 0.6;
 export const RACE_BOONS: Record<MyrranRaceId, [BoonDef, BoonDef]> = {
     beastmen: [
         { id: "beastmen.arcanus", name: "Minotaur Sages", side: "arcanus", effects: [mult("knowledge.mult", 1.5)], text: "×1.5 knowledge" },
-        { id: "beastmen.myrror", name: "Manticore Outriders", side: "myrror", effects: [mult("myrror.power", 1.3)], text: "×1.3 siege power on Myrror" },
+        { id: "beastmen.myrror", name: "Manticore Outriders", side: "myrror", effects: [mult("myrror.power", 1.3)], text: "×1.3 army power on Myrror" },
     ],
     darkElf: [
         { id: "darkElf.arcanus", name: "Dark Elf Channelers", side: "arcanus", effects: [mult("mana.mult", 1.5)], text: "×1.5 mana" },
@@ -354,7 +354,7 @@ export const RACE_BOONS: Record<MyrranRaceId, [BoonDef, BoonDef]> = {
     ],
     dwarf: [
         { id: "dwarf.arcanus", name: "Dwarven Forgemasters", side: "arcanus", effects: [mult("prod.mult", 1.5)], text: "×1.5 production" },
-        { id: "dwarf.myrror", name: "Steam Cannon Batteries", side: "myrror", effects: [mult("myrror.power", 1.3)], text: "×1.3 siege power on Myrror" },
+        { id: "dwarf.myrror", name: "Steam Cannon Batteries", side: "myrror", effects: [mult("myrror.power", 1.3)], text: "×1.3 army power on Myrror" },
     ],
     klackon: [
         { id: "klackon.arcanus", name: "Klackon Hives", side: "arcanus", effects: [mult("gold.mult", 1.5)], text: "×1.5 gold" },
@@ -368,7 +368,7 @@ export const RACE_BOONS: Record<MyrranRaceId, [BoonDef, BoonDef]> = {
     ],
     troll: [
         { id: "troll.arcanus", name: "Troll Chieftains' Tribute", side: "arcanus", effects: [mult("fame.mult", 1.25)], text: "×1.25 Fame from Refounds" },
-        { id: "troll.myrror", name: "War Troll Vanguard", side: "myrror", effects: [mult("myrror.power", 1.4)], text: "×1.4 siege power on Myrror" },
+        { id: "troll.myrror", name: "War Troll Vanguard", side: "myrror", effects: [mult("myrror.power", 1.4)], text: "×1.4 army power on Myrror" },
     ],
 };
 
@@ -385,7 +385,7 @@ export const REALM_LORE: Record<Realm, { effects: EffectDef[]; text: string }> =
         text: "+1 max population per city and ×1.5 growth",
     },
     death: { effects: [mult("army.power", 1.3)], text: "×1.3 army power" },
-    chaos: { effects: [mult("myrror.power", 1.5)], text: "×1.5 siege power on Myrror" },
+    chaos: { effects: [mult("myrror.power", 1.5)], text: "×1.5 army power on Myrror" },
     nature: { effects: [mult("prod.mult", 1.5)], text: "×1.5 production" },
     sorcery: {
         effects: [mult("mana.mult", 1.5), mult("knowledge.mult", 1.5)],
@@ -456,7 +456,7 @@ const essenceList: EssenceUpgradeDef[] = [
         maxLevel: 50,
         cost: (l) => Math.round(2 * Math.pow(1.7, l)),
         effects: [{ stat: "myrror.power", op: "mult", value: (l) => Math.pow(1.5, l) }],
-        text: (l) => `×${fmtNum(Math.pow(1.5, l))} siege power on Myrror`,
+        text: (l) => `×${fmtNum(Math.pow(1.5, l))} army power on Myrror`,
     },
     {
         id: "echoOfArcanus",

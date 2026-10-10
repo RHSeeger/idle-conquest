@@ -241,7 +241,7 @@ const list: SpellDef[] = [
         rarity: "rare",
         kind: "enchantment",
         effects: [{ stat: "role.siege", op: "mult", value: 4 }],
-        text: "×4 siege power",
+        text: "×4 power for siege troops",
     },
     { id: "greatDrake", name: "Great Drake", realm: "chaos", rarity: "veryRare", kind: "summon", unit: "greatDrake", text: "Summon Great Drakes (siege)" },
     {

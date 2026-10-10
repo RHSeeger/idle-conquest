@@ -290,7 +290,7 @@ export const RACES: Record<RaceId, RaceDef> = {
         cityEffects: [],
         cityEffectText: "Myrran: held on Myrror only",
         realmEffects: [],
-        realmEffectText: "×1.1 siege power on Myrror per city held there",
+        realmEffectText: "×1.1 army power on Myrror per city held there",
         favoredTrait: "cavalryScreen",
         nameParts: {
             start: ["Grug", "Ugg", "Thrum", "Bog", "Mur", "Grok", "Hruu", "Drog", "Lum", "Krug"],

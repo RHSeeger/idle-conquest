@@ -157,7 +157,7 @@ const list: RetortDef[] = [
             { stat: "role.siege", op: "mult", value: 2 },
             { stat: "role.melee", op: "mult", value: 1.5 },
         ],
-        text: "Chaos research ×0.5, ×2 siege and ×1.5 melee power (needs 4 Chaos books)",
+        text: "Chaos research ×0.5, ×2 power for siege troops and ×1.5 for melee troops (needs 4 Chaos books)",
         unlock: { kind: "defeatWizardWithBooks", realm: "chaos", count: 4, text: "Banish a wizard with 4+ Chaos books" },
     },
     {

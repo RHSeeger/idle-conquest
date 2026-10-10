@@ -27,7 +27,7 @@ const list: HeroDef[] = [
     { id: "marcus", name: "Marcus", title: "the Ranger", effects: [{ stat: "explore.speed", op: "mult", value: mult(0.15) }], text: (l) => `+${pct(0.15 * l)} exploration speed` },
     { id: "harold", name: "Sir Harold", title: "the Knight", effects: [{ stat: "role.cavalry", op: "mult", value: mult(0.15) }], text: (l) => `+${pct(0.15 * l)} cavalry power` },
     { id: "taki", name: "Taki", title: "the War Monk", effects: [{ stat: "army.power", op: "mult", value: mult(0.06) }], text: (l) => `+${pct(0.06 * l)} army power` },
-    { id: "warrax", name: "Warrax", title: "the Chaos Warrior", effects: [{ stat: "role.siege", op: "mult", value: mult(0.2) }], text: (l) => `+${pct(0.2 * l)} siege power` },
+    { id: "warrax", name: "Warrax", title: "the Chaos Warrior", effects: [{ stat: "role.siege", op: "mult", value: mult(0.2) }], text: (l) => `+${pct(0.2 * l)} power for siege troops` },
     { id: "elana", name: "Elana", title: "the Priestess", effects: [{ stat: "pop.max", op: "add", value: (l) => 0.25 * l }], text: (l) => `+${0.25 * l} max population per city` },
     {
         id: "greyfairer",

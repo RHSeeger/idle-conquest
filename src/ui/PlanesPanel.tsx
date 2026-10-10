@@ -234,7 +234,7 @@ function MyrrorSection() {
                 link{towersLeft > 0 ? ` (${towersLeft} more to take)` : ""}
                 {myrranWorkLevel(state, "planarGate") > 0 && ", and so is each Planar Gate"}. Each link also lets{" "}
                 {SHARE_PER_LINK * 100}% of your army fight there{max > SHARE_PER_LINK * links && ", plus Planar Anchor"}: at most{" "}
-                {Math.round(max * 100)}% now. The rest besieges Arcanus and raids its lairs. Siege power on Myrror boosts
+                {Math.round(max * 100)}% now. The rest besieges Arcanus and raids its lairs. Army power on Myrror boosts
                 (Essence, works, boons, holdings) act on what gets through.
             </p>
             {target ? (
@@ -264,7 +264,7 @@ function MyrrorSection() {
                         <p class="hint">
                             Too strong for now.{" "}
                             {capped
-                                ? "Your links are full: more Towers, Planar Gates, and siege power on Myrror (Essence, works, boons) move it."
+                                ? "Your links are full: more Towers, Planar Gates, and army power on Myrror (Essence, works, boons) move it."
                                 : "Myrror moves when your Arcanus army is strong: late in each kingdom, and more with every Ascension."}{" "}
                             Siege progress here is never lost between kingdoms.
                         </p>

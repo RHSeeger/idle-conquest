@@ -40,7 +40,7 @@ export const REALM_DEFS: Record<Realm, RealmDef> = {
             { stat: "role.melee", op: "mult", value: (n) => Math.pow(1.08, n) },
             { stat: "role.siege", op: "mult", value: (n) => Math.pow(1.08, n) },
         ],
-        perBookText: "×1.08 melee and siege power per book",
+        perBookText: "×1.08 power for melee and siege troops per book",
     },
     nature: {
         id: "nature",

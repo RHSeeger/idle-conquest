@@ -1,6 +1,7 @@
 import {
     AutomationKind,
     AUTO_PRESTIGE_STALL_SECONDS,
+    CONTEST_PATIENCE_SECONDS,
     isAutomationUnlocked,
     secondsSinceConquest,
     stallAction,
@@ -46,7 +47,8 @@ export function AutoPrestige(props: { kind: "refound" | "ascend" }) {
             </div>
             <p class="hint">
                 Stalls: if no Arcanus city has fallen for {STALL_MINUTES} minutes, it{" "}
-                {refound ? "Refounds" : "Ascends"} whatever the gain.
+                {refound ? "Refounds" : "Ascends"} whatever the gain
+                {refound ? "." : `, unless a rival wizard's wards will break within ${fmtTime(CONTEST_PATIENCE_SECONDS)} (the contest is worth waiting for).`}
                 {bothUnlocked &&
                     (refound
                         ? " If auto-Ascend is also on and Ascending is possible, a stall Ascends instead."

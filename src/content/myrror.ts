@@ -24,14 +24,26 @@ export const MYRROR_TUNING = {
     capitalMult: 3,
     domainMult: 2,
     fortressMult: 10,
+    /** A Tower of Wizardry defends like a region capital */
+    towerMult: 3,
+    /**
+     * What one planar link carries across (army power per second) at Myrror's
+     * first city, growing by linkGrowth per city: slower than the defenses, so
+     * Myrror stiffens even for an army too strong for the links (DESIGN.md §15.6)
+     */
+    linkCapacity: 3e9,
+    linkGrowth: 1.7,
 };
+
+/** Myrror regions whose first city is a Tower of Wizardry: one in the long first stretch, then each wizard's domain */
+export const TOWER_REGIONS = [3];
 
 /** Myrran race regions before the first Myrran wizard, and between the later ones */
 const FIRST_RACE_REGIONS = 5;
 const LATER_RACE_REGIONS = 2;
 export const MYRROR_WIZARDS = 4;
 
-/** At most this many links (MoM has six Towers of Wizardry) */
+/** At most this many links (MoM has six Towers of Wizardry: the one you came through, and five on Myrror) */
 export const MAX_LINKS = 6;
 /** Share of the army each link lets fight on Myrror */
 export const SHARE_PER_LINK = 0.1;
@@ -54,6 +66,8 @@ export interface MyrrorCity {
     pop: number;
     isRegionCapital: boolean;
     fortressOf?: string;
+    /** A Tower of Wizardry: taking it adds a planar link */
+    tower?: boolean;
 }
 
 /** Myrror's rival wizards for a beachhead race: distinct, and (by seed) different from Arcanus's usual ones */
@@ -89,6 +103,19 @@ export function myrrorPlan(beachhead: MyrranRaceId): MyrrorRegion[] {
     return regions;
 }
 
+/** Towers of Wizardry on Myrror: one in the first stretch, and one at the gate of each Myrran wizard's domain */
+export const MYRROR_TOWERS = TOWER_REGIONS.length + MYRROR_WIZARDS;
+
+/** Frontier indices of Myrror's Towers of Wizardry */
+export function towerIndices(plan: MyrrorRegion[]): number[] {
+    return plan.filter((r) => r.kind === "wizard" || TOWER_REGIONS.includes(r.index)).map((r) => r.index * REGION_SIZE);
+}
+
+/** Towers already behind a campaign at frontier `index` */
+export function towersTaken(plan: MyrrorRegion[], index: number): number {
+    return towerIndices(plan).filter((i) => i < index).length;
+}
+
 export function myrrorEnd(plan: MyrrorRegion[]): number {
     return plan.length * REGION_SIZE;
 }
@@ -108,7 +135,12 @@ export function myrrorCity(beachhead: MyrranRaceId, plan: MyrrorRegion[], index:
     let defense = myrrorDefense(index);
     const traits: TraitId[] = [];
     let fortressOf: string | undefined;
-    if (region.kind === "wizard") {
+    const tower = local === 0 && (region.kind === "wizard" || TOWER_REGIONS.includes(region.index));
+    if (tower) {
+        // the Tower: guarded by flying things, and by the wizard's wards in a domain
+        traits.push(...(region.kind === "wizard" ? (["wards", "flying"] as TraitId[]) : (["flying", "regenerating"] as TraitId[])));
+        defense = defense.times(t.towerMult);
+    } else if (region.kind === "wizard") {
         traits.push("wards");
         defense = defense.times(t.domainMult);
         if (isRegionCapital) {
@@ -126,8 +158,10 @@ export function myrrorCity(beachhead: MyrranRaceId, plan: MyrrorRegion[], index:
     }
     const name = fortressOf
         ? `Fortress of ${fortressOf}`
-        : hashPick(RACES[region.race].nameParts.start, "mns", beachhead, index) +
-          hashPick(RACES[region.race].nameParts.end, "mne", beachhead, index);
+        : tower
+          ? "Tower of Wizardry"
+          : hashPick(RACES[region.race].nameParts.start, "mns", beachhead, index) +
+            hashPick(RACES[region.race].nameParts.end, "mne", beachhead, index);
     return {
         index,
         region,
@@ -138,6 +172,7 @@ export function myrrorCity(beachhead: MyrranRaceId, plan: MyrrorRegion[], index:
         pop: 4 + Math.floor(index / 4) + (isRegionCapital ? 3 : 0),
         isRegionCapital,
         fortressOf,
+        tower: tower || undefined,
     };
 }
 
@@ -434,6 +469,14 @@ const essenceList: EssenceUpgradeDef[] = [
             { stat: "knowledge.mult", op: "mult", value: (l) => Math.pow(2, l) },
         ],
         text: (l) => `×${fmtNum(Math.pow(2, l))} production, gold and knowledge`,
+    },
+    {
+        id: "astralSorcery",
+        name: "Astral Sorcery",
+        maxLevel: 50,
+        cost: (l) => Math.round(2 * Math.pow(1.7, l)),
+        effects: [{ stat: "spell.power", op: "mult", value: (l) => Math.pow(2, l) }],
+        text: (l) => `×${fmtNum(Math.pow(2, l))} spell power (against rival wizards' wards)`,
     },
     {
         id: "wellspring",

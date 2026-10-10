@@ -5,6 +5,7 @@
  * version; `migrate` upgrades older saves step by step. Unknown/missing fields
  * are filled from a fresh game so adding new state never breaks old saves.
  */
+import { ARCANUS_WIZARDS, rivalWizards } from "../content/frontier";
 import { TAB_INTROS, WELCOME_ID } from "../content/intro";
 import { Decimal } from "./decimal";
 import { backfillCampaign } from "./planes";
@@ -143,6 +144,11 @@ export function deserialize(json: string): GameState {
     if (raw.records?.totalAscensions === undefined) state.records.totalAscensions = state.ascension.ascensions;
     if (raw.records?.totalPlaneshifts === undefined) state.records.totalPlaneshifts = state.planes.planeshifts;
     if (!raw.records?.layers) backfillLayerTimes(state);
+    // rivals became fixed per Ascension with the wizards' contest: keep the ones this kingdom
+    // already faced (wizards it banished by taking their Fortress count as banished)
+    if (raw.ascension?.rivals === undefined) state.ascension.rivals = rivalWizards(state.run.startingRace, ARCANUS_WIZARDS);
+    // auto-recruit's Chronicle mode became the doctrine, which starts as the last kingdom's army
+    if ((state.automation.unitMode as string) === "chronicle") state.automation.unitMode = "doctrine";
     // a challenge's stretch began when it did (older history recorded entering one as a plain Ascension)
     const l = state.records.layers.mastery;
     if (state.mastery.challenge && l.start < state.mastery.challengeStartedAt) l.start = state.mastery.challengeStartedAt;

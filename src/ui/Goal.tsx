@@ -3,7 +3,7 @@
  * the early game of each layer. Returns the first unmet goal.
  */
 import { ascensionProgress, planeshiftProgress } from "../engine/ascension";
-import { currentTarget, myrrorShare } from "../engine/army";
+import { myrrorShare } from "../engine/army";
 import { ARCANUS_WIZARDS } from "../content/frontier";
 import { MYRROR_WIZARDS } from "../content/myrror";
 import { isWizard, knowsSpell, masteryGate } from "../engine/magic";
@@ -51,14 +51,16 @@ function nextGoal(state: GameState): string | null {
         return "The Tower is open: you can Planeshift (Planes tab) and fight on two planes at once.";
     }
     if (isWizard(state)) {
-        if (!knowsSpell(state, "magicSpirit")) return "Research Magic Spirit (Magic tab) so captured magic nodes produce mana.";
-        const target = currentTarget(state);
-        if (target?.traits.includes("wards") && !knowsSpell(state, "dispelMagic")) {
-            return "A rival wizard's wards block your army. Research Dispel Magic (Magic tab) to break them.";
+        if (state.ascension.wizardsDefeated.length === 0) {
+            if (!knowsSpell(state, "dispelMagic")) {
+                return "Your spell power wears down the first rival wizard's wards (Magic tab). Research Dispel Magic to double it.";
+            }
+            return "Wear down the first rival wizard's wards with spell power (Magic tab): pick books that counter their realms, and keep casting skill free.";
         }
-        if (state.ascension.wizardsDefeated.length === 0) return "Fight through the rival wizard's domain and take their Fortress.";
-        if (!planeshiftProgress(state).ready && p.bestFrontier >= 80) {
-            return "Find and clear a Tower of Wizardry, then research the Rite of the Tower to look beyond Arcanus.";
+        if (!knowsSpell(state, "magicSpirit")) return "Research Magic Spirit (Magic tab) so captured magic nodes produce mana.";
+        const gate = planeshiftProgress(state);
+        if (gate.towerUnsealed && !gate.riteKnown) {
+            return "A banished wizard's Tower of Wizardry is unsealed: research the Rite of the Tower (Magic tab) to look beyond Arcanus.";
         }
     }
     return null;
@@ -77,7 +79,7 @@ function masteryGoal(state: GameState): string | null | undefined {
     const gate = masteryGate(state);
     if (gate.ready) return "Every rival wizard of both worlds has fallen: research the Spell of Mastery (Mastery tab).";
     if (gate.myrran >= MYRROR_WIZARDS) {
-        return `Myrror's wizards are all banished. Take every rival Fortress of Arcanus in one kingdom (${gate.fortresses} of ${ARCANUS_WIZARDS} in this one) to reach the Spell of Mastery.`;
+        return `Myrror's wizards are all banished. Banish all four rival wizards of Arcanus in one Ascension (${gate.arcanus} of ${ARCANUS_WIZARDS} in this one; Magic tab) to reach the Spell of Mastery.`;
     }
     if (m.masteries > 0 && m.completed.length === 0) {
         return "The Challenge Wizards await (Mastery tab): one Ascension as a rival wizard, under their rule, for a lasting reward.";

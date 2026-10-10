@@ -35,29 +35,30 @@ export interface TraitDef {
 }
 
 export const TRAITS: Record<TraitId, TraitDef> = {
+    // City traits are sharp on purpose (DESIGN.md §15.4): the army's mix against them is Layer 1's puzzle
     walls: {
         id: "walls",
         name: "City Walls",
-        description: "Melee, pike and cavalry ×0.5; siege ×2",
-        roleMults: { melee: 0.5, pike: 0.5, cavalry: 0.5, siege: 2 },
+        description: "Melee, pike and cavalry ×0.25; siege ×3",
+        roleMults: { melee: 0.25, pike: 0.25, cavalry: 0.25, siege: 3 },
     },
     archers: {
         id: "archers",
         name: "Archer Garrison",
-        description: "Ranged ×0.75; cavalry ×1.5 (they ride the archers down)",
-        roleMults: { ranged: 0.75, cavalry: 1.5 },
+        description: "Ranged ×0.5; cavalry ×2 (they ride the archers down)",
+        roleMults: { ranged: 0.5, cavalry: 2 },
     },
     cavalryScreen: {
         id: "cavalryScreen",
         name: "Cavalry Screen",
-        description: "Cavalry ×0.5; pike ×2",
-        roleMults: { cavalry: 0.5, pike: 2 },
+        description: "Cavalry ×0.25; pike ×3",
+        roleMults: { cavalry: 0.25, pike: 3 },
     },
     shieldWall: {
         id: "shieldWall",
         name: "Shield Wall",
-        description: "Melee ×0.6; ranged ×1.5",
-        roleMults: { melee: 0.6, ranged: 1.5 },
+        description: "Melee ×0.4; ranged ×2",
+        roleMults: { melee: 0.4, ranged: 2 },
     },
     undead: {
         id: "undead",

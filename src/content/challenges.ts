@@ -2,9 +2,10 @@
  * Layer 4: the Spell of Mastery and the Challenge Wizards (DESIGN.md §8).
  *
  * Each of the 14 rival wizards is a challenge: one Ascension as that wizard,
- * with their spellbooks, a fixed retort and their rule. The goal is to take
- * all four rival Fortresses of Arcanus in one run. Completing it grants a
- * permanent reward that echoes the rule's upside.
+ * with their spellbooks, a fixed retort and their rule. The goal is to banish
+ * all four of the Ascension's rival wizards of Arcanus (the wizards' contest,
+ * engine/wards.ts). Completing it grants a permanent reward that echoes the
+ * rule's upside.
  *
  * Rules are effects (applied while the challenge runs) plus a few bans that
  * the engine checks directly. First drafts: balance comes from play.
@@ -35,7 +36,7 @@ export const CHALLENGE_TUNING = {
     insightLevels: 1,
 };
 
-/** Each Mastery multiplies production, gold, knowledge and mana by this */
+/** Each Mastery multiplies production, gold, knowledge, mana, spell power and planar power by this */
 export const MASTERY_BONUS = 2;
 
 /** What a challenge's rule can forbid */
@@ -187,8 +188,8 @@ const list: Omit<ChallengeDef, "realms">[] = [
         wizard: "Kali",
         lore: "Kali walks alone and trusts no champion. But the rival wizards fear her, and their wards weaken when she comes.",
         retort: "archmage",
-        rule: "No heroes, but rival wizards' domains and Fortresses are half as strong",
-        reward: "Rival wizards' domains and Fortresses 15% weaker",
+        rule: "No heroes, but rival wizards' wards, domains and Fortresses are half as strong",
+        reward: "Rival wizards' wards, domains and Fortresses 15% weaker",
         ruleEffects: [mult("defense.domain", 0.5)],
         rewardEffects: [mult("defense.domain", 0.85)],
         bans: ["heroes"],

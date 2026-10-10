@@ -2,10 +2,38 @@
  * Small shared UI pieces: tooltips, stat breakdowns, cost labels, progress bars.
  */
 import { ComponentChildren } from "preact";
+import { useState } from "preact/hooks";
 import { Currency } from "../content/buildings";
 import { Decimal } from "../engine/decimal";
 import { Stats } from "../engine/effects";
 import { fmt, fmtSigned } from "../engine/format";
+
+/**
+ * Whether a collapsible part of the page is open, remembered per browser once the
+ * player toggles it (`fallback` until then). A convenience only: blocked storage just forgets.
+ */
+export function useStoredOpen(key: string, fallback: boolean): [boolean, (open: boolean) => void] {
+    const storageKey = "idle-conquest.open." + key;
+    const [stored, setStored] = useState<boolean | null>(() => {
+        try {
+            const v = localStorage.getItem(storageKey);
+            return v === null ? null : v === "1";
+        } catch {
+            return null;
+        }
+    });
+    const open = stored ?? fallback;
+    const setOpen = (o: boolean) => {
+        if (o === open) return;
+        setStored(o);
+        try {
+            localStorage.setItem(storageKey, o ? "1" : "0");
+        } catch {
+            // storage blocked: it just forgets
+        }
+    };
+    return [open, setOpen];
+}
 
 export function Tip(props: { tip: ComponentChildren; children: ComponentChildren; class?: string }) {
     return (

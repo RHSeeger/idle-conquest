@@ -434,7 +434,7 @@ Content volume grows by phase; mechanics come before content. One race done well
 
 ## 14. Meaningful choices (TODO #29)
 
-Status: **analysis and proposals, for discussion.** Nothing here is built yet.
+Status: **analysis and proposals, for discussion.** Nothing here is built yet. §15 builds on this with your layer notes: it reframes the root cause (Layers 2 and 3 have no accomplishment of their own) and supersedes 14.4 B3 and 14.5.
 
 The goal: the game should feel like you're *playing* it, not watching it, and playing well should feel like success. Your five criteria for choices:
 
@@ -520,3 +520,204 @@ The balance simulator can play the same stretch with different choices (each sta
 
 1. Is it acceptable that automation stops making choices for you (P6)? Some automations (Efficient recruit, Cheapest build) would become later unlocks or follow your settings, so the game gets a little less idle.
 2. How much active play is wanted (§13, question 5)? These proposals keep decisions at resets and in settings, never time-critical.
+
+---
+
+## 15. Each layer its own mechanic (TODO #29, direction)
+
+Status: **approved 2026-10-09, with every recommendation below, and built the same day as a first pass** (15.13 says how, and where it differs from the text). Still open: the Fortress-plane choice (15.12). The numbers are first tunings from the simulator, waiting on play. It builds on your layer notes and on §14.
+
+### 15.1 The root cause
+
+Layer 1 has an accomplishment of its own: taking cities. Layers 2 and 3 don't. Their gates are measured in Layer 1's units:
+
+- **Ascension to Planeshift:** the army raids the Tower of Wizardry, and Knowledge researches the Rite of the Tower.
+- **Planeshift to Mastery:** a share of the same army takes Myrror's cities, and the army takes the Fortresses of Arcanus.
+
+So a kingdom that is fast enough makes every layer above it fast, and the upper layers' own choices (books, retorts, the beachhead, works) are along for the ride. §14 blamed the uncapped exponential upgrades. They aren't the problem in themselves: an upper layer *should* be able to make a lower one trivial. The problem is the other direction.
+
+Your three rules for the fix:
+
+1. Being faster at earlier layers makes a layer's mechanic faster, but **can't make it trivial**.
+2. Finishing more of the current layer and buying its meta-upgrades makes its mechanic **much faster**.
+3. Purchases and choices at the layer above can make it much faster and, given enough, **trivial**.
+
+### 15.2 The shape every layer shares
+
+Each layer is a role in one story, from ruler to Master, and has the same five parts:
+
+| | Layer 1: the Ruler | Layer 2: the Wizard | Layer 3: the Planeswalker | Layer 4: the Master |
+|---|---|---|---|---|
+| **Choice going in** | Race | Spellbooks and retorts | Beachhead race and where your Fortress stands (new) | Which Challenge Wizard |
+| **What you buy during it** | Buildings, troops, Lore | Spells, enchantments, casting skill (new) | Myrran works | |
+| **Your accomplishment** | Take cities | **Break the rival wizards' wards (new)** | **Take and hold the Towers of Wizardry (new)** | Beat the challenge |
+| **Its power** | Army power | **Spell power (new)** | **Planar power (new)** | |
+| **Gate to the next layer** | Wizards' Guild, 6 books, 3 realms (as now) | Banish a rival wizard, which unseals their Tower, and research the Rite | Hold every Tower (the Myrran wizards fall), then the Spell of Mastery | |
+| **Meta currency** | Fame | Insight | Planar Essence | Mastery |
+
+There's one pattern for what you buy during a layer: **a limited capacity makes you choose**. In Layer 1 it's how you spend on troops against the traits ahead of you. In Layer 2 it's your casting skill, which caps how many enchantments you can keep running. In Layer 3 it's Myrror's three scarce resources.
+
+### 15.3 The rule between layers: power channels
+
+Each layer's accomplishment is driven by its own power. Who may multiply which:
+
+| Power | Drives | Multiplied fully by | Fed from below only through |
+|---|---|---|---|
+| Army power | Taking cities (Layer 1) | Fame, Insight, Essence, Mastery | — |
+| Spell power | Breaking wards (Layer 2) | Books, retorts, spells and enchantments, Insight, Essence, Mastery | Mana from the kingdom, with diminishing returns. Magic nodes and your Fortress are the main sources. **Fame upgrades don't touch it.** |
+| Planar power | Taking Towers (Layer 3) | Essence, works, Mastery | Army and spell power cross over through **planar links**, and each link comes from a Tower you hold. A huge army only helps up to what the links carry. |
+
+This is your three rules in mechanical form. A lower layer helps through a narrow pipe (diminishing mana, link capacity), the current layer's meta multiplies its own power, and upper layers multiply everything below. It is also measurable (§14 D). For example, the simulator can check that with the Fame tree maxed, the wards fall at most ×2 faster than with little Fame, while Insight upgrades can make them fall ×10 faster.
+
+Automation follows the same rule throughout (§14, P6): **you decide and automation carries it out.** Auto-recruit follows your army doctrine, auto-cast follows your enchantment loadout, and auto-works follow your priorities. Your settings are remembered (P5), so a replay needs no new thought, which keeps §5's replay rule.
+
+### 15.4 Layer 1: the Ruler
+
+The race choice and the gate stay. What changes is the choice inside a kingdom, which should be about **how you take cities**, the layer's accomplishment. Buildings and Lore can stay a list you work through: that's the numbers-go-up pleasure. Not every purchase has to be a choice; one or two real ones per layer is enough (P1).
+
+| Option | What it is | Verdict |
+|---|---|---|
+| **1A. Doctrine and sharper traits** | City traits hit harder (e.g. ×0.25 and ×3). You set the army mix (e.g. 40% siege, 30% pike) and auto-recruit follows it; greedy Efficient buying becomes a later unlock. The Army tab shows how your mix fares against the region ahead. | **Recommended.** It brings back the puzzle Layer 1 was built around, and a wrong mix shows within minutes. |
+| **1B. Routes** | At each region boundary, choose which of two neighbouring races comes next. The route decides which traits you'll face, and which rival wizard's domain you end at. | **Recommended, after 1A.** It chains the choices: race → route → traits → doctrine, and in Layer 2 the wizard you end at sets the realms you must counter. |
+| 1C. Kingdom focus | Pick a focus at each Refound (Conquest, Trade, Scholarship…). | Not now. It overlaps the race choice. |
+
+### 15.5 Layer 2: the Wizard
+
+Today a mortal army can't cross a rival wizard's domain (the Layer 1 wall), and an Ascension mostly means "do Layer 1 again, plus mana". The proposal makes the wall the Wizard's own accomplishment.
+
+| Option | What it is | Verdict |
+|---|---|---|
+| **2A. The wizards' contest** | Each rival wizard of Arcanus guards their domain with **wards**: a strength to wear down, like a city's defense, with their realms as its traits. Spell power wears it down. Your realms against theirs give matchups, like troops against city traits: opposed realms hit each other harder (Life and Death), and Sorcery dispels well against every ward. A banished wizard's domain is then taken by the army like any region. | **Recommended.** It's a real accomplishment, it's your own power, and your book choice depends on whom you face, which you know in advance (the wizard your route ends at). It's the Layer 1 puzzle again, in magic's terms. |
+| 2B. Nodes as the frontier | Capture and meld a sequence of guarded magic nodes; the gate needs enough node power. | It feels like economy, not a contest. Nodes fit better as 2A's economy, the way buildings are in Layer 1. |
+| 2C. A research ladder | Reach Very Rare spells in enough realms. | A progress bar with no sense of conquest. |
+
+**What you buy during an Ascension** (2A):
+
+- **Casting skill**, trained with mana, is your capacity: the Wizard's army. It sets your spell power and caps the upkeep of running enchantments.
+- **Enchantments** run within that cap, so you choose a loadout against the current wizard. Changing it is cheap: cancel one and cast another.
+- **Instants** strike wards in bursts. They already hit walls today.
+- **Research** teaches spells. The order matters because the counter spells for your current opponent come first.
+
+**Gate to Layer 3:** banishing a rival wizard unseals the Tower of Wizardry in their lands, and the Rite of the Tower opens it. Every wizard you banish unseals another Tower, and Towers are what Layer 3 is about. So the Wizard's accomplishment seeds the Planeswalker's.
+
+### 15.6 Layer 3: the Planeswalker
+
+Today Myrror is a second line of cities, taken by a share of the same army: Layer 1's verb again. The proposal makes **spanning two planes** the verb.
+
+| Option | What it is | Verdict |
+|---|---|---|
+| **3A. The Towers** | The planes are joined by Towers of Wizardry (e.g. 6). On Myrror, each Tower is held by a Myrran wizard. Planar power takes them, and each Tower you hold is a planar link: more of your army and magic can cross, and the Myrran regions behind it open (the existing Myrran cities, now the layer's economy). A Myrran wizard falls when their Towers fall. | **Recommended.** It uses what exists (links, the Tower, the Myrran frontier), fits Master of Magic (Towers join the planes), and the link cap is exactly the pipe that stops a strong kingdom from making Myrror trivial. |
+| 3B. Dominion | Myrran races must be brought under your rule (allied for boons or conquered for resources); the gate needs all six. | A good choice structure, but the accomplishment is close to Layer 1's cities. Its ally-or-conquer choice could be folded into 3A's boons. |
+| 3C. Two fronts | Myrran wizards counter-attack Arcanus through the Towers, and the army share becomes defense against offense. | Brings a failure state into an idle game. Not recommended. |
+
+**Choice going in:** the beachhead race, with what it gives shown on the choice (it isn't today), and **where your Fortress stands**, which §3 planned from the start. On Arcanus your kingdom is stronger and Myrror slower. On Myrror planar power is stronger and Arcanus weaker. It can be changed at each Planeshift.
+
+**What you buy during a Planeshift:** the works stay as Layer 3's buildings, but become a choice. Each resource already has two works (Adamantium: Arms or Garrisons; Quork: Foci or Caravans; Crysx: Gate or Lenses). Make each resource's cost climb with *everything* bought from it, not per work, so levelling one work makes its partner dearer. Auto-works follows a priority you set.
+
+**Gate to Mastery:** hold every Tower (so every Myrran wizard has fallen), then research and channel the Spell of Mastery, as now.
+
+### 15.7 Layer 4 and the challenges
+
+With power channels, a challenge (an Ascension under a rule) is decided by the Wizard's own contest, not by a Fame snowball. That addresses TODO #28 at its root. The challenge goal would become "banish the four rival wizards of Arcanus" (the wards) rather than "take the four Fortresses" (the army). Rules that bend spell power (Lo Pan, Tauron, Horus) then bend the contest itself. Revisit #22, #26 and #28 once Layer 2 is rebuilt.
+
+### 15.8 The meta trees
+
+Fame, Insight and Essence upgrades are still mostly bought in full.
+
+| Option | Verdict |
+|---|---|
+| **Keep them as they are for now** | **Recommended.** Each tree only needs to follow the channel table (Fame never multiplies spell or planar power). Changing the layers and the trees at once would make it impossible to tell which change worked. |
+| A capstone pick per tree | Later: one exclusive pick per tree (e.g. Fame: Conqueror or Steward), changeable at that layer's reset. |
+| A budget you allocate (§14 C2) | Changes a core loop; only if the trees still feel automatic once the layers have their own choices. |
+
+### 15.9 The story
+
+*A ruler.* You found a village of High Men. Your scouts bring word of Orcs to the east and Halflings to the south, and you choose the Orcs. Their cities hide behind walls, your spearmen stall, and the Army tab shows Walls halving your melee and doubling siege. You set your doctrine to siege. Catapults roll, the walls fall, and you can see it worked. At the end of the road stands the Domain of Merlin, its wards untouchable by any mortal army. You Refound, as Orcs this time, and Fame makes each new kingdom faster. Your Wizards' Guild fills with books.
+
+*A wizard.* You Ascend. Merlin is still there, but now you can fight him. His wards are Life and Nature, and the planner shows that Death magic unravels Life wards twice as fast. You take Death books and Infernal Power. Your casting skill holds three enchantments, so you choose the ones that sharpen your spells against him and drop the one that only helps the harvest. His wards thin and fall. Merlin is banished, and his domain opens to your army. In his lands stands a Tower of Wizardry, its seal broken. Every rival you banish unseals another. Insight makes each Ascension's contest faster, and your kingdom simply follows.
+
+*A planeswalker.* You research the Rite and step through the Tower. Myrror is a second world, held by its own wizards, and your power reaches it only through the Towers. One Tower carries a trickle of your army and magic. You land among the Klackons for their industry and raise your Fortress on Myrror. The second Tower falls, then the third, and with each one more of your power crosses and more of Myrror opens, rich in Adamantium, Quork and Crysx. Arms or Garrisons? You can't have both soon. Essence makes each Planeshift's campaign faster.
+
+*The Master.* With every Tower yours and every wizard on both planes banished, only the Spell of Mastery remains. You channel it and win, and the worlds begin anew, remembering you. Then the rival wizards come back one at a time, each daring you to play the Wizard's contest by their rule.
+
+### 15.10 What it changes
+
+- **Layer 2** gets the most new work: wards as a frontier, realm matchups, casting skill, enchantment upkeep, and the Tower gate moving from raid to unseal. Instants, enchantments, research and the Rite exist and are reused.
+- **Layer 3:** Towers as Myrror's frontier, planar power through links (links and their army-share cap exist), works costs shared per resource, the Fortress choice, and the beachhead race described.
+- **Layer 1:** doctrine and sharper traits, then routes. The frontier, traits and regions exist.
+- **Stats:** effects are tagged by channel, and Fame effects stop reaching spell and planar power.
+- **Challenges:** the goal moves to the wards.
+- **Saves:** a save in the middle of Layer 2 or 3 needs a migration (e.g. wizards already banished, Towers held). Possibly some Layer 2/3 progress gets reset, said in the changelog.
+
+### 15.11 Suggested order
+
+1. **The channel audit and a baseline** (§14 D): tag which stats each currency multiplies, and have the simulator measure how much Fame speeds up today's Layer 2 and 3 gates. No gameplay change yet.
+2. **Layer 2: the wizards' contest.** It's the biggest gap: your note says Layer 2 has neither things to buy nor an accomplishment of its own.
+3. **Layer 3: the Towers**, with shared work costs and the Fortress choice.
+4. **Layer 1: doctrine, then routes.**
+5. **Feedback** (§14 A1–A3) alongside each step: each new mechanic comes with its report.
+6. **Challenges** (#22, #26, #28) on the new structure, then the meta trees if they still feel automatic.
+
+Two small things can happen at any time: describing the beachhead races on their choice, and sharing works costs per resource.
+
+### 15.12 Decisions for you
+
+1. The framework: the shared shape (15.2) and the power channels (15.3).
+2. Layer 2: 2A (recommended), 2B or 2C.
+3. Layer 3: 3A (recommended), 3B or 3C, and the Fortress-plane choice.
+4. Layer 1: 1A then 1B (recommended), or 1C.
+5. Meta trees: keep for now (recommended), capstones, or a budget.
+6. Saves: is resetting some Layer 2/3 progress acceptable when this lands?
+
+### 15.13 As built (first pass, 2026-10-09)
+
+**Layer 2, the wizards' contest** (`engine/wards.ts`, Magic tab):
+
+- **Rivals are fixed per Ascension** (`ascension.rivals`), seeded by Planeshifts, Masteries and the Ascension number, and shown in the planner for the next Ascension. *Differs from 15.4:* before, the rivals came from each kingdom's starting race, so they changed at every Refound, and the route could pick the wizard. Fixed rivals are what make it possible to choose books against them, so the route no longer decides the wizard.
+- **Wards:** the k-th rival's strength is 3e4 × 20^k (× Kali's rule and reward). Progress and casting skill last the whole Ascension. A broken ward banishes the wizard: their domain opens to the army (a standing domain is a wall even for wizards), their realms are learned, and their Tower is unsealed.
+- **Spell power** = free casting skill × `spell.power` × matchup, where the matchup is each realm's share of your books × its factor. Opposed realms are ×2 (Life and Death, Chaos and Nature); Sorcery is ×1.5 against wards that aren't Sorcery's; the wizard's own realm is ×0.5.
+- **Casting skill** = 5 + log₁.₃₅(1 + mana poured ÷ 100). Mana is poured as a share of income, set by a slider (25% by default).
+- **Enchantments** take up casting skill while they run (1, 2, 4 or 8 by rarity). They can be dispelled, and auto-cast follows a loadout (an "auto" tick per enchantment).
+- **Instants** strike the wards while a rival stands, with N seconds of spell power. Dispel Magic now doubles spell power (and still breaks Myrror's wards).
+- **Spell power is multiplied by** Ward-Breaking (Insight, ×1.3 a level), Astral Sorcery (Essence, ×2 a level) and the Mastery bonus. Fame never touches it.
+- **Insight** = fame part × (1 + 0.25 × books) × (1 + rivals banished, with the current ward as a fraction)². The fame part is √(Fame ÷ 10), softcapped above 30. The old frontier-depth factor is gone: it made a strong kingdom decide Insight.
+- **Gates:** Planeshift needs a Tower unsealed this Ascension plus the Rite; the Tower lair is retired from expeditions. The Mastery gate and a challenge's goal are all four rivals banished in one Ascension.
+- **Auto-Ascend** doesn't fire on a stall while the current ward will break within an hour.
+
+**Layer 3, the Towers** (`engine/planes.ts`, Planes tab):
+
+- **Five Towers of Wizardry on Myrror:** the first city of region 3, and the gate of each Myrran wizard's domain. Each one taken is a link.
+- **The pipe:** planar power = min(army sent, link capacity) × `myrror.power`, where capacity = 3e9 × 1.7^city × links. Myrror's defenses grow ×1.75 a city, so an army too big for the links still meets a slowly stiffening Myrror, which Essence, works, boons and more links answer.
+- **Works:** each level of a work makes the other work of its resource ×1.5 dearer, and auto-buy leaves works whose "auto" is unticked.
+- **The beachhead choice** shows the race's resource, holding bonus and unit.
+
+**Layer 1** (Army tab):
+
+- **Sharper city traits:** Walls ×0.25 to melee, pike and cavalry and ×3 to siege; Archers ×0.5 ranged, ×2 cavalry; Cavalry Screen ×0.25 cavalry, ×3 pike; Shield Wall ×0.4 melee, ×2 ranged. Monster traits are unchanged.
+- **Doctrine:** a 0–10 weight per role. Until set, it follows the last kingdom's army, scaled to 10. Auto-recruit buys the role furthest below its share, with that role's best power per cost, and saves for it rather than buying a role that's already ahead.
+- **Most efficient** (the old greedy mode) unlocks at 2 Ascensions (Legend Never Dies). The bot still uses it, as a stand-in for a player who adapts.
+- **The Army tab** shows aim, army now, and the role multipliers against the next 8 cities, with both the army's and the doctrine's overall fit.
+- **Routes:** `planRoute` offers the two nearest neighbours not met yet at each race region, and untouched it takes the nearer one (the old order). They're chosen for regions not yet entered and remembered per starting race (`prestige.routeMemory`).
+
+**Feedback:**
+
+- **A2:** Fame per minute now and its best this kingdom (Kingdom tab).
+- **A3:** the planner's matchups against the next rivals.
+- Each new mechanic shows its own numbers: wards progress and time left, the pipe's capacity against what you send, the doctrine's fit.
+- **A1** (a report at each reset) isn't built.
+
+**Saves:** nothing is reset. Rivals are taken from the current kingdom's old plan, so wizards banished by taking their Fortress still count. A Tower lair cleared in the current kingdom still counts as unsealed. Myrror keeps its links. "Chronicle" auto-recruit becomes the doctrine. This answers question 6 without a reset.
+
+**Simulator (bot, 16h cap per kingdom; before → after):**
+
+| Milestone | Before | After |
+|---|---|---|
+| First Ascension | 4h22m | 3h43m |
+| First Planeshift | 7h25m | 6h06m |
+| Insight per Ascension | 10 at first, 9.5M by Planeshift 6 | 9 at first, up to 4K in Planeshift 2, 40K–140K late |
+| An Ascension, once strong | 20 s | a few minutes, waiting on the contest |
+| All four rivals in one Ascension | — | first at Planeshift 6, about 11h40m |
+| Myrror fully held | Planeshift 5, 8h52m | Planeshift 8, 12h56m |
+| The Spell of Mastery | channelling at about 9h | channelling at about 13h, so the first Mastery comes several hours later |
+
+Layers 2 and 3 become trivial only late, through Essence (Astral Sorcery, Wellspring), which is the "upper layer may trivialise" rule at work.

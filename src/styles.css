@@ -277,12 +277,36 @@ h3 {
     }
 }
 
-.panel section {
+.panel section,
+.panel details.section {
     background: var(--panel);
     border: 1px solid var(--border);
     border-radius: 6px;
     padding: 10px 12px;
     margin-bottom: 10px;
+}
+
+/* a collapsible section: its heading is the toggle */
+details.section > summary {
+    cursor: pointer;
+    list-style: none;
+}
+details.section > summary::-webkit-details-marker {
+    display: none;
+}
+details.section > summary h2 {
+    display: inline;
+    margin: 0;
+}
+details.section > summary h2::before {
+    content: "▸ ";
+    color: var(--muted);
+}
+details.section[open] > summary h2::before {
+    content: "▾ ";
+}
+details.section[open] > summary {
+    margin-bottom: 8px;
 }
 
 .row {
@@ -361,6 +385,73 @@ button.danger {
     display: flex;
     align-items: center;
     gap: 10px;
+}
+
+/* a card with a control under it (a work's auto-buy box) */
+.card-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.card-wrap .card {
+    flex: 1;
+}
+
+/* "auto" boxes: an enchantment in the auto-cast loadout, a work auto-buy grows */
+label.loadout {
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+/* why a spell can't be cast, under its Cast button */
+.cast-blocker {
+    display: block;
+    font-size: 12px;
+}
+
+/* the route: which race each coming region will be */
+.route {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 8px 0;
+}
+
+.route-choice {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+/* the doctrine: weights per troop role */
+table.doctrine td,
+table.doctrine th {
+    padding: 2px 10px 2px 0;
+}
+
+table.doctrine tr.unavailable td {
+    color: var(--muted);
+}
+
+/* the wizards' contest: rivals and their wards */
+table.rivals td {
+    padding: 2px 10px 2px 0;
+}
+
+table.rivals tr.done td {
+    color: var(--muted);
+}
+
+table.rivals tr.current td:first-child {
+    color: var(--accent);
+}
+
+.progress.wards .progress-fill {
+    background: var(--mana, #7a5cc4);
 }
 
 div.panel-card {
@@ -874,6 +965,37 @@ tr.cleared td {
     overflow-y: auto;
 }
 
+/* the game's confirmation dialog (ui/Confirm.tsx), above any other modal */
+.confirm-backdrop {
+    z-index: 60;
+}
+.modal.confirm h2 {
+    margin-top: 0;
+}
+.modal.confirm p {
+    margin: 0 0 10px;
+    line-height: 1.45;
+}
+.confirm-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 14px;
+}
+.confirm-buttons button {
+    padding: 6px 14px;
+}
+.confirm-ok {
+    font-weight: 600;
+}
+.confirm-ok.danger {
+    border-color: var(--bad);
+}
+.modal.confirm .warning {
+    color: var(--bad);
+    font-weight: 600;
+}
+
 .offline-log {
     font-size: 12px;
     color: var(--muted);
@@ -925,6 +1047,33 @@ tr.cleared td {
 
 .prestige-button.ascend {
     border-color: var(--insight);
+}
+
+/* the Insight and Essence sums beside the Ascend and Planeshift buttons */
+table.prestige-sum {
+    border-collapse: collapse;
+    margin: 8px 0;
+    font-size: 13px;
+}
+table.prestige-sum td {
+    padding: 2px 10px 2px 0;
+    vertical-align: baseline;
+}
+table.prestige-sum td.num {
+    text-align: right;
+    font-family: var(--mono);
+    white-space: nowrap;
+}
+table.prestige-sum td.insight {
+    color: var(--insight);
+}
+table.prestige-sum td.essence {
+    color: var(--essence);
+}
+table.prestige-sum tr.total td {
+    border-top: 1px solid var(--border);
+    padding-top: 4px;
+    font-weight: 600;
 }
 
 ul.gate {
@@ -1090,16 +1239,21 @@ button.toggle.auto {
 .glance[open] summary {
     margin-bottom: 4px;
 }
-/* two columns on wide screens, to keep it short */
-.glance .overview {
+/* two columns on wide screens, to keep it short: the kingdom, then the layers above */
+.glance .overview-columns {
     display: grid;
     grid-template-columns: 1fr 1fr;
     column-gap: 24px;
+    align-items: start;
 }
 @media (max-width: 900px) {
-    .glance .overview {
+    .glance .overview-columns {
         grid-template-columns: 1fr;
     }
+}
+/* each line's label links to its tab */
+.glance button.ov-label {
+    text-align: left;
 }
 .glance .overview li {
     border-bottom: none;

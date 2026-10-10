@@ -7,10 +7,10 @@
  * The last city of each region is a walled region capital.
  *
  * After the race regions lies a rival wizard's domain. Mortal armies cannot
- * pass its wards — that is Layer 1's ceiling. Wizards (Layer 2) can break the
- * wards with Dispel Magic; the domain ends in the rival's Fortress, and beyond
- * it the frontier continues through more races and more rival wizards until
- * the edge of Arcanus.
+ * pass its wards — that is Layer 1's ceiling. Wizards (Layer 2) break the
+ * wards with spell power (engine/wards.ts); then the army can take the domain,
+ * which ends in the rival's Fortress, and beyond it the frontier continues
+ * through more races and more rival wizards until the edge of Arcanus.
  */
 import { D, Decimal } from "../engine/decimal";
 import { hash, hashFloat, hashPick } from "../engine/rng";
@@ -59,6 +59,8 @@ export interface RegionDef {
     name: string;
     /** Wizard domains: the rival wizard's name */
     wizard?: string;
+    /** Race regions: which one this is (0 = the first after the Borderlands), for the route */
+    raceRegion?: number;
 }
 
 export interface FrontierCity {
@@ -71,11 +73,14 @@ export interface FrontierCity {
     /** Population (thousands) the city has when conquered */
     pop: number;
     isRegionCapital: boolean;
-    /** Set on a rival wizard's Fortress: taking it defeats that wizard */
+    /** Set on a rival wizard's Fortress, the end of their domain (the wizard falls when their wards break) */
     fortressOf?: string;
 }
 
-/** The rival wizards met by a run starting as `start`, in order (distinct) */
+/**
+ * The rival wizards met by a run starting as `start`, in order (distinct).
+ * Only for saves from before rivals were fixed per Ascension (see rivalsFor).
+ */
 export function rivalWizards(start: RaceId, count: number): string[] {
     const pool: string[] = [...RIVAL_WIZARDS];
     const result: string[] = [];
@@ -86,27 +91,72 @@ export function rivalWizards(start: RaceId, count: number): string[] {
     return result;
 }
 
-/** The first rival wizard (the Layer 1 wall) */
-export function rivalWizard(start: RaceId): string {
-    return rivalWizards(start, 1)[0];
+/**
+ * The four rival wizards of Arcanus for one Ascension, in the order their
+ * domains lie on the frontier. Fixed for the whole Ascension (so the next
+ * one's can be shown while you plan your books) and seeded by where you are
+ * in the game. `exclude` is the wizard you are playing as (a challenge).
+ */
+export function rivalsFor(seed: Array<string | number>, exclude: string | null = null): string[] {
+    const pool: string[] = RIVAL_WIZARDS.filter((w) => w !== exclude);
+    const result: string[] = [];
+    for (let i = 0; i < ARCANUS_WIZARDS && pool.length > 0; i++) {
+        result.push(pool.splice(hash("rivals", ...seed, i) % pool.length, 1)[0]);
+    }
+    return result;
 }
 
 /**
- * Builds the region list. `domains` is how many rival wizards' domains are
- * included (Layer 1 only ever sees the first one).
+ * The route (DESIGN.md §15.4): at each boundary the frontier can turn to one
+ * of two races, the nearest neighbours of the start not met yet. Returns, for
+ * `count` race regions, each one's race and its two options. A region without
+ * a (valid) choice in `route` takes the nearer option.
  */
-export function regionPlan(start: RaceId, raceRegions = BASE_RACE_REGIONS, domains = 1): RegionDef[] {
+export function planRoute(start: RaceId, count: number, route: readonly (RaceId | null)[] = []): { picks: RaceId[]; options: RaceId[][] } {
+    const order = neighborOrder(start);
+    const used = new Set<RaceId>();
+    const picks: RaceId[] = [];
+    const options: RaceId[][] = [];
+    for (let k = 0; k < count; k++) {
+        // every race met: the road goes round again
+        if (used.size >= order.length) used.clear();
+        const open = order.filter((r) => !used.has(r)).slice(0, 2);
+        const chosen = route[k];
+        const pick = chosen && open.includes(chosen) ? chosen : open[0];
+        options.push(open);
+        picks.push(pick);
+        used.add(pick);
+    }
+    return { picks, options };
+}
+
+/** Race regions in a plan with these many wizards' domains */
+export function raceRegionCount(raceRegions: number, wizards: number): number {
+    return raceRegions + Math.max(0, wizards - 1) * LATER_RACE_REGIONS;
+}
+
+/**
+ * Builds the region list. `wizards` are the rival wizards whose domains are
+ * included, in order (Layer 1 only ever sees the first one); `route` the races
+ * chosen at the boundaries.
+ */
+export function regionPlan(
+    start: RaceId,
+    raceRegions = BASE_RACE_REGIONS,
+    wizards: readonly string[] = rivalsFor([0, 0, 0]).slice(0, 1),
+    route: readonly (RaceId | null)[] = [],
+): RegionDef[] {
     const regions: RegionDef[] = [
         { index: 0, kind: "borderlands", race: start, name: `${RACES[start].adjective} Borderlands` },
     ];
     const order = neighborOrder(start);
-    const wizards = rivalWizards(start, domains);
+    const { picks } = planRoute(start, raceRegionCount(raceRegions, wizards.length), route);
     let cursor = 0;
     wizards.forEach((wizard, d) => {
         const block = d === 0 ? raceRegions : LATER_RACE_REGIONS;
         for (let i = 0; i < block; i++) {
-            const r = order[cursor++ % order.length];
-            regions.push({ index: regions.length, kind: "race", race: r, name: RACES[r].plural });
+            const r = picks[cursor++];
+            regions.push({ index: regions.length, kind: "race", race: r, name: RACES[r].plural, raceRegion: cursor - 1 });
         }
         regions.push({
             index: regions.length,

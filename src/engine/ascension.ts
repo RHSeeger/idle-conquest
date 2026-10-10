@@ -27,9 +27,9 @@ import {
     resolveFamiliar,
     restoreRememberedSpells,
     spellMemoryLevel,
-    towerCleared,
     validateBooks,
 } from "./magic";
+import { banishedCount, beginContest, currentRival, towersUnsealed, wardStrength } from "./wards";
 import {
     applyRunStart,
     closeFameChronicle,
@@ -63,29 +63,72 @@ export function ascensionProgress(state: GameState): AscensionProgress {
     };
 }
 
-/** Insight grows ×1.06 for each frontier city taken beyond this index (the Layer 1 wall) */
-const INSIGHT_DEPTH_FROM = 40;
-const INSIGHT_DEPTH_GROWTH = 1.06;
+/**
+ * The kingdom's part of Insight (√(Fame / 10)) is softcapped beyond this: a
+ * strong kingdom helps, but the wizards' contest decides (DESIGN.md §15.3)
+ */
+export const INSIGHT_FAME_SOFTCAP = 30;
+const INSIGHT_FAME_SOFTCAP_POWER = 0.3;
+/** Insight × (1 + rivals banished, plus the share of the current rival's wards worn down)^this */
+export const INSIGHT_WARD_POWER = 2;
 
 /**
- * Insight = √(Fame earned this Ascension / 10)
- *           × (1 + 0.25 × spellbooks this run)
- *           × (1 + rival wizards defeated this Ascension)
- *           × 1.06^(frontier cities beyond the Layer 1 wall, this run)
+ * Insight = fame part × (1 + 0.25 × spellbooks this run) × (1 + rivals banished)^2,
+ * where the fame part is √(Fame earned this Ascension / 10), softcapped above 30,
+ * and "rivals banished" counts the current rival's wards worn down as a fraction.
+ * The contest is how well you did as a wizard, so it weighs the most.
  */
 export function insightOnAscend(state: GameState): Decimal {
-    if (!ascensionProgress(state).ready) {
-        return D(0);
-    }
+    return insightBreakdown(state).total;
+}
+
+/** Every factor of insightOnAscend, for showing the sum beside the Ascend button */
+export interface InsightBreakdown {
+    /** Fame earned this Ascension, plus what refounding now would give */
+    fame: number;
+    /** √(fame / 10), softcapped above INSIGHT_FAME_SOFTCAP */
+    famePart: number;
+    fameSoftcapped: boolean;
+    spellbooks: number;
+    /** 1 + 0.25 × spellbooks */
+    booksMult: number;
+    /** Rivals banished, plus the share of the current rival's wards worn down */
+    contest: number;
+    /** (1 + contest)^INSIGHT_WARD_POWER */
+    contestMult: number;
+    /** famePart × booksMult × contestMult, before the softcap */
+    raw: number;
+    softcapped: boolean;
+    /** Insight multipliers (upgrades, retorts, Mastery…) */
+    mult: number;
+    ready: boolean;
+    total: Decimal;
+}
+
+export function insightBreakdown(state: GameState): InsightBreakdown {
     const a = state.ascension;
     // Fame that would be earned by refounding now counts too
     const fame = a.fameEarned.plus(fameOnRefound(state)).toNumber();
-    const base = Math.sqrt(Math.max(0, fame) / 10);
-    const books = 1 + 0.25 * spellbookCount(state);
-    const wizards = 1 + a.wizardsDefeatedThisAscension.length;
-    const depth = Decimal.pow(INSIGHT_DEPTH_GROWTH, Math.max(0, state.run.frontier.index - INSIGHT_DEPTH_FROM));
-    const raw = depth.times(base * books * wizards);
-    return softcapInsight(raw).times(getStats(state).get("insight.mult")).floor();
+    const root = Math.sqrt(Math.max(0, fame) / 10);
+    const fameSoftcapped = root > INSIGHT_FAME_SOFTCAP;
+    const famePart = fameSoftcapped ? INSIGHT_FAME_SOFTCAP * Math.pow(root / INSIGHT_FAME_SOFTCAP, INSIGHT_FAME_SOFTCAP_POWER) : root;
+    const spellbooks = spellbookCount(state);
+    const booksMult = 1 + 0.25 * spellbooks;
+    const contest = contestScore(state);
+    const contestMult = Math.pow(1 + contest, INSIGHT_WARD_POWER);
+    const raw = famePart * booksMult * contestMult;
+    const mult = getStats(state).get("insight.mult").toNumber();
+    const ready = ascensionProgress(state).ready;
+    const total = ready ? softcapInsight(D(raw)).times(mult).floor() : D(0);
+    return { fame, famePart, fameSoftcapped, spellbooks, booksMult, contest, contestMult, raw, softcapped: raw > INSIGHT_SOFTCAP, mult, ready, total };
+}
+
+/** Rivals banished this Ascension, plus the share of the current rival's wards worn down */
+export function contestScore(state: GameState): number {
+    const banished = banishedCount(state);
+    const rival = currentRival(state);
+    const partial = rival ? Math.min(1, state.ascension.wardProgress.div(wardStrength(state, rival)).toNumber()) : 0;
+    return banished + partial;
 }
 
 /** Insight beyond this is softcapped: the deep-frontier factor otherwise snowballs into the millions */
@@ -179,6 +222,7 @@ export function performAscension(
     a.spellsKnown = [];
     const restored = restoreRememberedSpells(state);
     a.wizardsDefeatedThisAscension = [];
+    beginContest(state);
 
     const keepAnnals = hasAscensionMilestone(state, "keepAnnals");
     const annals = keepAnnals ? ascensionRaceOptions(state) : [...new Set<RaceId>(["highMen", startRace])];
@@ -225,19 +269,20 @@ export function performAscension(
 // --- Layer 3 gate (Planeshift) ---
 
 export interface PlaneshiftProgress {
-    towerCleared: boolean;
+    /** A Tower of Wizardry unsealed this Ascension (a rival banished) */
+    towerUnsealed: boolean;
     riteKnown: boolean;
     ready: boolean;
 }
 
 /**
- * The gate to Layer 3 (DESIGN.md §6.3): clear a Tower of Wizardry, then
- * research the Rite of the Tower. Layer 3 itself is not designed yet.
+ * The gate to Layer 3 (DESIGN.md §15.5): banish a rival wizard, which unseals
+ * their Tower of Wizardry, then research the Rite of the Tower to open it.
  */
 export function planeshiftProgress(state: GameState): PlaneshiftProgress {
-    const tower = towerCleared(state);
+    const tower = towersUnsealed(state) > 0;
     const rite = knowsSpell(state, "riteOfTheTower");
-    return { towerCleared: tower, riteKnown: rite, ready: tower && rite };
+    return { towerUnsealed: tower, riteKnown: rite, ready: tower && rite };
 }
 
 // --- Insight upgrades ---

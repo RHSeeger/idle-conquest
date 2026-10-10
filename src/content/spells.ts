@@ -4,10 +4,14 @@
  *
  *  - enchantment: cast once per run for mana, lasts until the run ends
  *  - summon:      opens a creature you can conjure in stacks with mana (see units.ts)
- *  - instant:     a burst of siege damage worth N seconds of your army's power,
+ *  - instant:     a burst worth N seconds of your spell power against a rival
+ *                 wizard's wards (of your army's power once all are banished),
  *                 for a fixed mana cost, with a cooldown
  *  - utility:     a lasting capability (e.g. Magic Spirit melds nodes,
- *                 Dispel Magic breaks rival wizards' wards)
+ *                 Dispel Magic doubles spell power)
+ *
+ * A running enchantment takes up casting skill (RARITY_UPKEEP), which is
+ * then not there for the wizards' contest (engine/wards.ts).
  *
  * A realm's spells of a rarity are available once your wizard profile has
  * enough books in that realm (RARITY_BOOKS). Arcane spells need no books.
@@ -36,6 +40,9 @@ export const RARITY_RESEARCH: Record<Rarity, number> = { common: 300, uncommon: 
 /** Base mana cost of casting an enchantment, by rarity */
 export const RARITY_MANA: Record<Rarity, number> = { common: 100, uncommon: 3000, rare: 1e5, veryRare: 4e6 };
 
+/** Casting skill a running enchantment takes up, by rarity (engine/wards.ts) */
+export const RARITY_UPKEEP: Record<Rarity, number> = { common: 1, uncommon: 2, rare: 4, veryRare: 8 };
+
 export interface SpellDef {
     id: string;
     name: string;
@@ -51,7 +58,7 @@ export interface SpellDef {
     siegeSeconds?: number;
     mana?: number;
     cooldown?: number;
-    /** Can only be researched after clearing a Tower of Wizardry this run */
+    /** Can only be researched once a Tower of Wizardry is unsealed this Ascension (a rival wizard banished) */
     requiresTower?: boolean;
     /** Knowing this other spell multiplies the research cost */
     discountedBy?: { spell: string; mult: number };
@@ -73,7 +80,14 @@ const list: SpellDef[] = [
         effects: [{ stat: "explore.speed", op: "mult", value: 2 }],
         text: "×2 exploration speed",
     },
-    { id: "dispelMagic", name: "Dispel Magic", realm: "arcane", rarity: "uncommon", kind: "utility", text: "Break the wards that protect rival wizards' domains." },
+    {
+        id: "dispelMagic",
+        name: "Dispel Magic",
+        realm: "arcane",
+        rarity: "uncommon",
+        kind: "utility",
+        text: "×2 spell power against rival wizards' wards; breaks the wards of Myrror's domains.",
+    },
     {
         id: "summoningCircle",
         name: "Summoning Circle",
@@ -100,7 +114,7 @@ const list: SpellDef[] = [
         kind: "utility",
         requiresTower: true,
         discountedBy: { spell: "planeShift", mult: 0.5 },
-        text: "Open a captured Tower of Wizardry onto Myrror.",
+        text: "Open an unsealed Tower of Wizardry onto Myrror.",
     },
     {
         id: "spellOfMastery",
@@ -162,7 +176,7 @@ const list: SpellDef[] = [
         text: "×5 army power",
     },
     { id: "archangel", name: "Archangel", realm: "life", rarity: "veryRare", kind: "summon", unit: "archangel", text: "Summon Archangels (cavalry)" },
-    { id: "holyWord", name: "Holy Word", realm: "life", rarity: "rare", kind: "instant", siegeSeconds: 240, mana: 2e4, cooldown: 120, text: "Siege burst: 240s of army power" },
+    { id: "holyWord", name: "Holy Word", realm: "life", rarity: "rare", kind: "instant", siegeSeconds: 240, mana: 2e4, cooldown: 120, text: "Burst: 240s of spell power against wards (of army power once every rival is banished)" },
 
     // --- Death ---
     {
@@ -204,10 +218,10 @@ const list: SpellDef[] = [
         effects: [{ stat: "army.power", op: "mult", value: 4 }, { stat: "mana.mult", op: "mult", value: 1.5 }],
         text: "×4 army power, ×1.5 mana",
     },
-    { id: "deathWish", name: "Death Wish", realm: "death", rarity: "veryRare", kind: "instant", siegeSeconds: 600, mana: 6e5, cooldown: 300, text: "Siege burst: 600s of army power" },
+    { id: "deathWish", name: "Death Wish", realm: "death", rarity: "veryRare", kind: "instant", siegeSeconds: 600, mana: 6e5, cooldown: 300, text: "Burst: 600s of spell power against wards (of army power once every rival is banished)" },
 
     // --- Chaos ---
-    { id: "fireBolt", name: "Fire Bolt", realm: "chaos", rarity: "common", kind: "instant", siegeSeconds: 30, mana: 25, cooldown: 20, text: "Siege burst: 30s of army power" },
+    { id: "fireBolt", name: "Fire Bolt", realm: "chaos", rarity: "common", kind: "instant", siegeSeconds: 30, mana: 25, cooldown: 20, text: "Burst: 30s of spell power against wards (of army power once every rival is banished)" },
     { id: "hellHounds", name: "Hell Hounds", realm: "chaos", rarity: "common", kind: "summon", unit: "hellHounds", text: "Summon Hell Hounds (cavalry)" },
     {
         id: "eldritchWeapon",
@@ -218,7 +232,7 @@ const list: SpellDef[] = [
         effects: [{ stat: "role.melee", op: "mult", value: 2 }, { stat: "role.cavalry", op: "mult", value: 2 }],
         text: "×2 melee and cavalry power",
     },
-    { id: "fireball", name: "Fireball", realm: "chaos", rarity: "uncommon", kind: "instant", siegeSeconds: 90, mana: 750, cooldown: 45, text: "Siege burst: 90s of army power" },
+    { id: "fireball", name: "Fireball", realm: "chaos", rarity: "uncommon", kind: "instant", siegeSeconds: 90, mana: 750, cooldown: 45, text: "Burst: 90s of spell power against wards (of army power once every rival is banished)" },
     { id: "chaosSpawn", name: "Chaos Spawn", realm: "chaos", rarity: "rare", kind: "summon", unit: "chaosSpawn", text: "Summon Chaos Spawn (melee)" },
     {
         id: "chaosRift",
@@ -302,7 +316,7 @@ const list: SpellDef[] = [
         effects: [{ stat: "gold.mult", op: "mult", value: 2 }, { stat: "knowledge.mult", op: "mult", value: 1.5 }],
         text: "×2 gold, ×1.5 knowledge",
     },
-    { id: "psionicBlast", name: "Psionic Blast", realm: "sorcery", rarity: "uncommon", kind: "instant", siegeSeconds: 60, mana: 500, cooldown: 30, text: "Siege burst: 60s of army power" },
+    { id: "psionicBlast", name: "Psionic Blast", realm: "sorcery", rarity: "uncommon", kind: "instant", siegeSeconds: 60, mana: 500, cooldown: 30, text: "Burst: 60s of spell power against wards (of army power once every rival is banished)" },
     { id: "stormGiant", name: "Storm Giant", realm: "sorcery", rarity: "rare", kind: "summon", unit: "stormGiant", text: "Summon Storm Giants (ranged)" },
     {
         id: "flight",
@@ -322,7 +336,7 @@ const list: SpellDef[] = [
         text: "Step between the planes: the Rite of the Tower costs half as much to research",
     },
     { id: "skyDrake", name: "Sky Drake", realm: "sorcery", rarity: "veryRare", kind: "summon", unit: "skyDrake", text: "Summon Sky Drakes (cavalry)" },
-    { id: "timeStop", name: "Time Stop", realm: "sorcery", rarity: "veryRare", kind: "instant", siegeSeconds: 900, mana: 8e5, cooldown: 400, text: "Siege burst: 900s of army power" },
+    { id: "timeStop", name: "Time Stop", realm: "sorcery", rarity: "veryRare", kind: "instant", siegeSeconds: 900, mana: 8e5, cooldown: 400, text: "Burst: 900s of spell power against wards (of army power once every rival is banished)" },
 ];
 
 export const SPELLS: Record<string, SpellDef> = Object.fromEntries(list.map((s) => [s.id, s]));

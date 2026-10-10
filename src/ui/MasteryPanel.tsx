@@ -33,7 +33,9 @@ import {
     startChallenge,
 } from "../engine/mastery";
 import { GameState } from "../engine/state";
+import { banishedCount } from "../engine/wards";
 import { Price, ProgressBar } from "./components";
+import { askConfirm } from "./Confirm";
 import { game } from "./game";
 
 const check = (ok: boolean) => <span class={ok ? "good" : "bad"}>{ok ? "✓" : "✗"}</span>;
@@ -43,7 +45,7 @@ const CLAIM_TEXT =
     "Every milestone counts as earned, so automation runs from the start.";
 
 function doClaim(state: GameState) {
-    if (confirm(`Claim your Mastery?\n\n${CLAIM_TEXT}`)) claimMastery(state);
+    askConfirm({ title: "Claim your Mastery?", tone: "mastery", confirm: "Claim Mastery", body: [CLAIM_TEXT], onConfirm: () => claimMastery(state) });
 }
 
 export function isMasteryTabVisible(state: GameState): boolean {
@@ -76,7 +78,7 @@ function SpellSection() {
                     <p class="hint">{CLAIM_TEXT} You can keep playing for as long as you like and claim it later.</p>
                     <button class="prestige-button mastery" disabled={!canClaimMastery(state)} onClick={() => doClaim(state)}>
                         Claim Mastery {m.masteries + 1} (×{fmtInt(Math.pow(MASTERY_BONUS, m.masteries + 1))} production, gold,
-                        knowledge and mana)
+                        knowledge, mana, spell power and planar power)
                     </button>
                 </>
             ) : (
@@ -89,8 +91,8 @@ function SpellSection() {
                                     {MYRROR_WIZARDS})
                                 </li>
                                 <li>
-                                    {check(gate.fortresses >= ARCANUS_WIZARDS)} Take every rival wizard's Fortress on Arcanus in one
-                                    kingdom ({gate.fortresses} of {ARCANUS_WIZARDS} in this one)
+                                    {check(gate.arcanus >= ARCANUS_WIZARDS)} Banish all four rival wizards of Arcanus in one
+                                    Ascension, by breaking their wards ({gate.arcanus} of {ARCANUS_WIZARDS} in this one; Magic tab)
                                 </li>
                             </ul>
                             <p>
@@ -137,7 +139,7 @@ function MasteriesSection() {
                 Masteries <span class="count">· {m.masteries} claimed</span>
             </h2>
             <p>
-                ×{fmtInt(masteryBonus(state))} production, gold, knowledge and mana. Every milestone counts as earned. Each
+                ×{fmtInt(masteryBonus(state))} production, gold, knowledge, mana, spell power and planar power. Every milestone counts as earned. Each
                 Spell of Mastery you cast again (same gate) gives another Mastery.
             </p>
         </section>
@@ -163,15 +165,27 @@ function ChallengesSection() {
     const doStart = (wizard: string) => {
         const c = CHALLENGES[wizard];
         const replay = m.completed.includes(wizard);
-        const text = [
-            replay ? `Replay ${wizard}'s challenge?` : `Accept ${wizard}'s challenge?`,
-            c.lore,
-            `This is an Ascension: your current Ascension ends (with Insight if its gate is met), and a new one begins as ${wizard}, with their books and retort. You keep your Insight, Planar Essence and their upgrades: the more of them you've built up, the easier it is.`,
-            `Rule: ${c.rule}.`,
-            `Goal: take all ${ARCANUS_WIZARDS} rival Fortresses of Arcanus in one kingdom. Refounds are allowed; Ascending and Planeshifting aren't. Myrror pauses meanwhile.`,
-            replay ? `Reward: ${c.reward} (already yours; a replay doesn't give it again).` : `Reward: ${c.reward}.`,
-        ].join("\n\n");
-        if (confirm(text)) startChallenge(state, wizard);
+        askConfirm({
+            title: replay ? `Replay ${wizard}'s challenge?` : `Accept ${wizard}'s challenge?`,
+            tone: "mastery",
+            confirm: replay ? "Replay challenge" : "Accept challenge",
+            body: [
+                <p class="challenge-lore">{c.lore}</p>,
+                `This is an Ascension: your current Ascension ends (with Insight if its gate is met), and a new one begins as ${wizard}, with their books and retort. You keep your Insight, Planar Essence and their upgrades: the more of them you've built up, the easier it is.`,
+                <p>
+                    <b>Rule:</b> {c.rule}.
+                </p>,
+                <p>
+                    <b>Goal:</b> banish all {ARCANUS_WIZARDS} rival wizards of Arcanus by breaking their wards (Magic tab). Refounds are allowed and
+                    keep the progress; Ascending and Planeshifting aren't. Myrror pauses meanwhile.
+                </p>,
+                <p>
+                    <b>Reward:</b> {c.reward}
+                    {replay ? " (already yours; a replay doesn't give it again)." : "."}
+                </p>,
+            ],
+            onConfirm: () => startChallenge(state, wizard),
+        });
     };
     return (
         <section>
@@ -179,9 +193,9 @@ function ChallengesSection() {
                 Challenge Wizards <span class="count">· {m.completed.length} of {CHALLENGE_ORDER.length} beaten</span>
             </h2>
             <p class="hint">
-                One Ascension as a rival wizard, with their books, retort and rule. Goal: take all {ARCANUS_WIZARDS} rival
-                Fortresses of Arcanus in one kingdom. Refounds are allowed; Ascending and Planeshifting aren't, and Myrror
-                pauses (its holdings, works and boons still count). Rewards last forever.
+                One Ascension as a rival wizard, with their books, retort and rule. Goal: banish all {ARCANUS_WIZARDS} rival
+                wizards of Arcanus by breaking their wards. Refounds are allowed and keep the progress; Ascending and
+                Planeshifting aren't, and Myrror pauses (its holdings, works and boons still count). Rewards last forever.
             </p>
             <p class="hint">
                 <b>Power up first.</b> A challenge isn't a fresh start like claiming a Mastery: you take your Insight, Planar
@@ -237,9 +251,13 @@ function CurrentChallenge() {
     const m = state.mastery;
     const c = CHALLENGES[m.challenge!];
     const doAbandon = () => {
-        if (confirm(`Abandon ${c.wizard}'s challenge? You Ascend back to your own profile (with Insight if the Ascension gate is met).`)) {
-            abandonChallenge(state);
-        }
+        askConfirm({
+            title: `Abandon ${c.wizard}'s challenge?`,
+            danger: true,
+            confirm: "Abandon",
+            body: ["You Ascend back to your own profile (with Insight if the Ascension gate is met)."],
+            onConfirm: () => abandonChallenge(state),
+        });
     };
     const won = canCompleteChallenge(state);
     const insight = insightOnAscend(state);
@@ -249,9 +267,9 @@ function CurrentChallenge() {
             <p>
                 <b>{c.wizard}'s challenge</b> ·{" "}
                 {m.challengeWonIn !== null ? `won in ${fmtTime(m.challengeWonIn)}` : `${fmtTime(state.meta.playtime - m.challengeStartedAt)} so far`}
-                {m.challengeBest[c.wizard] !== undefined && ` (best ${fmtTime(m.challengeBest[c.wizard])})`} · Fortresses in this kingdom:{" "}
+                {m.challengeBest[c.wizard] !== undefined && ` (best ${fmtTime(m.challengeBest[c.wizard])})`} · Rivals banished:{" "}
                 <b>
-                    {state.run.fortressesTaken} of {ARCANUS_WIZARDS}
+                    {banishedCount(state)} of {ARCANUS_WIZARDS}
                 </b>
             </p>
             <p class="hint">Rule: {c.rule}.</p>
@@ -264,7 +282,7 @@ function CurrentChallenge() {
                         ? `Won! Completing it gives the reward (${c.reward}) and Ascends you back to your own profile` +
                           (insight.gt(0) ? ` (+${fmtInt(insight)} Insight)` : "") +
                           "."
-                        : `Once all ${ARCANUS_WIZARDS} rival Fortresses of Arcanus have fallen in one kingdom. You can Refound as often as you like to get there (a Refound starts the count again), but you can't Ascend until it's complete. Completing it gives the reward and Ascends you back to your own profile (auto-Ascend does it for you).`}
+                        : `Once all ${ARCANUS_WIZARDS} rival wizards of Arcanus are banished (their wards broken, Magic tab). You can Refound as often as you like on the way (the contest's progress is kept), but you can't Ascend until it's complete. Completing it gives the reward and Ascends you back to your own profile (auto-Ascend does it for you).`}
                 </span>
             </p>
             <button class="toggle" onClick={doAbandon}>
@@ -296,7 +314,7 @@ export function ChallengeBanner(props: { onOpen: () => void }) {
                 <span class="good">Won: complete it on the Mastery tab.</span>
             ) : (
                 <>
-                    Fortresses in this kingdom: {state.run.fortressesTaken} of {ARCANUS_WIZARDS}.
+                    Rivals banished: {banishedCount(state)} of {ARCANUS_WIZARDS}.
                 </>
             )}{" "}
             <button class="link" onClick={props.onOpen}>
@@ -312,9 +330,8 @@ export function Victory() {
     const m = state.mastery;
     if (!m.cast || m.victorySeen || !m.victory) return null;
     const v = m.victory;
-    const claim = () => {
-        if (confirm(`Claim your Mastery now?\n\n${CLAIM_TEXT}`)) claimMastery(state);
-    };
+    const claim = () =>
+        askConfirm({ title: "Claim your Mastery now?", tone: "mastery", confirm: "Claim Mastery", body: [CLAIM_TEXT], onConfirm: () => claimMastery(state) });
     return (
         <div class="modal-backdrop">
             <div class="modal victory">
@@ -334,7 +351,7 @@ export function Victory() {
                     {m.masteries > 0 && <li>Masteries before this one: {m.masteries}</li>}
                 </ul>
                 <p class="hint">
-                    {CLAIM_TEXT} You gain a Mastery (×{MASTERY_BONUS} production, gold, knowledge and mana each)
+                    {CLAIM_TEXT} You gain a Mastery (×{MASTERY_BONUS} production, gold, knowledge, mana, spell power and planar power each)
                     {m.masteries === 0 ? " and the Challenge Wizards open." : "."} Or keep playing, and claim it whenever you
                     like from the Mastery tab.
                 </p>

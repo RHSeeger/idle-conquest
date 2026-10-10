@@ -9,6 +9,7 @@ import { fmt, fmtInt, fmtSigned, fmtTime } from "../engine/format";
 import { ArmyPanel, armyActivity } from "./ArmyPanel";
 import { BuildingsPanel } from "./BuildingsPanel";
 import { BreakdownView, CURRENCY_ICON, Tip } from "./components";
+import { ConfirmHost } from "./Confirm";
 import { game, useTicker } from "./game";
 import { LorePanel } from "./LorePanel";
 import { OfflineSummary, OfflineReport } from "./OfflineReport";
@@ -86,7 +87,7 @@ const TABS: TabDef[] = [
         visible: () => {
             const s = game();
             const gate = planeshiftProgress(s);
-            return s.planes.planeshifts > 0 || gate.towerCleared || gate.riteKnown;
+            return s.planes.planeshifts > 0 || gate.towerUnsealed || gate.riteKnown;
         },
         render: () => <PlanesPanel />,
     },
@@ -254,7 +255,7 @@ export function App(props: { offline: OfflineSummary | null; initialTab?: string
                 </button>
             </header>
             <ResourceBar />
-            <Overview />
+            <Overview onOpen={(t) => setTab(t as TabId)} />
             <nav class="tabs">
                 {visible.map((t) => {
                     const attention = tabAttention(state, t.id);
@@ -289,6 +290,7 @@ export function App(props: { offline: OfflineSummary | null; initialTab?: string
             {!offline && <Welcome />}
             {!offline && <Victory />}
             {!offline && <MasteryNotice />}
+            <ConfirmHost />
         </div>
     );
 }

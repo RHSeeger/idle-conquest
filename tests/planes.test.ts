@@ -11,6 +11,9 @@ import {
     MYRRAN_RESOURCES,
     myrrorCity,
     myrrorPlan,
+    MYRROR_TOWERS,
+    towerIndices,
+    towersTaken,
     VAULT_AMOUNT,
     wizardBoons,
 } from "../src/content/myrror";
@@ -21,6 +24,12 @@ import { D } from "../src/engine/decimal";
 import { isWizard } from "../src/engine/magic";
 import {
     addPlanarLink,
+    armySentToMyrror,
+    autoWorks,
+    myrranWorkCost,
+    planarCapacity,
+    setAutoBuysWork,
+    SHARED_WORK_GROWTH,
     buyMyrranWork,
     canPlaneshift,
     chooseBoon,
@@ -117,11 +126,66 @@ describe("Myrror", () => {
         expect(myrrorPower(state, getStats(state), []).gt(0)).toBe(true);
     });
 
-    it("Towers add links, up to six", () => {
+    it("Myrror's Towers of Wizardry are cities on its frontier; each one taken adds a link, up to six", () => {
         const state = opened();
-        for (let i = 0; i < 10; i++) addPlanarLink(state);
+        const plan = myrrorPlan("troll");
+        const towers = towerIndices(plan);
+        expect(towers).toHaveLength(MYRROR_TOWERS);
+        const tower = myrrorCity("troll", plan, towers[0])!;
+        expect(tower.tower).toBe(true);
+        expect(tower.name).toBe("Tower of Wizardry");
+        // the gate of a Myrran wizard's domain is a Tower too
+        expect(plan[towers[1] / REGION_SIZE].kind).toBe("wizard");
+        expect(planarLinks(state)).toBe(1);
+        state.planes.myrror!.index = towers[0];
+        conquerMyrror(state, myrrorTarget(state)!, false);
+        expect(planarLinks(state)).toBe(2);
+        expect(towersTaken(plan, state.planes.myrror!.index)).toBe(1);
+        for (let i = 0; i < 10; i++) addPlanarLink(state); // (Towers cleared as lairs, in older saves)
         expect(state.planes.myrror!.links).toBe(MAX_LINKS);
-        expect(LAIRS.towerOfWizardry.tower).toBe(true);
+        // expeditions no longer find Towers: banishing a rival wizard unseals them
+        expect(LAIRS.towerOfWizardry.retired).toBe(true);
+    });
+
+    it("the links are a narrow pipe: past what they carry, a bigger army doesn't help on Myrror", () => {
+        const state = opened();
+        setArmyShare(state, 1);
+        const traits = myrrorTarget(state)!.traits;
+        const capacity = planarCapacity(state, 0);
+        state.run.units = { spearmen: 1 };
+        const small = armySentToMyrror(state, getStats(state), traits);
+        expect(small.lt(capacity)).toBe(true);
+        expect(myrrorPower(state, getStats(state), traits).toNumber()).toBeCloseTo(small.times(getStats(state).get("myrror.power")).toNumber());
+        state.run.units = { spearmen: 1e6 };
+        state.rev++;
+        state.ascension.upgrades.battleMagic = 60; // an Arcanus army far beyond the links
+        state.rev++;
+        expect(armySentToMyrror(state, getStats(state), traits).gt(capacity)).toBe(true);
+        const capped = myrrorPower(state, getStats(state), traits);
+        expect(capped.toNumber()).toBeCloseTo(capacity.times(getStats(state).get("myrror.power")).toNumber());
+        // Myrror's own boosts act on what gets through, and another link carries more
+        state.planes.upgrades.astralLegions = 2;
+        state.rev++;
+        expect(myrrorPower(state, getStats(state), traits).toNumber()).toBeCloseTo(capped.toNumber() * 2.25);
+        state.planes.myrror!.links = 2;
+        expect(planarCapacity(state, 0).toNumber()).toBeCloseTo(capacity.toNumber() * 2);
+    });
+
+    it("works on the same resource make each other dearer; auto-buy leaves the ones switched off", () => {
+        const state = opened();
+        const m = state.planes.myrror!;
+        const base = myrranWorkCost(state, "myrranGarrisons");
+        m.resources.adamantium = 100;
+        expect(buyMyrranWork(state, "adamantiumArms")).toBe(true);
+        expect(myrranWorkCost(state, "myrranGarrisons")).toBe(Math.round(base * SHARED_WORK_GROWTH));
+        expect(myrranWorkCost(state, "quorkFoci")).toBe(base); // another resource: no change
+        state.planes.planeshifts = 1;
+        state.automation.works = true;
+        state.planes.planeshifts = 3; // Eternal Return
+        setAutoBuysWork(state, "myrranGarrisons", false);
+        autoWorks(state);
+        expect(m.works.myrranGarrisons ?? 0).toBe(0);
+        expect(m.works.adamantiumArms).toBeGreaterThan(1);
     });
 
     it("conquests are held: they boost Arcanus, unlock racial units and survive Refounds", () => {

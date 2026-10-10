@@ -24,6 +24,8 @@ import { getStats, registerCollector } from "./collect";
 import { D, Decimal, ZERO } from "./decimal";
 import { Stats } from "./effects";
 import { bump, GameState, log } from "./state";
+import { fmt } from "./format";
+import { banishedCount, currentRival, enchantmentUpkeep, freeSkill, hasSkillFor, spellPower, strikeWards, towersUnsealed } from "./wards";
 
 /** Ascended at least once, or Planeshifted (you stay a wizard across Planeshifts), or a Master of Magic */
 export function isWizard(state: GameState): boolean {
@@ -35,18 +37,18 @@ export function isWizard(state: GameState): boolean {
 export interface MasteryGate {
     /** Myrran wizards banished this Planeshift */
     myrran: number;
-    /** Rival wizards' Fortresses taken this run */
-    fortresses: number;
+    /** This Ascension's rival wizards of Arcanus banished (their wards broken) */
+    arcanus: number;
     ready: boolean;
 }
 
-/** Every rival wizard on both planes: all of Myrror's this Planeshift, and all of Arcanus's in this run */
+/** Every rival wizard on both planes: all of Myrror's this Planeshift, and all four of Arcanus's this Ascension */
 export function masteryGate(state: GameState): MasteryGate {
     const myrran = state.planes.myrror?.wizardsDefeated.length ?? 0;
-    const fortresses = state.run.fortressesTaken;
+    const arcanus = banishedCount(state);
     const m = state.mastery;
-    const ready = myrran >= MYRROR_WIZARDS && fortresses >= ARCANUS_WIZARDS && !m.challenge && !m.cast;
-    return { myrran, fortresses, ready };
+    const ready = myrran >= MYRROR_WIZARDS && arcanus >= ARCANUS_WIZARDS && !m.challenge && !m.cast;
+    return { myrran, arcanus, ready };
 }
 
 // --- Wizard profile ---
@@ -175,13 +177,9 @@ export function knowsSpell(state: GameState, id: string): boolean {
 }
 
 /** Can this spell be researched with the current wizard profile? */
-export function towerCleared(state: GameState): boolean {
-    return state.run.sites.some((s) => s.cleared && LAIRS[s.type]?.tower);
-}
-
 export function spellAvailable(state: GameState, spell: SpellDef): boolean {
     if (!isWizard(state)) return false;
-    if (spell.requiresTower && !towerCleared(state)) return false;
+    if (spell.requiresTower && towersUnsealed(state) === 0) return false;
     if (spell.requiresMastery && !knowsSpell(state, spell.id) && !masteryGate(state).ready) return false;
     if (spell.realm === "arcane") return true;
     return booksIn(state, spell.realm) >= RARITY_BOOKS[spell.rarity];
@@ -303,8 +301,14 @@ export function manaRate(state: GameState, stats: Stats): Decimal {
 export function tickMagic(state: GameState, stats: Stats, dt: number): void {
     if (!isWizard(state)) return;
     const income = manaRate(state, stats).times(dt);
-    // while the Spell of Mastery channels, mana income flows into it instead (engine/mastery.ts)
-    if (!state.mastery.channelling) state.run.mana = state.run.mana.plus(income);
+    // while the Spell of Mastery channels, mana income flows into it instead (engine/mastery.ts);
+    // otherwise the chosen share trains casting skill (engine/wards.ts) and the rest is yours to spend
+    if (!state.mastery.channelling) {
+        const a = state.ascension;
+        const toSkill = income.times(a.skillShare);
+        if (toSkill.gt(0)) a.skillMana = a.skillMana.plus(toSkill);
+        state.run.mana = state.run.mana.plus(a.skillShare > 0 ? income.minus(toSkill) : income);
+    }
     // Jafar's rule and reward: gold from mana income
     const fromMana = stats.get("gold.fromMana");
     if (fromMana.gt(0)) state.run.gold = state.run.gold.plus(income.times(fromMana));
@@ -371,8 +375,23 @@ export function canCastEnchantment(state: GameState, id: string): boolean {
         !challengeBans(state, "enchantments") &&
         knowsSpell(state, id) &&
         !state.run.enchantments.includes(id) &&
+        hasSkillFor(state, spell) &&
         state.run.mana.gte(enchantmentCost(state, spell))
     );
+}
+
+/** Why a known enchantment can't be cast right now, or null if it can */
+export function enchantmentBlocker(state: GameState, id: string): string | null {
+    const spell = SPELLS[id];
+    if (!spell || spell.kind !== "enchantment" || !knowsSpell(state, id)) return "not known";
+    if (state.run.enchantments.includes(id)) return "already running";
+    if (challengeBans(state, "enchantments")) return "this challenge forbids enchantments";
+    if (!hasSkillFor(state, spell)) {
+        return `needs ${enchantmentUpkeep(spell)} free casting skill (${fmt(freeSkill(state))} free: dispel another enchantment, or train more skill)`;
+    }
+    const cost = enchantmentCost(state, spell);
+    if (state.run.mana.lt(cost)) return `needs ${fmt(cost)} mana (you have ${fmt(state.run.mana)})`;
+    return null;
 }
 
 export function castEnchantment(state: GameState, id: string): boolean {
@@ -382,6 +401,28 @@ export function castEnchantment(state: GameState, id: string): boolean {
     bump(state);
     log(state, "milestone", `Cast ${SPELLS[id].name}.`);
     return true;
+}
+
+/** Ends a running enchantment, freeing its casting skill (the mana is not returned) */
+export function dispelEnchantment(state: GameState, id: string): boolean {
+    const i = state.run.enchantments.indexOf(id);
+    if (i < 0) return false;
+    state.run.enchantments.splice(i, 1);
+    bump(state);
+    return true;
+}
+
+/** Whether auto-cast keeps an enchantment running (your loadout) */
+export function inLoadout(state: GameState, id: string): boolean {
+    return !state.automation.loadoutOff.includes(id);
+}
+
+export function setInLoadout(state: GameState, id: string, on: boolean): void {
+    const off = state.automation.loadoutOff;
+    const i = off.indexOf(id);
+    if (on && i >= 0) off.splice(i, 1);
+    if (!on && i < 0) off.push(id);
+    bump(state);
 }
 
 // --- Instants ---
@@ -407,17 +448,29 @@ export function canCastInstant(state: GameState, id: string): boolean {
     );
 }
 
+/** What an instant strikes: a rival wizard's wards while any stand, otherwise the army's target */
+export function instantStrikesWards(state: GameState): boolean {
+    return currentRival(state) !== null;
+}
+
 /**
- * Casts an instant: adds `siegeSeconds` of the army's current power to the
- * current siege (lair raid or frontier city). The siege resolves next tick.
- * `powerAgainst` is supplied by the caller to avoid an import cycle with army.ts.
+ * Casts an instant: `siegeSeconds` of your spell power against the current
+ * rival's wards, or once every rival is banished, of the army's current power
+ * against the current siege (lair raid or frontier city; it resolves next
+ * tick). `powerAgainstTarget` is supplied by the caller to avoid an import
+ * cycle with army.ts.
  */
 export function castInstant(state: GameState, id: string, powerAgainstTarget: Decimal): boolean {
     if (!canCastInstant(state, id)) return false;
     const spell = SPELLS[id];
     state.run.mana = state.run.mana.minus(instantCost(state, spell));
     state.run.cooldowns[id] = instantCooldown(state, spell);
-    const damage = powerAgainstTarget.times(spell.siegeSeconds ?? 0).times(getStats(state).get("instant.power"));
+    const stats = getStats(state);
+    if (instantStrikesWards(state)) {
+        strikeWards(state, spellPower(state, stats).times(spell.siegeSeconds ?? 0).times(stats.get("instant.power")));
+        return true;
+    }
+    const damage = powerAgainstTarget.times(spell.siegeSeconds ?? 0).times(stats.get("instant.power"));
     if (state.run.armyTarget !== null) {
         state.run.lairSiege = state.run.lairSiege.plus(damage);
     } else {
@@ -427,6 +480,8 @@ export function castInstant(state: GameState, id: string, powerAgainstTarget: De
 }
 
 // --- Wards ---
+// (Arcanus's rival wizards' wards are the wizards' contest, engine/wards.ts. The
+// "wards" trait left here is Myrror's, and Dispel Magic still breaks it.)
 
 /** Traits that actually apply: a wizard's wards vanish once Dispel Magic is known */
 export function effectiveTraits(state: GameState, traits: readonly TraitId[]): TraitId[] {

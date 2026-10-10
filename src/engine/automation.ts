@@ -7,7 +7,7 @@
  */
 import { BUILDING_ORDER } from "../content/buildings";
 import { LORE_ORDER } from "../content/lore";
-import { traitRoleMult } from "../content/traits";
+import { Role, ROLES, traitRoleMult } from "../content/traits";
 import { UNITS } from "../content/units";
 import {
     buyBuilding,
@@ -56,6 +56,7 @@ import {
     castEnchantment,
     castInstant,
     enchantmentCost,
+    inLoadout,
     instantCost,
     isWizard,
     knowsSpell,
@@ -67,6 +68,9 @@ import {
 import { lairTarget } from "./exploration";
 import { SPELLS } from "../content/spells";
 import { GameState } from "./state";
+import { currentRival, wardSecondsLeft } from "./wards";
+import { hireCost, heroesAllowed, isTavernOpen } from "./heroes";
+import { MAX_HEROES } from "../content/heroes";
 
 /** How long (seconds of income) automation will save up for the next building */
 export const SAVE_FOR_BUILDING_SECONDS = 90;
@@ -163,6 +167,14 @@ function runStalled(state: GameState): boolean {
     return state.run.time - state.run.lastConquestAt > AUTO_PRESTIGE_STALL_SECONDS;
 }
 
+/** A stalled kingdom doesn't make auto-Ascend give up on wards that will break within this long */
+export const CONTEST_PATIENCE_SECONDS = 3600;
+
+/** Whether the current rival's wards will break soon (auto-Ascend waits for them on a stall) */
+export function contestClose(state: GameState): boolean {
+    return currentRival(state) !== null && wardSecondsLeft(state, getStats(state)) < CONTEST_PATIENCE_SECONDS;
+}
+
 /** Seconds since the last Arcanus city fell (auto-Refound/Ascend's stall clock) */
 export function secondsSinceConquest(state: GameState): number {
     return Math.max(0, state.run.time - state.run.lastConquestAt);
@@ -184,7 +196,7 @@ function refoundPossible(state: GameState): boolean {
  * Auto-Ascend is checked first, so it wins whenever it's possible.
  */
 export function stallAction(state: GameState): "ascend" | "refound" | null {
-    if (isAutomationActive(state, "ascend") && ascendPossible(state)) return "ascend";
+    if (isAutomationActive(state, "ascend") && ascendPossible(state) && !contestClose(state)) return "ascend";
     if (isAutomationActive(state, "refound") && refoundPossible(state)) return "refound";
     return null;
 }
@@ -198,7 +210,7 @@ export function autoAscend(state: GameState): boolean {
     if (state.run.time < AUTO_PRESTIGE_MIN_RUN || !ascendPossible(state)) return false;
     const a = state.ascension;
     const target = a.insightTotal.times(state.automation.ascendAt).max(1);
-    if (insightOnAscend(state).lt(target) && !runStalled(state)) return false;
+    if (insightOnAscend(state).lt(target) && !(runStalled(state) && !contestClose(state))) return false;
     return ascend(state, a.planBooks, leastMastered(state, ascensionRaceOptions(state)), a.planRetorts);
 }
 
@@ -234,22 +246,23 @@ function secondsToAffordBuilding(state: GameState, econ: { production: Decimal; 
 
 /**
  * Building order for auto-build:
- *  - "chronicle": the last run's build order first, then everything else
+ *  - "chronicle": the last run's build order first, then the rest as "cheapest"
+ *    orders them (so with no Chronicle yet, it's the same as "cheapest")
  *  - "cheapest": whatever can be bought (or rushed) now, cheapest first; then
  *    the rest by how soon current income affords them. So it always buys
  *    something when anything is affordable, and otherwise saves for the
  *    building it can get soonest.
+ * Only buildings not yet built and visible are listed.
  */
 export function buildQueue(state: GameState, mode = state.automation.buildMode): string[] {
-    if (mode === "cheapest") {
-        const econ = realmEconomy(state, getStats(state));
-        return BUILDING_ORDER.filter((id) => !state.run.buildings.includes(id) && isBuildingVisible(state, id))
-            .map((id) => ({ id, seconds: secondsToAffordBuilding(state, econ, id), price: rushPrice(state, id) }))
-            .sort((a, b) => a.seconds - b.seconds || a.price.cmp(b.price))
-            .map((x) => x.id);
-    }
-    const chronicle = state.prestige.chronicle.buildOrder.filter((id) => BUILDING_ORDER.includes(id));
-    return [...chronicle, ...BUILDING_ORDER.filter((id) => !chronicle.includes(id))];
+    const econ = realmEconomy(state, getStats(state));
+    const cheapest = BUILDING_ORDER.filter((id) => !state.run.buildings.includes(id) && isBuildingVisible(state, id))
+        .map((id) => ({ id, seconds: secondsToAffordBuilding(state, econ, id), price: rushPrice(state, id) }))
+        .sort((a, b) => a.seconds - b.seconds || a.price.cmp(b.price))
+        .map((x) => x.id);
+    if (mode === "cheapest") return cheapest;
+    const chronicle = state.prestige.chronicle.buildOrder.filter((id) => cheapest.includes(id));
+    return [...chronicle, ...cheapest.filter((id) => !chronicle.includes(id))];
 }
 
 /**
@@ -309,48 +322,102 @@ export function autoSettle(state: GameState): void {
 }
 
 /**
+ * Auto-recruit's Most efficient mode (best power per cost against the current
+ * target) is a later unlock: until then it follows your doctrine (DESIGN.md §15.4)
+ */
+export function isEfficientRecruitUnlocked(state: GameState): boolean {
+    return hasAscensionMilestone(state, "legacyRenown");
+}
+
+/** Every role at the same weight: the doctrine before you've set one or fought with an army */
+const BALANCED: Record<Role, number> = Object.fromEntries(ROLES.map((r) => [r, 1])) as Record<Role, number>;
+
+/**
+ * The doctrine auto-recruit follows: the weights you set, or until then the
+ * mix of power by role that your last kingdom's army had (balanced if none).
+ */
+export function activeDoctrine(state: GameState): Record<Role, number> {
+    const set = state.automation.doctrine;
+    if (set) return Object.fromEntries(ROLES.map((r) => [r, Math.max(0, set[r] ?? 0)])) as Record<Role, number>;
+    const weights = Object.fromEntries(ROLES.map((r) => [r, 0])) as Record<Role, number>;
+    for (const [id, count] of Object.entries(state.prestige.chronicle.unitMix)) {
+        const u = UNITS[id];
+        if (u && count > 0) weights[u.role] += u.power * count;
+    }
+    // on the doctrine's 0–10 scale, the strongest role at 10
+    const max = Math.max(...ROLES.map((r) => weights[r]));
+    if (max <= 0) return BALANCED;
+    return Object.fromEntries(ROLES.map((r) => [r, Math.round((10 * weights[r]) / max)])) as Record<Role, number>;
+}
+
+/** Shares of army power the doctrine aims for, over the roles you can train troops of now */
+export function doctrineShares(state: GameState, units = availableUnits(state)): Record<Role, number> {
+    const weights = activeDoctrine(state);
+    const trainable = new Set(units.map((id) => UNITS[id].role));
+    const total = ROLES.reduce((sum, r) => sum + (trainable.has(r) ? weights[r] : 0), 0);
+    return Object.fromEntries(ROLES.map((r) => [r, trainable.has(r) && total > 0 ? weights[r] / total : 0])) as Record<Role, number>;
+}
+
+/** Sets one role's weight in the doctrine (starting from the doctrine in force) */
+export function setDoctrineWeight(state: GameState, role: Role, weight: number): void {
+    state.automation.doctrine = { ...activeDoctrine(state), [role]: Math.max(0, Math.min(10, Math.round(weight))) };
+}
+
+/**
  * Spends production/gold on troops, keeping `reserve` of each untouched.
+ *  - "doctrine": the role furthest below its share of your doctrine first,
+ *    with that role's best power per cost
  *  - "efficient": best siege power per cost against the current target
- *  - "chronicle": approach the army mix of the last run
  */
 export function autoRecruit(
     state: GameState,
-    mode: "efficient" | "chronicle",
+    mode: "efficient" | "doctrine",
     reserve: { production: Decimal; gold: Decimal; mana: Decimal },
 ): void {
     const traits = currentTarget(state)?.traits ?? [];
-    const mix = state.prestige.chronicle.unitMix;
-    const useMix = mode === "chronicle" && Object.keys(mix).length > 0;
     const units = availableUnits(state);
     const stats = getStats(state);
+    const shares = mode === "doctrine" ? doctrineShares(state, units) : null;
 
     for (let guard = 0; guard < 60; guard++) {
-        let best: { id: string; score: number; budget: Decimal } | null = null;
+        // the doctrine's deficit per role: target share minus the share of power it has now
+        let deficit: Record<Role, number> | null = null;
+        let total = ZERO;
+        if (shares) {
+            const byRole = powerByRole(state, stats);
+            total = ROLES.reduce((sum, r) => sum.plus(byRole[r]), ZERO);
+            deficit = Object.fromEntries(
+                ROLES.map((r) => [r, shares[r] - (total.gt(0) ? byRole[r].div(total).toNumber() : 0)]),
+            ) as Record<Role, number>;
+        }
+        // following a doctrine, only roles below their share are bought: if those cost more than
+        // you have now, it saves for them rather than pile more onto roles that are already ahead
+        const anyBelow = deficit !== null && ROLES.some((r) => deficit![r] > 1e-9);
+        let best: { id: string; deficit: number; score: number; budget: Decimal } | null = null;
         for (const id of units) {
             const u = UNITS[id];
+            if (shares && shares[u.role] <= 0) continue;
+            if (deficit && anyBelow && deficit[u.role] <= 1e-9) continue;
             const price = unitPrice(state, stats, id, 1);
             const available = wallet(state, u.currency).minus(reserve[u.currency]);
             if (available.lt(price)) continue;
-            let score: number;
-            if (useMix) {
-                const weight = mix[id] ?? 0;
-                if (weight <= 0) continue;
-                score = -((state.run.units[id] ?? 0) / weight); // lowest fill ratio first
-            } else {
-                const owned = state.run.units[id] ?? 0;
-                score = unitPower(stats, id, owned + 1).times(traitRoleMult(traits, u.role)).div(price).toNumber();
+            const owned = state.run.units[id] ?? 0;
+            const perCost = unitPower(stats, id, owned + 1).div(price);
+            const score = (deficit ? perCost : perCost.times(traitRoleMult(traits, u.role))).toNumber();
+            const d = deficit ? deficit[u.role] : 0;
+            if (!best || d > best.deficit + 1e-9 || (Math.abs(d - best.deficit) <= 1e-9 && score > best.score)) {
+                best = { id, deficit: d, score, budget: available };
             }
-            if (!best || score > best.score) best = { id, score, budget: available };
         }
-        // buy in chunks (an eighth of what the budget allows) so large incomes need few iterations
-        const chunk = best ? Math.max(1, Math.floor(unitAffordableWith(state, stats, best.id, best.budget) / 8)) : 0;
-        if (!best || buyUnits(state, best.id, chunk) === 0) {
-            // in chronicle mode, fall back to efficient buying once the mix can't be followed
-            if (useMix && guard === 0) {
-                autoRecruit(state, "efficient", reserve);
-            }
-            return;
+        // buy in chunks (an eighth of what the budget allows) so large incomes need few iterations;
+        // following the doctrine, no more than closes that role's gap (so one role doesn't overshoot)
+        let chunk = best ? Math.max(1, Math.floor(unitAffordableWith(state, stats, best.id, best.budget) / 8)) : 0;
+        if (best && deficit && total.gt(0) && best.deficit > 0) {
+            const each = unitPower(stats, best.id, state.run.units[best.id] ?? 0);
+            const gap = total.times(best.deficit).div(each.max(1e-9)).toNumber();
+            chunk = Math.max(1, Math.min(chunk, Math.ceil(gap)));
         }
+        if (!best || buyUnits(state, best.id, chunk) === 0) return;
     }
 }
 
@@ -382,11 +449,11 @@ export function autoResearch(state: GameState): void {
     }
 }
 
-/** Casts every affordable known enchantment, then any instant that's ready */
+/** Casts every affordable enchantment of your loadout that fits your casting skill, then any instant that's ready */
 export function autoCast(state: GameState): void {
     const known = state.ascension.spellsKnown.map((id) => SPELLS[id]);
     const enchantments = known
-        .filter((s) => s.kind === "enchantment" && !state.run.enchantments.includes(s.id))
+        .filter((s) => s.kind === "enchantment" && inLoadout(state, s.id) && !state.run.enchantments.includes(s.id))
         .sort((a, b) => enchantmentCost(state, a).cmp(enchantmentCost(state, b)));
     for (const s of enchantments) {
         if (canCastEnchantment(state, s.id)) castEnchantment(state, s.id);
@@ -445,6 +512,69 @@ function accrueRecruitBudget(state: GameState): void {
     }
 }
 
+// --- Auto-tax (unlocked with auto-build) ---
+
+/** Floors the player can pick for auto-tax (share of non-farming citizens kept on taxes) */
+export const TAX_FLOORS = [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5];
+
+export function isAutoTaxActive(state: GameState): boolean {
+    return isAutomationUnlocked(state, "buildings") && state.automation.taxAuto;
+}
+
+export interface TaxPlan {
+    /** What it's saving for: the next building auto-build wants, and/or the next hero */
+    building: string | null;
+    hero: boolean;
+    /** The tax share it sets */
+    share: number;
+    /** Seconds until both currencies are there at that share (0 if they already are, Infinity if never) */
+    seconds: number;
+    /** Whether anything being saved for still needs gold */
+    needsGold: boolean;
+}
+
+/**
+ * The tax share at which production and gold for what you're saving for arrive
+ * together, counting what's on hand. While nothing needs gold, the floor.
+ * Production is linear in the share (workers), and so is gold (taxpayers), so the
+ * balance has a closed form: Pn / (P1 + (P0 − P1)(1 − t)) = Gn / (G1 · t).
+ */
+export function taxPlan(state: GameState): TaxPlan {
+    const run = state.run;
+    const stats = getStats(state);
+    const floor = Math.max(0, Math.min(1, state.automation.taxFloor));
+    const building = buildQueue(state)[0] ?? null;
+    const hero = heroesAllowed(state) && isTavernOpen(state) && run.heroes.length < MAX_HEROES;
+    const price = building ? buildingPrice(stats, building) : {};
+    const prodNeed = (price.production ?? ZERO).minus(run.production).max(0).toNumber();
+    const goldNeed = (price.gold ?? ZERO).plus(hero ? hireCost(state) : ZERO).minus(run.gold).max(0).toNumber();
+
+    // income at no tax and at full tax (the economy reads the share from the run)
+    const saved = run.taxShare;
+    run.taxShare = 0;
+    const p0 = realmEconomy(state, stats).production.toNumber();
+    run.taxShare = 1;
+    const full = realmEconomy(state, stats);
+    run.taxShare = saved;
+    const p1 = full.production.toNumber();
+    const g1 = full.gold.toNumber();
+    const prodAt = (t: number) => p1 + (p0 - p1) * (1 - t);
+    const wait = (need: number, rate: number) => (need <= 0 ? 0 : rate <= 0 ? Infinity : need / rate);
+
+    let share = floor;
+    if (goldNeed > 0 && g1 > 0) {
+        const balanced = prodNeed <= 0 ? 1 : (goldNeed * p0) / (prodNeed * g1 + goldNeed * (p0 - p1));
+        share = Math.max(floor, Math.min(1, balanced));
+    }
+    const seconds = Math.max(wait(prodNeed, prodAt(share)), wait(goldNeed, g1 * share));
+    return { building, hero, share, seconds, needsGold: goldNeed > 0 };
+}
+
+/** Sets the Work/Tax split from taxPlan */
+export function autoTax(state: GameState): void {
+    state.run.taxShare = taxPlan(state).share;
+}
+
 /** Runs every automation the player has unlocked and enabled */
 export function runAutomation(state: GameState, force = false): void {
     // prestige automation first (never forced: the bot decides those itself)
@@ -470,6 +600,8 @@ export function runAutomation(state: GameState, force = false): void {
 function runAutomationSteps(state: GameState, force: boolean, budgeted: boolean): void {
     const on = (kind: AutomationKind) => force || isAutomationActive(state,kind);
     const savingFor = on("buildings") ? autoBuild(state) : null;
+    // after auto-build, so the split follows what it's now saving for
+    if (force || isAutoTaxActive(state)) autoTax(state);
     if (isWizard(state) && on("research")) autoResearch(state);
     if (on("lore")) autoLore(state);
     if (on("settlers")) autoSettle(state);
@@ -490,7 +622,8 @@ function runAutomationSteps(state: GameState, force: boolean, budgeted: boolean)
                 reserve[c] = reserve[c].max(wallet(state, c).minus(state.run.recruitBudget[c]));
             }
         }
-        autoRecruit(state, force ? "efficient" : state.automation.unitMode, reserve);
+        const mode = force || (state.automation.unitMode === "efficient" && isEfficientRecruitUnlocked(state)) ? "efficient" : "doctrine";
+        autoRecruit(state, mode, reserve);
         if (budgeted) {
             for (const c of BUDGET_CURRENCIES) {
                 const spent = before[c].minus(wallet(state, c)).max(0);

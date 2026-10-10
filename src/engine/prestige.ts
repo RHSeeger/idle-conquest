@@ -100,6 +100,24 @@ export function fameOnRefound(state: GameState, tribute = tributeShare(state)): 
     return D(base * raceMult).times(getStats(state).get("fame.mult")).floor();
 }
 
+/** Runs shorter than this don't count for the best Fame rate (a Refound a few seconds in is all noise) */
+const FAME_RATE_MIN_TIME = 60;
+
+/** Fame per second a Refound now would give over this run (0 early on) */
+export function fameRate(state: GameState): number {
+    const t = state.run.time;
+    return t < FAME_RATE_MIN_TIME ? 0 : fameOnRefound(state).toNumber() / t;
+}
+
+/** Called from tick(): remembers the best Fame rate of this run, the classic moment to Refound */
+export function trackFameRate(state: GameState): void {
+    const rate = fameRate(state);
+    if (rate > state.run.bestFameRate) {
+        state.run.bestFameRate = rate;
+        state.run.bestFameRateAt = state.run.time;
+    }
+}
+
 export function refound(state: GameState, nextRace: RaceId): boolean {
     // you may start as any race already in the Annals or conquered this run
     if (!canRefound(state) || !(state.prestige.annals.includes(nextRace) || state.run.racesConquered.includes(nextRace))) {
@@ -161,6 +179,8 @@ export function applyRunStart(state: GameState): void {
     const run = state.run;
     // Far Scouting: the levels chosen take effect as a realm is founded
     run.scoutingCap = state.prestige.scoutingUse;
+    // the route last chosen for this starting race
+    run.route = [...(state.prestige.routeMemory[run.startingRace] ?? [])];
     const give = (ids: string[]) => {
         for (const id of ids) {
             if (!run.buildings.includes(id)) {

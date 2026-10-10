@@ -10,6 +10,27 @@ export interface ChangeEntry {
 
 export const CHANGES: ChangeEntry[] = [
     {
+        date: "2026-10-09",
+        items: [
+            "Every layer now has a mechanic of its own, and the choices you make in it matter. A stronger kingdom still helps the layers above, but it can't make them trivial.",
+            "Kingdoms: city defenses are sharper (Walls ×0.25 to melee, ×3 to siege, and so on). Set your army's doctrine, the mix of troop roles auto-recruit keeps to, and see how it fares against the cities ahead (Army tab). Most efficient recruiting now unlocks at 2 Ascensions.",
+            "Kingdoms: choose your route. At each region boundary, pick which of two neighbouring races comes next (Army tab); the choice is kept for later kingdoms of that race.",
+            "Kingdom tab: Fame per minute if you Refound now, and its best this kingdom, so you can tell when it has peaked.",
+            "Ascensions: the wizards' contest. Each Ascension faces four rival wizards, shown while you plan it. Your spell power wears down their wards one by one, and the progress lasts through Refounds; banishing a wizard opens their domain to your army and unseals their Tower of Wizardry (Magic tab).",
+            "Spell power is your free casting skill × spell power bonuses × how well your books counter the rival: opposed realms ×2, Sorcery ×1.5, their own realm ×0.5. Casting skill grows with the share of mana you train it with; enchantments take some of it up, so choose which to keep running (auto-cast follows your loadout). Instants strike the wards. Dispel Magic doubles spell power.",
+            "Insight now comes mostly from the rivals you banish; the Fame part has diminishing returns. New upgrades: Ward-Breaking (Insight) and Astral Sorcery (Essence). Each Mastery multiplies spell and planar power too.",
+            "Planeshift needs a banished rival's Tower and the Rite of the Tower; expeditions no longer find Towers. A challenge is won by banishing all four rivals, and the Spell of Mastery needs all four banished in one Ascension.",
+            "Myrror: five Towers of Wizardry stand on its frontier, and each one you take is another planar link. The links carry only so much of your army across, so past that point Myrror's own bonuses (Essence, works, boons) decide its pace. The two works of each resource now make each other dearer, and you can choose which ones auto-buy grows. The beachhead choice says what each race gives.",
+            "Older saves keep their progress: wizards already defeated count as banished, and Myrror keeps its links.",
+            "Auto-tax (comes with auto-build, Kingdom tab): the Work/Tax split follows what you're saving for, so production and gold for the next building (and the next hero) arrive together. While nothing needs gold, taxes stay at a floor you choose (10% to start) and everyone else works. Moving the slider by hand switches it off.",
+            "Confirmations (Refound, Ascend, Planeshift, Mastery, challenges, dismissing a hero, loading or erasing a save) use the game's own dialog instead of the browser's, with the reward on the button. Escape cancels.",
+            "The Insight you'd get is worked out factor by factor beside the Ascend button (Fame, spellbooks, rivals banished, bonuses), and the Planar Essence beside the Planeshift button (Myrran cities taken, races held, wizards banished); both are in their dialogs too.",
+            "At a glance: lines keep their places (your kingdom on the left, the layers above on the right), and each line's name takes you to its tab. Its next building is now the one you'll get soonest, rather than a fixed order, until a Chronicle says otherwise; auto-build's Chronicle mode does the same once the Chronicle's buildings are built.",
+            "Army tab: Doctrine has its own section, which you can collapse (it starts collapsed while auto-recruit is on Most efficient).",
+            "Magic tab: an enchantment you can't cast says why (mana, free casting skill, or a challenge rule). Its checkbox is now labelled \"auto-cast\" and only appears once Auto-cast is unlocked; instants have none because Auto-cast casts them all whenever they're ready.",
+        ],
+    },
+    {
         date: "2026-10-08",
         items: [
             "Clearer words: the stretch from founding (or Refounding) to the next reset is now a Kingdom, everywhere, and \"realm\" means only the realms of magic.",

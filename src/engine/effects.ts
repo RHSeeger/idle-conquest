@@ -74,6 +74,8 @@ export const STAT_BASE: Record<string, number> = {
     "mana.perPop": 0,
     "mana.mult": 1,
     "summon.power": 1,
+    /** Multiplies spell power, which wears down rival wizards' wards (engine/wards.ts) */
+    "spell.power": 1,
     "cost.research": 1,
     "cost.summon": 1,
     /** Multiplies the siege damage of instant spells (Chaos familiar) */

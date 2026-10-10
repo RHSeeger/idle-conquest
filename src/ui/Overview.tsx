@@ -157,7 +157,7 @@ export function Overview(props: { onOpen: OpenTab }) {
             </ul>
             <ul class="overview">
                 {(canRefound(state) || state.prestige.refounds > 0 || isWizard(state)) && (
-                    <Line icon="✦" label="Refound" tab="prestige" onOpen={onOpen}>
+                    <Line icon="✦" label="Refound" tab="prestige" onOpen={onOpen} auto="refound">
                         {canRefound(state) ? `+${fmtInt(fameOnRefound(state))} Fame if you Refound now` : "conquer a city of another race first"}
                     </Line>
                 )}
@@ -186,14 +186,14 @@ export function Overview(props: { onOpen: OpenTab }) {
                     </Line>
                 )}
                 {(asc.books > 0 || asc.wizardsGuild || isWizard(state)) && (
-                    <Line icon="◈" label="Ascension" tab="ascension" onOpen={onOpen}>
+                    <Line icon="◈" label="Ascension" tab="ascension" onOpen={onOpen} auto="ascend">
                         {canAscend(state)
                             ? "ready"
                             : `Wizards' Guild ${asc.wizardsGuild ? "✓" : "✗"} · books ${asc.books}/${ASCENSION_BOOKS} · realms ${asc.realms}/${ASCENSION_REALMS}`}
                     </Line>
                 )}
                 {state.planes.myrror && (
-                    <Line icon="❖" label="Myrror" tab="planes" onOpen={onOpen}>
+                    <Line icon="❖" label="Myrror" tab="planes" onOpen={onOpen} auto="works">
                         {(() => {
                             const t = myrrorTarget(state);
                             const share = myrrorShare(state);

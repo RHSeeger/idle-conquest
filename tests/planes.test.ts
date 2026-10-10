@@ -188,6 +188,19 @@ describe("Myrror", () => {
         expect(m.works.adamantiumArms).toBeGreaterThan(1);
     });
 
+    it("auto-buy levels both works of a resource in turn, not just the first", () => {
+        const state = opened();
+        const m = state.planes.myrror!;
+        state.planes.planeshifts = 3; // Eternal Return
+        state.automation.works = true;
+        m.resources.adamantium = 1000;
+        autoWorks(state);
+        const arms = m.works.adamantiumArms ?? 0;
+        const garrisons = m.works.myrranGarrisons ?? 0;
+        expect(arms + garrisons).toBeGreaterThan(4);
+        expect(Math.abs(arms - garrisons)).toBeLessThanOrEqual(1);
+    });
+
     it("conquests are held: they boost Arcanus, unlock racial units and survive Refounds", () => {
         const state = opened();
         expect(isUnitAvailable(state, "warTrolls")).toBe(false);

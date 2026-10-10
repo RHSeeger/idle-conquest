@@ -94,6 +94,11 @@ Items you've flagged as needing work. They're recorded here and picked up only w
 - **The Insight sum** beside the Ascend button (and in the Ascend dialog): Fame part √(Fame / 10) (with the softcap noted), × spellbooks (1 + 0.25 × books), × (1 + rivals banished)², the overall softcap if it applies, × Insight bonuses, = the total. `insightBreakdown` in `engine/ascension.ts`; `insightOnAscend` now returns its total. The formula paragraph at the top of the tab is shortened to point there.
 - **The Essence sum**, the same way, beside the Planeshift button and in its dialog: (Myrran cities taken ÷ 4)^1.3 × (1 + 0.25 × Myrran races held) × (1 + Myrran wizards banished), or the fixed amount on the first Planeshift. `essenceBreakdown` in `engine/planes.ts`; `essenceOnPlaneshift` returns its total. Both tables share the `table.prestige-sum` style.
 
+### Bug: auto-buy only levelled the first Myrran work of each resource (2026-10-10, from play-testing)
+
+- A resource's two works cost the same at the same total level (own ×1.5 per level, ×`SHARED_WORK_GROWTH` 1.5 per partner level), and `autoWorks` sorted by cost only, so the stable sort always picked the first work. Ties now go to the lower level (`autoWorks` in `engine/planes.ts`).
+- Rounding also broke the tie: `workCost` rounded before `myrranWorkCost` applied the partner ×1.5, so prices drifted (e.g. 16 against 17) and favoured the higher-level work. `workCost` (`content/myrror.ts`) is now unrounded; `myrranWorkCost` rounds once. Planar Gate's own cost function is unchanged. Tested: auto-buy keeps both works within one level.
+
 ### "Siege power" meant two things (2026-10-10, from play-testing)
 
 - Player-facing text used "siege power" both for the whole army's attack (every `myrror.power` bonus: Essence, Myrran works, boons, Troll holdings; the glossary; the Planes tab) and for the siege troop role (`role.siege`: Chaos Rift, Warrax, Chaos books, the Chaos retort). Play-test: the Myrror bonuses read as either confusing (if army-wide) or weak (if siege-only). They were army-wide, so they now say "army power on Myrror", matching the existing "army power" wording (Army power multiplier, Chaos nodes, Fame); the role ones say "power for siege troops". The glossary entry is "Army power". Code comments unchanged; no behaviour change.

@@ -29,6 +29,7 @@ export const CHANGES: ChangeEntry[] = [
             "Army tab: Doctrine has its own section, which you can collapse (it starts collapsed while auto-recruit is on Most efficient).",
             "Magic tab: an enchantment you can't cast says why (mana, free casting skill, or a challenge rule). Its checkbox is now labelled \"auto-cast\" and only appears once Auto-cast is unlocked; instants have none because Auto-cast casts them all whenever they're ready.",
             "Clearer words: \"siege\" now means only siege troops (Catapults and the like), so Chaos Rift, Warrax, Chaos books and the Chaos retort say \"power for siege troops\". Bonuses to your whole army say \"army power\", including the Myrror ones (Essence, works, boons), which were \"siege power on Myrror\".",
+            "Fixed: auto-buy for Myrran works only ever levelled the first work of each resource, since the two cost the same. On a tie it now picks the one with fewer levels, so both grow in turn. The two works' prices also no longer drift apart by a point or two through rounding.",
             "Fixed: the Ascension tab's \"next Ascension's rivals\" showed every rival's wards at the first rival's strength; each is now as strong as it will be in that Ascension.",
         ],
     },

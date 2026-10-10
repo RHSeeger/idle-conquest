@@ -238,7 +238,11 @@ export interface MyrranWorkDef {
     text: (level: number) => string;
 }
 
-const workCost = (l: number) => Math.round(2 * Math.pow(1.5, l));
+/**
+ * Not rounded here: myrranWorkCost rounds once, after the partner works' ×1.5,
+ * so a resource's two works cost exactly the same at the same total level
+ */
+const workCost = (l: number) => 2 * Math.pow(1.5, l);
 
 const workList: MyrranWorkDef[] = [
     {

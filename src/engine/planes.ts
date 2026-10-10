@@ -273,11 +273,16 @@ export function buyMyrranWork(state: GameState, id: string): boolean {
     return true;
 }
 
-/** Auto-buy Myrran works (Eternal Return): the works you left on, whatever is affordable, cheapest first */
+/**
+ * Auto-buy Myrran works (Eternal Return): the works you left on, whatever is
+ * affordable, cheapest first. A resource's two works usually cost the same
+ * (each level makes both dearer), so ties go to the lower level, which levels
+ * them in turn rather than always the first.
+ */
 export function autoWorks(state: GameState): void {
     for (let guard = 0; guard < 100; guard++) {
         const affordable = MYRRAN_WORK_ORDER.filter((id) => autoBuysWork(state, id) && canBuyMyrranWork(state, id)).sort(
-            (a, b) => myrranWorkCost(state, a) - myrranWorkCost(state, b),
+            (a, b) => myrranWorkCost(state, a) - myrranWorkCost(state, b) || myrranWorkLevel(state, a) - myrranWorkLevel(state, b),
         );
         if (affordable.length === 0 || !buyMyrranWork(state, affordable[0])) return;
     }

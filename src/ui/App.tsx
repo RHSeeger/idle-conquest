@@ -174,7 +174,8 @@ function ResourceBar() {
                     tip={<BreakdownView stats={stats} stat="mana.mult" title="Mana multiplier" />}
                 />
             )}
-            {(state.prestige.fameTotal.gt(0) || canRefound(state)) && (
+            {/* once Fame has been seen: it stays through Ascensions (unspent, or from Echo of Glory) */}
+            {(state.prestige.fameTotal.gt(0) || state.prestige.fame.gt(0) || canRefound(state) || state.ascension.ascensions > 0 || state.planes.planeshifts > 0) && (
                 <div class="resource fame">
                     <span class="resource-name">✦ Fame</span>
                     <span class="resource-amount">{fmtInt(state.prestige.fame)}</span>
@@ -185,7 +186,7 @@ function ResourceBar() {
                 <div class="resource insight">
                     <span class="resource-name">◈ Insight</span>
                     <span class="resource-amount">{fmtInt(state.ascension.insight)}</span>
-                    <span class="resource-rate">{state.ascension.ascensions} ascensions</span>
+                    <span class="resource-rate">{state.ascension.ascensions} Ascension{state.ascension.ascensions === 1 ? "" : "s"}</span>
                 </div>
             )}
             {state.planes.planeshifts > 0 && (

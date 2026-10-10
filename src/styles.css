@@ -1288,16 +1288,29 @@ button.toggle.auto {
 }
 
 .ov-auto {
+    font: inherit;
     font-size: 11px;
+    line-height: inherit;
+    margin: 0;
     padding: 0 6px;
     border-radius: 8px;
     border: 1px solid var(--border);
+    background: transparent;
     color: var(--muted);
+    cursor: pointer;
 }
 
 .ov-auto.on {
     border-color: var(--good);
     color: var(--good);
+}
+
+/* it's a switch: outline it on hover so it reads as clickable */
+.ov-auto:hover,
+.ov-auto:focus-visible {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
+    outline: none;
 }
 
 /* --- army orders (Army tab) --- */

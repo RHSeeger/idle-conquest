@@ -207,11 +207,25 @@ export function stallAction(state: GameState): "ascend" | "refound" | null {
  * Uses the planned wizard profile (Ascension tab).
  */
 export function autoAscend(state: GameState): boolean {
-    if (state.run.time < AUTO_PRESTIGE_MIN_RUN || !ascendPossible(state)) return false;
+    if (!autoPrestigeDue(state, "ascend")) return false;
     const a = state.ascension;
-    const target = a.insightTotal.times(state.automation.ascendAt).max(1);
-    if (insightOnAscend(state).lt(target) && !(runStalled(state) && !contestClose(state))) return false;
     return ascend(state, a.planBooks, leastMastered(state, ascensionRaceOptions(state)), a.planRetorts);
+}
+
+/**
+ * Whether auto-Ascend or auto-Refound would act right now if it were on (its
+ * threshold is reached or the kingdom has stalled), whether or not it is on
+ */
+export function autoPrestigeDue(state: GameState, kind: "ascend" | "refound"): boolean {
+    if (state.run.time < AUTO_PRESTIGE_MIN_RUN) return false;
+    if (kind === "ascend") {
+        if (!ascendPossible(state)) return false;
+        const target = state.ascension.insightTotal.times(state.automation.ascendAt).max(1);
+        return insightOnAscend(state).gte(target) || (runStalled(state) && !contestClose(state));
+    }
+    if (!refoundPossible(state)) return false;
+    const target = state.prestige.fameTotal.times(state.automation.refoundAt).max(1);
+    return fameOnRefound(state).gte(target) || runStalled(state);
 }
 
 /**
@@ -219,10 +233,7 @@ export function autoAscend(state: GameState): boolean {
  * far (or the run has stalled), as the least-mastered race in the Annals.
  */
 export function autoRefound(state: GameState): boolean {
-    if (state.run.time < AUTO_PRESTIGE_MIN_RUN || !refoundPossible(state)) return false;
-    const fame = fameOnRefound(state);
-    const target = state.prestige.fameTotal.times(state.automation.refoundAt).max(1);
-    if (fame.lt(target) && !runStalled(state)) return false;
+    if (!autoPrestigeDue(state, "refound")) return false;
     const options = [...new Set([...state.prestige.annals, ...state.run.racesConquered])];
     return refound(state, leastMastered(state, options));
 }

@@ -19,7 +19,7 @@ import { BUILDINGS } from "../content/buildings";
 import { LORE, LORE_ORDER } from "../content/lore";
 import { isLoreUnlocked, isSettlersUnlocked } from "../engine/actions";
 import { ascensionProgress, ASCENSION_BOOKS, ASCENSION_REALMS, canAscend } from "../engine/ascension";
-import { AutomationKind, buildQueue, isAutomationUnlocked, isSavingForSpell } from "../engine/automation";
+import { AutomationKind, autoPrestigeDue, buildQueue, isAutomationUnlocked, isSavingForSpell } from "../engine/automation";
 import { getStats } from "../engine/collect";
 import { buildingPrice, lorePrice, PriceMap, settlersPrice } from "../engine/costs";
 import { Decimal, ZERO } from "../engine/decimal";
@@ -53,17 +53,46 @@ function when(seconds: number): string {
 /** Opens a tab by its id (App's setTab) */
 type OpenTab = (tab: string) => void;
 
-/** One system's line; its label is a link to the tab where that system lives */
+/** Each line's automation, by the name its tab's toggle uses */
+const AUTO_NAMES: Partial<Record<AutomationKind, string>> = {
+    units: "Auto-recruit",
+    buildings: "Auto-build",
+    lore: "Auto-study",
+    settlers: "Auto-settle",
+    lairs: "Auto-raid",
+    research: "Auto-research",
+    refound: "Auto-Refound",
+    ascend: "Auto-Ascend",
+    works: "Myrran works auto-buy",
+};
+
+/** The marker's tooltip; warns when switching auto-Refound/Ascend on would act at once */
+function autoTip(state: GameState, kind: AutomationKind, on: boolean): string {
+    const name = AUTO_NAMES[kind] ?? "Automation";
+    if (on) return `${name} is on: click to turn it off. Its settings are on the tab.`;
+    const now =
+        (kind === "ascend" || kind === "refound") && autoPrestigeDue(state, kind)
+            ? ` Careful: its condition is already met, so it would ${kind === "ascend" ? "Ascend" : "Refound"} right away.`
+            : "";
+    return `${name} is off: click to turn it on.${now} Its settings are on the tab.`;
+}
+
+/** One system's line; its label is a link to the tab where that system lives, its marker switches its automation */
 function Line(props: { icon: string; label: string; tab: string; onOpen: OpenTab; auto?: AutomationKind; children: ComponentChildren }) {
     const state = game();
-    const auto = props.auto && isAutomationUnlocked(state, props.auto) ? state.automation[props.auto] : undefined;
+    const kind = props.auto && isAutomationUnlocked(state, props.auto) ? props.auto : undefined;
+    const on = kind ? state.automation[kind] : false;
     return (
         <li>
             <button class="link ov-label" title="Go to it" onClick={() => props.onOpen(props.tab)}>
                 {props.icon} {props.label}
             </button>
             <span class="ov-text">{props.children}</span>
-            {auto !== undefined && <span class={"ov-auto " + (auto ? "on" : "off")}>{auto ? "auto" : "manual"}</span>}
+            {kind && (
+                <button class={"ov-auto " + (on ? "on" : "off")} title={autoTip(state, kind, on)} onClick={() => (state.automation[kind] = !on)}>
+                    {on ? "auto" : "manual"}
+                </button>
+            )}
         </li>
     );
 }

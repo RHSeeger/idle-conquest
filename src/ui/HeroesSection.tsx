@@ -36,7 +36,15 @@ export function heroAscendText(state: GameState): string {
 
 /** What happens to the current heroes on Refound and, once you have Ascended, on Ascension */
 export function heroCarryText(state: GameState): string {
-    return state.ascension.ascensions === 0 ? heroRefoundText(state) : `${heroRefoundText(state)} ${heroAscendText(state)}`;
+    if (state.ascension.ascensions === 0) {
+        return heroRefoundText(state);
+    }
+    // Eternal Companions keeping heroes through Refounds too: one sentence covers both resets
+    if (refoundHeroKeeper(state).name === "Eternal Companions") {
+        return carrySentence(state, "Refound or Ascend", "Eternal Companions", "Insight → Eternal Companions",
+            insightUpgradeLevel(state, "eternalCompanions"), heroesKeptOnAscend(state));
+    }
+    return `${heroRefoundText(state)} ${heroAscendText(state)}`;
 }
 
 export function HeroesSection() {

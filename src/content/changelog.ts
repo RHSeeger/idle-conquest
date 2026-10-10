@@ -33,6 +33,7 @@ export const CHANGES: ChangeEntry[] = [
             "Fixed: with every Myrran city taken, the Planes tab read \"city 129 of 128\". Like the Army tab at the edge of Arcanus, it now drops the count and says \"The edge of Myrror\".",
             "Fixed: auto-buy for Myrran works only ever levelled the first work of each resource, since the two cost the same. On a tie it now picks the one with fewer levels, so both grow in turn. The two works' prices also no longer drift apart by a point or two through rounding.",
             "Fixed: the Ascension tab's \"next Ascension's rivals\" showed every rival's wards at the first rival's strength; each is now as strong as it will be in that Ascension.",
+            "Fixed: the Heroes section said the same Eternal Companions sentence twice, once for Refound and once for Ascend; it now says it once, for both.",
         ],
     },
     {

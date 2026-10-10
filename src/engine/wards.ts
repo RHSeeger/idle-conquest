@@ -67,9 +67,13 @@ export function currentRival(state: GameState): string | null {
     return ascensionRivals(state).find((w) => !isBanished(state, w)) ?? null;
 }
 
-/** How strong a rival's wards are: each rival of the Ascension is stronger than the one before */
-export function wardStrength(state: GameState, wizard: string): Decimal {
-    const k = Math.max(0, ascensionRivals(state).indexOf(wizard));
+/**
+ * How strong a rival's wards are: each rival of the Ascension is stronger than
+ * the one before. `rivals` is the line-up the wizard is in (this Ascension's
+ * by default; the planner passes the next Ascension's).
+ */
+export function wardStrength(state: GameState, wizard: string, rivals: readonly string[] = ascensionRivals(state)): Decimal {
+    const k = Math.max(0, rivals.indexOf(wizard));
     // Kali's rule and reward weaken rival wizards' domains, wards included
     return D(WARD_TUNING.base).times(Decimal.pow(WARD_TUNING.growth, k)).times(getStats(state).get("defense.domain"));
 }

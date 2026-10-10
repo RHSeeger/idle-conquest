@@ -520,6 +520,17 @@ describe("Rival wizards (the wizards' contest)", () => {
         expect(currentRival(state)).toBe(shown[0]);
     });
 
+    it("the planner's ward strengths follow the next line-up, as they will be after Ascending", () => {
+        const state = wizard();
+        const next = nextRivals(state);
+        const planned = next.map((w) => wardStrength(state, w, next).toNumber());
+        expect(planned[1]).toBeGreaterThan(planned[0]);
+        expect(planned[3]).toBeGreaterThan(planned[2]);
+        readyFor(state);
+        expect(ascend(state, { life: 3, chaos: 2 }, "highMen")).toBe(true);
+        expect(next.map((w) => wardStrength(state, w).toNumber())).toEqual(planned);
+    });
+
     it("realms match up: opposed ×2, Sorcery ×1.5 against others, a wizard's own realm ×0.5", () => {
         expect(realmMatchup("death", ["life", "nature"])).toBe(2);
         expect(realmMatchup("chaos", ["life", "nature"])).toBe(2);

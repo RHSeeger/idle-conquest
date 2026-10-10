@@ -64,7 +64,7 @@ export function RivalMatchups(props: { books: Partial<Record<Realm, number>>; ri
                                         <span class={m > 1.001 ? "good" : m < 0.999 ? "bad" : ""}>{mult(m)}</span>
                                     </Tip>
                                 </td>
-                                <td class="hint">{fmt(wardStrength(state, w))} strong</td>
+                                <td class="hint">{fmt(wardStrength(state, w, props.rivals))} strong</td>
                                 {props.status && (
                                     <td>{isBanished(state, w) ? <span class="good">banished</span> : w === current ? "now" : "waiting"}</td>
                                 )}

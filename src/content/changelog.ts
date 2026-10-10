@@ -28,6 +28,7 @@ export const CHANGES: ChangeEntry[] = [
             "At a glance: lines keep their places (your kingdom on the left, the layers above on the right), and each line's name takes you to its tab. Its next building is now the one you'll get soonest, rather than a fixed order, until a Chronicle says otherwise; auto-build's Chronicle mode does the same once the Chronicle's buildings are built. The Refound, Ascension and Myrror lines now show whether auto-Refound, auto-Ascend and Myrran works auto-buy are on, like the others, and clicking a line's auto/manual marker turns that automation on or off (its settings stay on its tab; the tooltip warns when turning auto-Refound or auto-Ascend on would act at once). The Magic line is now two, Research (next spell, auto-research) and Casting (enchantments active, auto-cast).",
             "Army tab: Doctrine has its own section, which you can collapse (it starts collapsed while auto-recruit is on Most efficient).",
             "Magic tab: an enchantment you can't cast says why (mana, free casting skill, or a challenge rule). Its checkbox is now labelled \"auto-cast\" and only appears once Auto-cast is unlocked; instants have none because Auto-cast casts them all whenever they're ready.",
+            "Fixed: the Ascension tab's \"next Ascension's rivals\" showed every rival's wards at the first rival's strength; each is now as strong as it will be in that Ascension.",
         ],
     },
     {

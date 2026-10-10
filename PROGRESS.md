@@ -94,6 +94,10 @@ Items you've flagged as needing work. They're recorded here and picked up only w
 - **The Insight sum** beside the Ascend button (and in the Ascend dialog): Fame part √(Fame / 10) (with the softcap noted), × spellbooks (1 + 0.25 × books), × (1 + rivals banished)², the overall softcap if it applies, × Insight bonuses, = the total. `insightBreakdown` in `engine/ascension.ts`; `insightOnAscend` now returns its total. The formula paragraph at the top of the tab is shortened to point there.
 - **The Essence sum**, the same way, beside the Planeshift button and in its dialog: (Myrran cities taken ÷ 4)^1.3 × (1 + 0.25 × Myrran races held) × (1 + Myrran wizards banished), or the fixed amount on the first Planeshift. `essenceBreakdown` in `engine/planes.ts`; `essenceOnPlaneshift` returns its total. Both tables share the `table.prestige-sum` style.
 
+### Bug: "city 129 of 128" on the Planes tab (2026-10-10, from play-testing)
+
+- With all of Myrror taken, the Planes tab's heading showed `m.index + 1` of `myrrorEnd`. It now shows the count only while there's a target, as the Army tab's Campaign heading does, and the end message matches the Army tab's "The edge of Arcanus" box: "The edge of Myrror" with a line under it.
+
 ### Bug: auto-buy only levelled the first Myrran work of each resource (2026-10-10, from play-testing)
 
 - A resource's two works cost the same at the same total level (own ×1.5 per level, ×`SHARED_WORK_GROWTH` 1.5 per partner level), and `autoWorks` sorted by cost only, so the stable sort always picked the first work. Ties now go to the lower level (`autoWorks` in `engine/planes.ts`).

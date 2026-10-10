@@ -201,7 +201,12 @@ function MyrrorSection() {
     return (
         <section>
             <h2>
-                Myrror <span class="count">· city {m.index + 1} of {myrrorEnd(plan)}</span>
+                Myrror{" "}
+                {target && (
+                    <span class="count">
+                        · city {target.index + 1} of {myrrorEnd(plan)}
+                    </span>
+                )}
             </h2>
             <PendingBoons />
             {state.mastery.challenge && (
@@ -271,7 +276,10 @@ function MyrrorSection() {
                     )}
                 </div>
             ) : (
-                <div class="wall">You hold all of Myrror.</div>
+                <div class="wall">
+                    <b>The edge of Myrror</b>
+                    <p>Every city of Myrror is yours, and is held until the next Planeshift.</p>
+                </div>
             )}
             <RegionList plan={plan} current={regionIdx} />
             <h3>Holdings</h3>

@@ -36,6 +36,7 @@ export const CHANGES: ChangeEntry[] = [
             "Fixed: the Heroes section said the same Eternal Companions sentence twice, once for Refound and once for Ascend; it now says it once, for both.",
             "The Fame that Echo of Glory (Ascension milestone) starts an Ascension with is now explained: a line in the log when you Ascend, and a note on the Kingdom tab until your first Refound, since it isn't counted in Fame earned.",
             "Fixed: the Fame box at the top of the page disappeared after an Ascension until you could Refound, even with Fame to spend. It now stays once you have Ascended or Planeshifted. The Insight box now shows the Insight you'd get if you Ascended now, as the Fame and Essence boxes do for Refound and Planeshift, instead of your number of Ascensions.",
+            "During a challenge, Myrror's pause is plain to see: the Planes tab's army slider is greyed out under a clear notice (it used to snap back to 0% when moved), At a glance says Myrror is paused rather than \"no troops sent\", and you're no longer told to send troops there.",
         ],
     },
     {

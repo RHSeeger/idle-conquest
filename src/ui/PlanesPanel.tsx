@@ -210,7 +210,11 @@ function MyrrorSection() {
             </h2>
             <PendingBoons />
             {state.mastery.challenge && (
-                <p class="hint">Myrror pauses during {state.mastery.challenge}'s challenge: the whole army fights on Arcanus.</p>
+                <p class="challenge-off">
+                    <b>Paused during {state.mastery.challenge}'s challenge:</b> a challenge is one Ascension of Arcanus, so
+                    the whole army fights there and Myrror's siege waits. The split you set comes back when the challenge
+                    ends.
+                </p>
             )}
             <div class="slider-row">
                 <span>Arcanus {Math.round((1 - share) * 100)}%</span>
@@ -219,6 +223,7 @@ function MyrrorSection() {
                     min={0}
                     max={Math.round(max * 100)}
                     step={5}
+                    disabled={!!state.mastery.challenge}
                     value={Math.round(share * 100)}
                     onInput={(e) => setArmyShare(state, Number((e.target as HTMLInputElement).value) / 100)}
                 />

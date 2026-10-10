@@ -232,6 +232,7 @@ export function Overview(props: { onOpen: OpenTab }) {
                             const t = myrrorTarget(state);
                             const share = myrrorShare(state);
                             if (!t) return "all of Myrror is yours";
+                            if (state.mastery.challenge) return `paused during ${state.mastery.challenge}'s challenge`;
                             if (share <= 0) return "no troops sent";
                             const power = myrrorPower(state, stats, t.traits);
                             const eta = power.gt(0) ? t.defense.minus(state.planes.myrror!.siege).div(power).toNumber() : Infinity;

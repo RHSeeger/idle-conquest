@@ -90,6 +90,8 @@ export const STAT_BASE: Record<string, number> = {
     "myrror.capitalDefense": 1,
     /** Multiplies the Myrran resources each city taken yields */
     "myrror.resources": 1,
+    /** Multiplies how fast mana income fills the Spell of Mastery (Planar Channel, Essence) */
+    "mastery.channel": 1,
     // Challenge Wizards (Layer 4): rules and rewards
     "cost.hero": 1,
     "hero.xp": 1,

@@ -7,10 +7,11 @@ import { cityAt, conquer, currentPlan, currentTarget, isUnitAvailable, myrrorSha
 import { getStats } from "../src/engine/collect";
 import { D } from "../src/engine/decimal";
 import { hireCost } from "../src/engine/heroes";
-import { canCastEnchantment, isWizard, knowsSpell, masteryGate, research, spellAvailable } from "../src/engine/magic";
+import { canCastEnchantment, isWizard, knowsSpell, manaRate, masteryGate, research, spellAvailable } from "../src/engine/magic";
 import {
     abandonChallenge,
     canChannel,
+    channelRate,
     canStartChallenge,
     claimMastery,
     completeChallenge,
@@ -21,10 +22,10 @@ import {
     startChallenge,
     tickMastery,
 } from "../src/engine/mastery";
-import { canPlaneshift, hasPlaneshiftMilestone } from "../src/engine/planes";
+import { canPlaneshift, hasPlaneshiftMilestone, resetLayersBelowPlanes } from "../src/engine/planes";
 import { hasMilestone, refound } from "../src/engine/prestige";
 import { deserialize, serialize } from "../src/engine/save";
-import { GameState, newCampaign, newGame } from "../src/engine/state";
+import { bump, GameState, newCampaign, newGame } from "../src/engine/state";
 import { tick } from "../src/engine/tick";
 import { ascensionRivals, banishedCount, currentRival, strikeWards, wardStrength } from "../src/engine/wards";
 
@@ -121,6 +122,25 @@ describe("The Spell of Mastery", () => {
         expect(state.mastery.cast).toBe(true);
         expect(state.mastery.channelling).toBe(false);
         expect(state.mastery.victory?.playtime).toBeGreaterThan(0);
+    });
+
+    it("Planar Channel (Essence) speeds the channel, and a Planeshift keeps its progress", () => {
+        const state = atTheGate();
+        state.ascension.spellsKnown = [SPELL_OF_MASTERY];
+        state.run.mana = D(0);
+        const mana = manaRate(state, getStats(state));
+        expect(channelRate(state, getStats(state)).eq(mana)).toBe(true);
+        state.planes.upgrades.planarChannel = 2;
+        bump(state);
+        expect(channelRate(state, getStats(state)).toNumber()).toBeCloseTo(mana.toNumber() * 2.25);
+        setChannelling(state, true);
+        tickMastery(state, getStats(state), 10);
+        expect(state.mastery.progress.toNumber()).toBeCloseTo(mana.toNumber() * 2.25 * 10);
+        const kept = state.mastery.progress;
+        // what a Planeshift resets below it (the gate for Planeshifting itself is tested in planes.test.ts)
+        resetLayersBelowPlanes(state, "highMen");
+        expect(state.mastery.progress.eq(kept)).toBe(true);
+        expect(canChannel(state)).toBe(true);
     });
 
     it("can be claimed later: keep playing first", () => {

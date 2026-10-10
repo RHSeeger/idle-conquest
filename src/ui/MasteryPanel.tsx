@@ -12,10 +12,11 @@ import { SPELLS } from "../content/spells";
 import { insightOnAscend } from "../engine/ascension";
 import { getStats } from "../engine/collect";
 import { fmt, fmtInt, fmtTime } from "../engine/format";
-import { canResearch, knowsSpell, masteryGate, research, researchCost } from "../engine/magic";
+import { canResearch, knowsSpell, manaRate, masteryGate, research, researchCost } from "../engine/magic";
 import {
     abandonChallenge,
     canChannel,
+    channelRate,
     canClaimMastery,
     canCompleteChallenge,
     canStartChallenge,
@@ -34,7 +35,7 @@ import {
 } from "../engine/mastery";
 import { GameState } from "../engine/state";
 import { banishedCount } from "../engine/wards";
-import { Price, ProgressBar } from "./components";
+import { BreakdownView, Price, ProgressBar, Tip } from "./components";
 import { askConfirm } from "./Confirm";
 import { game } from "./game";
 
@@ -118,14 +119,43 @@ function SpellSection() {
                                 <span class="hint">
                                     {m.channelling
                                         ? `All mana income flows into the Spell: about ${Number.isFinite(left) ? fmtTime(left) : "forever"} left at this rate.`
-                                        : "Paused: your mana goes to your pool as usual. Progress is kept, also through Refounds and Ascensions."}
+                                        : "Paused: your mana goes to your pool as usual. Progress is kept, also through Refounds, Ascensions and Planeshifts."}
                                 </span>
                             </p>
+                            <ChannelSpeed />
                         </>
                     )}
                 </>
             )}
         </section>
+    );
+}
+
+/** The channel's rate (mana income × channel speed), each with its breakdown, and what makes it faster */
+function ChannelSpeed() {
+    const state = game();
+    const stats = getStats(state);
+    const speed = stats.get("mastery.channel");
+    return (
+        <>
+            <p>
+                Channel:{" "}
+                <Tip tip={<BreakdownView stats={stats} stat="mana.mult" title="Mana multiplier" />}>
+                    <b class="mana">{fmt(manaRate(state, stats))}</b> mana/s
+                </Tip>{" "}
+                ×{" "}
+                <Tip tip={<BreakdownView stats={stats} stat="mastery.channel" title="Channel speed" />}>
+                    <b>{fmt(speed)}</b> channel speed
+                </Tip>{" "}
+                = <b>{fmt(channelRate(state, stats))}</b>/s
+            </p>
+            <p class="hint">
+                Faster with more mana: Arcane Power (Insight; Ascending keeps the channel's progress), the Channeler, Mana
+                Focusing and Alchemy retorts, Dark Rituals, melded nodes, and on Myrror Quork Foci and Dark Elf cities. And
+                with Planar Channel (Essence). A Planeshift keeps the progress too, but resets your Insight upgrades and
+                Myrror's works and holdings, so it pays only if its Essence buys enough Planar Channel.
+            </p>
+        </>
     );
 }
 

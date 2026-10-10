@@ -53,9 +53,14 @@ export function setChannelling(state: GameState, on: boolean): boolean {
     return true;
 }
 
-/** Seconds of current mana income until the Spell completes (Infinity without income) */
+/** Mana per second the channel adds to the Spell: mana income × channel speed (Planar Channel) */
+export function channelRate(state: GameState, stats: Stats): Decimal {
+    return manaRate(state, stats).times(stats.get("mastery.channel"));
+}
+
+/** Seconds at the current channel rate until the Spell completes (Infinity without income) */
 export function masterySecondsLeft(state: GameState, stats: Stats): number {
-    const rate = manaRate(state, stats);
+    const rate = channelRate(state, stats);
     if (rate.lte(0)) return Infinity;
     return masteryCost(state).minus(state.mastery.progress).max(0).div(rate).toNumber();
 }
@@ -64,7 +69,7 @@ export function masterySecondsLeft(state: GameState, stats: Stats): number {
 export function tickMastery(state: GameState, stats: Stats, dt: number): void {
     const m = state.mastery;
     if (!m.channelling || m.cast) return;
-    m.progress = m.progress.plus(manaRate(state, stats).times(dt));
+    m.progress = m.progress.plus(channelRate(state, stats).times(dt));
     if (m.progress.gte(masteryCost(state))) completeSpell(state);
 }
 

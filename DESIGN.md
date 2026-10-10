@@ -301,7 +301,8 @@ Then **research the Spell of Mastery** (Arcane, 1e18 Knowledge). It only becomes
 
 **Casting is a channel**, as in MoM, where it takes many turns:
 - Start it in the Mastery tab. From then on all mana income flows into the Spell instead of the mana pool, so enchantments, instants and summons wait. It can be paused and resumed; progress is kept, also through Refounds, Ascensions and Planeshifts.
-- It needs 3e14 mana (`MASTERY_TUNING.mana`), ×10 for each Mastery already claimed: about an hour at the income a player has once the gate is met (play-tested; 8e15 showed over a day).
+- It needs 7e13 mana (`MASTERY_TUNING.mana`), ×10 for each Mastery already claimed: about an hour at the income a player has once the gate is met (play-tested: 8e15 showed over a day; after §15, 3e14 showed 4h).
+- The channel fills at mana income × channel speed. Channel speed comes from Planar Channel (Essence, ×1.5 per level), so Planar Essence, and a Planeshift before the Spell, shortens it.
 - When it completes: **you have won.** A victory screen sums up the journey (time played, Refounds, Ascensions and Planeshifts of all time, wizards banished on each plane).
 
 **Claim it now or later.** The victory screen offers:

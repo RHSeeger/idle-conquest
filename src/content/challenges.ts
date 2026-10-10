@@ -22,8 +22,11 @@ export const MASTERY_TUNING = {
      * Mana channelled into the Spell to complete it. Play-test: 8e15 left a real
      * player with everything conquered looking at "1d 6h" (~7e10 mana/s), so it's
      * tuned to about an hour at that income (the bot, with more mana, needs less).
+     * After §15 less mana reaches the endgame: a play-test had ~2e10/s with both
+     * planes conquered (4h at 3e14), the bot 4–7e9/s, so it's 7e13: about an hour
+     * there, and Planar Channel (Essence) shortens it.
      */
-    mana: 3e14,
+    mana: 7e13,
     /** Each Mastery already claimed multiplies the next Spell's mana by this (each Mastery doubles income) */
     growth: 10,
 };

@@ -483,6 +483,14 @@ const essenceList: EssenceUpgradeDef[] = [
         text: (l) => `×${fmtNum(Math.pow(2, l))} spell power (against rival wizards' wards)`,
     },
     {
+        id: "planarChannel",
+        name: "Planar Channel",
+        maxLevel: 20,
+        cost: (l) => Math.round(10 * Math.pow(2, l)),
+        effects: [{ stat: "mastery.channel", op: "mult", value: (l) => Math.pow(1.5, l) }],
+        text: (l) => `×${fmtNum(Math.pow(1.5, l))} channel speed for the Spell of Mastery`,
+    },
+    {
         id: "wellspring",
         name: "Wellspring",
         maxLevel: 20,

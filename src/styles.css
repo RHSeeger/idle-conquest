@@ -1049,22 +1049,28 @@ tr.cleared td {
     border-color: var(--insight);
 }
 
-/* the Insight sum beside the Ascend button */
-table.insight-sum {
+/* the Insight and Essence sums beside the Ascend and Planeshift buttons */
+table.prestige-sum {
     border-collapse: collapse;
     margin: 8px 0;
     font-size: 13px;
 }
-table.insight-sum td {
+table.prestige-sum td {
     padding: 2px 10px 2px 0;
     vertical-align: baseline;
 }
-table.insight-sum td.num {
+table.prestige-sum td.num {
     text-align: right;
     font-family: var(--mono);
     white-space: nowrap;
 }
-table.insight-sum tr.total td {
+table.prestige-sum td.insight {
+    color: var(--insight);
+}
+table.prestige-sum td.essence {
+    color: var(--essence);
+}
+table.prestige-sum tr.total td {
     border-top: 1px solid var(--border);
     padding-top: 4px;
     font-weight: 600;

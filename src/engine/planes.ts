@@ -338,14 +338,39 @@ const FIRST_PLANESHIFT_ESSENCE = 5;
 
 /** Planar Essence = (Myrran cities taken ÷ 4)^1.3 × (1 + 0.25 per Myrran race held) × (1 + Myrran wizards banished) */
 export function essenceOnPlaneshift(state: GameState): Decimal {
+    return essenceBreakdown(state).total;
+}
+
+/** Every factor of essenceOnPlaneshift, for showing the sum beside the Planeshift button */
+export interface EssenceBreakdown {
+    /** The first Planeshift: no Myrror campaign yet, so a fixed amount */
+    first: boolean;
+    /** Myrran cities taken this campaign */
+    taken: number;
+    /** (taken ÷ 4)^1.3 */
+    base: number;
+    races: number;
+    /** 1 + 0.25 per Myrran race held */
+    racesMult: number;
+    wizards: number;
+    /** 1 + Myrran wizards banished */
+    wizardsMult: number;
+    total: Decimal;
+}
+
+export function essenceBreakdown(state: GameState): EssenceBreakdown {
     const m = state.planes.myrror;
     // the first Planeshift opens Myrror: there's no campaign to reward yet
-    if (!m) return D(FIRST_PLANESHIFT_ESSENCE);
-    if (m.taken <= 0) return D(0);
-    const base = Math.pow(m.taken / 4, 1.3);
-    const races = 1 + 0.25 * heldMyrranRaces(state).length;
-    const wizards = 1 + m.wizardsDefeated.length;
-    return D(base * races * wizards).floor();
+    if (!m) {
+        return { first: true, taken: 0, base: 0, races: 0, racesMult: 1, wizards: 0, wizardsMult: 1, total: D(FIRST_PLANESHIFT_ESSENCE) };
+    }
+    const taken = Math.max(0, m.taken);
+    const base = Math.pow(taken / 4, 1.3);
+    const races = heldMyrranRaces(state).length;
+    const racesMult = 1 + 0.25 * races;
+    const wizards = m.wizardsDefeated.length;
+    const wizardsMult = 1 + wizards;
+    return { first: false, taken, base, races, racesMult, wizards, wizardsMult, total: D(base * racesMult * wizardsMult).floor() };
 }
 
 /** Not during a challenge (Layer 4), which is one Ascension of Arcanus */

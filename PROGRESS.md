@@ -91,6 +91,7 @@ Items you've flagged as needing work. They're recorded here and picked up only w
 
 - **The game's own confirm dialog** (`ui/Confirm.tsx`: `askConfirm({title, body, confirm, danger?, tone?, onConfirm})`, shown by `<ConfirmHost />` in App) replaces all nine browser `confirm()` calls: Refound, Ascend, Planeshift, claim Mastery (twice), accept/replay and abandon a challenge, dismiss a hero, load a save, erase everything. The confirm button says what it does and gives ("Ascend (+120 Insight)") and takes the layer's colour; destructive ones (dismiss, abandon, load, erase) have a red border and focus Cancel, the others focus Confirm. Escape or a click outside cancels. It sits above other modals (the Victory screen's claim).
 - **The Insight sum** beside the Ascend button (and in the Ascend dialog): Fame part √(Fame / 10) (with the softcap noted), × spellbooks (1 + 0.25 × books), × (1 + rivals banished)², the overall softcap if it applies, × Insight bonuses, = the total. `insightBreakdown` in `engine/ascension.ts`; `insightOnAscend` now returns its total. The formula paragraph at the top of the tab is shortened to point there.
+- **The Essence sum**, the same way, beside the Planeshift button and in its dialog: (Myrran cities taken ÷ 4)^1.3 × (1 + 0.25 × Myrran races held) × (1 + Myrran wizards banished), or the fixed amount on the first Planeshift. `essenceBreakdown` in `engine/planes.ts`; `essenceOnPlaneshift` returns its total. Both tables share the `table.prestige-sum` style.
 
 ### At a glance and Doctrine layout (2026-10-09, from play-testing)
 

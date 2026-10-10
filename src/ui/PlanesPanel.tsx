@@ -47,7 +47,8 @@ import {
     myrranWorkCost,
     myrranWorkLevel,
     canPlaneshift,
-    essenceOnPlaneshift,
+    essenceBreakdown,
+    EssenceBreakdown,
     essenceUpgradeCost,
     essenceUpgradeLevel,
     fitProfile,
@@ -63,6 +64,47 @@ import { askConfirm } from "./Confirm";
 import { game } from "./game";
 import { TRAITS } from "../content/traits";
 
+/** How the Planar Essence on Planeshifting is worked out, factor by factor */
+function EssenceSum(props: { b: EssenceBreakdown }) {
+    const b = props.b;
+    return (
+        <table class="prestige-sum">
+            <tbody>
+                {b.first ? (
+                    <tr>
+                        <td>First Planeshift</td>
+                        <td class="hint">no Myrror campaign yet: a fixed amount</td>
+                        <td class="num" />
+                    </tr>
+                ) : (
+                    <>
+                        <tr>
+                            <td>Myrran cities taken</td>
+                            <td class="hint">({fmtInt(b.taken)} ÷ 4)^1.3</td>
+                            <td class="num">{fmt(b.base)}</td>
+                        </tr>
+                        <tr>
+                            <td>Myrran races held</td>
+                            <td class="hint">1 + 0.25 × {b.races}</td>
+                            <td class="num">×{fmt(b.racesMult)}</td>
+                        </tr>
+                        <tr>
+                            <td>Myrran wizards banished</td>
+                            <td class="hint">1 + {b.wizards}</td>
+                            <td class="num">×{fmt(b.wizardsMult)}</td>
+                        </tr>
+                    </>
+                )}
+                <tr class="total">
+                    <td>Planar Essence on Planeshifting</td>
+                    <td class="hint" />
+                    <td class="num essence">{fmtInt(b.total)}</td>
+                </tr>
+            </tbody>
+        </table>
+    );
+}
+
 function PlaneshiftSection() {
     const state = game();
     const pl = state.planes;
@@ -71,7 +113,8 @@ function PlaneshiftSection() {
     const races = state.prestige.annals;
     const [race, setRace] = useState<RaceId>(state.run.startingRace);
     const startRace = races.includes(race) ? race : races[0];
-    const essence = essenceOnPlaneshift(state);
+    const breakdown = essenceBreakdown(state);
+    const essence = breakdown.total;
     const profile = fitProfile(state.ascension.planBooks, state.ascension.planRetorts);
     const check = (ok: boolean) => <span class={ok ? "good" : "bad"}>{ok ? "✓" : "✗"}</span>;
 
@@ -83,7 +126,8 @@ function PlaneshiftSection() {
             body: [
                 `Myrror opens among the ${RACES[beachhead].plural}.`,
                 `Your kingdom, Fame, refounds, Insight, Insight upgrades, Ascensions and spells reset${pl.myrror ? ", and so does this Myrror campaign (with its resources, works and boons)" : ""}.`,
-                `You stay a Wizard (${profileText(profile.books, profile.retorts)}) and gain ${fmtInt(essence)} Planar Essence.`,
+                `You stay a Wizard (${profileText(profile.books, profile.retorts)}).`,
+                <EssenceSum b={breakdown} />,
             ],
             onConfirm: () => planeshift(state, beachhead, startRace),
         });
@@ -128,6 +172,7 @@ function PlaneshiftSection() {
                 Wizard profile: <b>{profileText(profile.books, profile.retorts)}</b>{" "}
                 <span class="hint">(your planned profile from the Ascension tab, fitted to a fresh Planeshift's picks)</span>
             </p>
+            <EssenceSum b={breakdown} />
             <button class="prestige-button planeshift" disabled={!canPlaneshift(state)} onClick={doShift}>
                 Planeshift (+{fmtInt(essence)} Planar Essence)
             </button>

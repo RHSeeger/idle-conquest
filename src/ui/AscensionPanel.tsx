@@ -348,7 +348,7 @@ function BeyondArcanus() {
 function InsightSum(props: { b: InsightBreakdown }) {
     const b = props.b;
     return (
-        <table class="insight-sum">
+        <table class="prestige-sum">
             <tbody>
                 <tr>
                     <td>Fame this Ascension</td>

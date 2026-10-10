@@ -13,7 +13,10 @@ import {
     runAutomation,
     setDoctrineWeight,
     stallAction,
+    taxPlan,
 } from "../src/engine/automation";
+import { buildingPrice } from "../src/engine/costs";
+import { realmEconomy } from "../src/engine/economy";
 import { powerByRole } from "../src/engine/army";
 import { getStats } from "../src/engine/collect";
 import { buyFameUpgrade, closeFameChronicle } from "../src/engine/prestige";
@@ -66,6 +69,60 @@ describe("Army budget", () => {
         state.run.gold = D(10000);
         runAutomation(state);
         expect(state.run.production.plus(state.run.gold).toNumber()).toBeLessThan(15000);
+    });
+});
+
+describe("Auto-tax", () => {
+    /** Auto-build unlocked (Master Builders), saving for the Shrine, which costs production and gold */
+    function taxing() {
+        const state = newGame(0);
+        state.prestige.refounds = 1;
+        state.automation = { ...state.automation, buildings: false, lore: false, settlers: false, lairs: false, units: false };
+        state.automation.buildMode = "chronicle";
+        state.prestige.chronicle.buildOrder = ["shrine"];
+        state.run.buildings.push("buildersHall"); // the Shrine needs it
+        state.run.cities[0].pop = 10;
+        state.run.production = D(0);
+        state.run.gold = D(0);
+        return state;
+    }
+
+    it("balances the split so production and gold for the next building arrive together", () => {
+        const state = taxing();
+        expect(buildQueue(state)[0]).toBe("shrine");
+        const plan = taxPlan(state);
+        expect(plan.needsGold).toBe(true);
+        expect(plan.share).toBeGreaterThan(state.automation.taxFloor);
+        expect(plan.share).toBeLessThan(1);
+        state.run.taxShare = plan.share;
+        const econ = realmEconomy(state, getStats(state));
+        const price = buildingPrice(getStats(state), "shrine");
+        const prodTime = price.production!.div(econ.production).toNumber();
+        const goldTime = price.gold!.div(econ.gold).toNumber();
+        expect(Math.abs(prodTime - goldTime) / goldTime).toBeLessThan(0.01);
+        expect(plan.seconds).toBeCloseTo(goldTime, 0);
+    });
+
+    it("keeps taxes at the floor while nothing needs gold", () => {
+        const state = taxing();
+        state.run.gold = D(1e9); // the Shrine's gold is already there
+        state.automation.taxFloor = 0.15;
+        runAutomation(state);
+        expect(state.run.taxShare).toBeCloseTo(0.15);
+    });
+
+    it("leaves the slider alone when switched off, or before auto-build is unlocked", () => {
+        const off = taxing();
+        off.automation.taxAuto = false;
+        off.run.taxShare = 0.42;
+        runAutomation(off);
+        expect(off.run.taxShare).toBe(0.42);
+
+        const locked = taxing();
+        locked.prestige.refounds = 0;
+        locked.run.taxShare = 0.42;
+        runAutomation(locked);
+        expect(locked.run.taxShare).toBe(0.42);
     });
 });
 

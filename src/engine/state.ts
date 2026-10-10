@@ -410,6 +410,13 @@ export interface Automation {
     loreSpendCap: number;
     /** Enchantments auto-cast leaves alone (your loadout is every other one you know); kept through every reset */
     loadoutOff: string[];
+    /**
+     * Auto-tax (unlocked with auto-build): the Work/Tax split follows what you're
+     * saving for, so production and gold arrive together (engine/automation.ts autoTax)
+     */
+    taxAuto: boolean;
+    /** Auto-tax's lowest tax share, kept while nothing being saved for needs gold */
+    taxFloor: number;
 }
 
 export interface GameState {
@@ -585,6 +592,8 @@ export function newGame(now = Date.now()): GameState {
             ascendAt: 1,
             loreSpendCap: 0.1,
             loadoutOff: [],
+            taxAuto: true,
+            taxFloor: 0.1,
         },
         settings: { buyAmount: 1, autosaveSeconds: 15, devSpeed: 1, showDevTools: false },
         meta: { created: now, lastTick: now, playtime: 0, introsSeen: [] },

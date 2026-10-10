@@ -69,6 +69,8 @@ import { lairTarget } from "./exploration";
 import { SPELLS } from "../content/spells";
 import { GameState } from "./state";
 import { currentRival, wardSecondsLeft } from "./wards";
+import { hireCost, heroesAllowed, isTavernOpen } from "./heroes";
+import { MAX_HEROES } from "../content/heroes";
 
 /** How long (seconds of income) automation will save up for the next building */
 export const SAVE_FOR_BUILDING_SECONDS = 90;
@@ -510,6 +512,69 @@ function accrueRecruitBudget(state: GameState): void {
     }
 }
 
+// --- Auto-tax (unlocked with auto-build) ---
+
+/** Floors the player can pick for auto-tax (share of non-farming citizens kept on taxes) */
+export const TAX_FLOORS = [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5];
+
+export function isAutoTaxActive(state: GameState): boolean {
+    return isAutomationUnlocked(state, "buildings") && state.automation.taxAuto;
+}
+
+export interface TaxPlan {
+    /** What it's saving for: the next building auto-build wants, and/or the next hero */
+    building: string | null;
+    hero: boolean;
+    /** The tax share it sets */
+    share: number;
+    /** Seconds until both currencies are there at that share (0 if they already are, Infinity if never) */
+    seconds: number;
+    /** Whether anything being saved for still needs gold */
+    needsGold: boolean;
+}
+
+/**
+ * The tax share at which production and gold for what you're saving for arrive
+ * together, counting what's on hand. While nothing needs gold, the floor.
+ * Production is linear in the share (workers), and so is gold (taxpayers), so the
+ * balance has a closed form: Pn / (P1 + (P0 − P1)(1 − t)) = Gn / (G1 · t).
+ */
+export function taxPlan(state: GameState): TaxPlan {
+    const run = state.run;
+    const stats = getStats(state);
+    const floor = Math.max(0, Math.min(1, state.automation.taxFloor));
+    const building = buildQueue(state)[0] ?? null;
+    const hero = heroesAllowed(state) && isTavernOpen(state) && run.heroes.length < MAX_HEROES;
+    const price = building ? buildingPrice(stats, building) : {};
+    const prodNeed = (price.production ?? ZERO).minus(run.production).max(0).toNumber();
+    const goldNeed = (price.gold ?? ZERO).plus(hero ? hireCost(state) : ZERO).minus(run.gold).max(0).toNumber();
+
+    // income at no tax and at full tax (the economy reads the share from the run)
+    const saved = run.taxShare;
+    run.taxShare = 0;
+    const p0 = realmEconomy(state, stats).production.toNumber();
+    run.taxShare = 1;
+    const full = realmEconomy(state, stats);
+    run.taxShare = saved;
+    const p1 = full.production.toNumber();
+    const g1 = full.gold.toNumber();
+    const prodAt = (t: number) => p1 + (p0 - p1) * (1 - t);
+    const wait = (need: number, rate: number) => (need <= 0 ? 0 : rate <= 0 ? Infinity : need / rate);
+
+    let share = floor;
+    if (goldNeed > 0 && g1 > 0) {
+        const balanced = prodNeed <= 0 ? 1 : (goldNeed * p0) / (prodNeed * g1 + goldNeed * (p0 - p1));
+        share = Math.max(floor, Math.min(1, balanced));
+    }
+    const seconds = Math.max(wait(prodNeed, prodAt(share)), wait(goldNeed, g1 * share));
+    return { building, hero, share, seconds, needsGold: goldNeed > 0 };
+}
+
+/** Sets the Work/Tax split from taxPlan */
+export function autoTax(state: GameState): void {
+    state.run.taxShare = taxPlan(state).share;
+}
+
 /** Runs every automation the player has unlocked and enabled */
 export function runAutomation(state: GameState, force = false): void {
     // prestige automation first (never forced: the bot decides those itself)
@@ -535,6 +600,8 @@ export function runAutomation(state: GameState, force = false): void {
 function runAutomationSteps(state: GameState, force: boolean, budgeted: boolean): void {
     const on = (kind: AutomationKind) => force || isAutomationActive(state,kind);
     const savingFor = on("buildings") ? autoBuild(state) : null;
+    // after auto-build, so the split follows what it's now saving for
+    if (force || isAutoTaxActive(state)) autoTax(state);
     if (isWizard(state) && on("research")) autoResearch(state);
     if (on("lore")) autoLore(state);
     if (on("settlers")) autoSettle(state);

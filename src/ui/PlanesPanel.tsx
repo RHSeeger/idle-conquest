@@ -502,8 +502,8 @@ function EssenceSection() {
             </p>
             {off && (
                 <p class="challenge-off">
-                    <b>Off during {state.mastery.challenge}'s challenge:</b> Essence upgrades do nothing until it ends. You
-                    can still buy them.
+                    <b>Off during {state.mastery.challenge}'s challenge:</b> Essence upgrades do nothing until it ends
+                    (Astral Archivists' auto-buy still works). You can still buy them.
                 </p>
             )}
             <div class={"cards" + (off ? " off" : "")}>
@@ -518,7 +518,7 @@ function EssenceSection() {
                                 <span class="count">
                                     {level}/{u.maxLevel}
                                 </span>
-                                {off && level > 0 && <span class="off-tag">off</span>}
+                                {off && level > 0 && id !== "astralArchivists" && <span class="off-tag">off</span>}
                             </div>
                             <div class="card-text">
                                 {u.text(level)}

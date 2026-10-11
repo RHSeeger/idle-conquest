@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import { canBuyBuilding, canRushBuilding, rushPrice } from "../src/engine/actions";
 import { frontierCity, REGION_SIZE } from "../src/content/frontier";
 import { conquer, currentPlan } from "../src/engine/army";
-import { canAscend } from "../src/engine/ascension";
+import { buyInsightUpgrade, canAscend } from "../src/engine/ascension";
+import { resetLayersBelowPlanes } from "../src/engine/planes";
 import {
     activeDoctrine,
     autoBuild,
@@ -10,6 +11,7 @@ import {
     doctrineShares,
     isEfficientRecruitUnlocked,
     nextFameChronicleStep,
+    nextInsightChronicleStep,
     runAutomation,
     setDoctrineWeight,
     stallAction,
@@ -219,6 +221,53 @@ describe("Fame auto-buy (Royal Stewards)", () => {
         locked.prestige.fame = D(1000);
         runAutomation(locked);
         expect(locked.prestige.fameOrder).toEqual([]);
+    });
+});
+
+describe("Insight auto-buy (Astral Archivists)", () => {
+    function archived() {
+        const state = newGame(0);
+        state.planes.upgrades.astralArchivists = 1;
+        state.automation = { ...state.automation, buildings: false, units: false, lore: false, settlers: false, lairs: false };
+        return state;
+    }
+
+    it("records the purchase order and hands it to the next Planeshift", () => {
+        const state = archived();
+        state.ascension.insight = D(1000);
+        buyInsightUpgrade(state, "sageLore");
+        buyInsightUpgrade(state, "arcanePower");
+        buyInsightUpgrade(state, "sageLore");
+        expect(state.ascension.insightOrder).toEqual(["sageLore", "arcanePower", "sageLore"]);
+        resetLayersBelowPlanes(state, "highMen");
+        expect(state.planes.insightChronicle).toEqual(["sageLore", "arcanePower", "sageLore"]);
+        expect(state.ascension.insightOrder).toEqual([]);
+    });
+
+    it("in Chronicle mode, waits for each recorded purchase in turn", () => {
+        const state = archived();
+        state.planes.insightChronicle = ["sageLore", "arcanePower", "sageLore"];
+        state.ascension.insight = D(1); // not enough for Sage Lore (2): must not buy anything else
+        runAutomation(state);
+        expect(state.ascension.upgrades).toEqual({});
+        expect(nextInsightChronicleStep(state)).toBe("sageLore");
+        state.ascension.insight = D(1000);
+        runAutomation(state);
+        expect(state.ascension.insightOrder.slice(0, 3)).toEqual(["sageLore", "arcanePower", "sageLore"]);
+        expect(nextInsightChronicleStep(state)).toBe(null);
+    });
+
+    it("in Cheapest mode, buys cheapest first and does nothing when locked", () => {
+        const state = archived();
+        state.automation.insightMode = "cheapest";
+        state.ascension.insight = D(2);
+        runAutomation(state);
+        expect(state.ascension.insightOrder.length).toBe(1); // one of the 2-Insight upgrades
+        expect(state.ascension.insight.toNumber()).toBe(0);
+        const locked = newGame(0);
+        locked.ascension.insight = D(1000);
+        runAutomation(locked);
+        expect(locked.ascension.insightOrder).toEqual([]);
     });
 });
 

@@ -459,6 +459,9 @@ export function resetLayersBelowPlanes(state: GameState, startRace: RaceId): voi
     a.ascensions = 0;
     a.insight = D(0);
     a.insightTotal = D(0);
+    // this Planeshift's purchase order becomes the Insight Chronicle that auto-buy can replay
+    if (a.insightOrder.length > 0) state.planes.insightChronicle = [...a.insightOrder];
+    a.insightOrder = [];
     a.upgrades = {};
     a.books = profile.books;
     a.retorts = profile.retorts;

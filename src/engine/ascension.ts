@@ -323,6 +323,7 @@ export function buyInsightUpgrade(state: GameState, id: string): boolean {
     if (!canBuyInsightUpgrade(state, id)) return false;
     state.ascension.insight = state.ascension.insight.minus(insightUpgradeCost(state, id));
     state.ascension.upgrades[id] = insightUpgradeLevel(state, id) + 1;
+    state.ascension.insightOrder.push(id);
     // the first Familiar arrives at once, as planned for this profile
     const a = state.ascension;
     if (id === "familiar" && a.familiar === null) a.familiar = resolveFamiliar(a.planFamiliar, a.books);

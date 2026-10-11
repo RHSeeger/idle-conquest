@@ -40,14 +40,18 @@ import {
 import {
     ascend,
     ascensionRaceOptions,
+    buyInsightUpgrade,
     canAscend,
+    canBuyInsightUpgrade,
     hasAscensionMilestone,
     insightOnAscend,
+    insightUpgradeCost,
     insightUpgradeLevel,
 } from "./ascension";
 import { FAME_UPGRADE_ORDER, FAME_UPGRADES } from "../content/fame";
+import { INSIGHT_UPGRADE_ORDER, INSIGHT_UPGRADES } from "../content/wizards";
 import { completeChallenge } from "./mastery";
-import { autoWorks, hasPlaneshiftMilestone } from "./planes";
+import { autoWorks, essenceUpgradeLevel, hasPlaneshiftMilestone } from "./planes";
 import { RaceId } from "../content/races";
 import {
     availableSpells,
@@ -88,6 +92,7 @@ export type AutomationKind =
     | "refound"
     | "ascend"
     | "fame"
+    | "insight"
     | "works";
 
 /** Auto-Refound/Ascend also fire when no Arcanus city has fallen for this long (seconds) */
@@ -119,6 +124,9 @@ export function isAutomationUnlocked(state: GameState, kind: AutomationKind): bo
         case "fame":
             // the owned level: an automation, not power, so it works in challenges too (like milestones)
             return insightUpgradeLevel(state, "royalStewards") > 0;
+        case "insight":
+            // likewise the owned level
+            return essenceUpgradeLevel(state, "astralArchivists") > 0;
     }
 }
 
@@ -155,6 +163,41 @@ export function autoFame(state: GameState): void {
         const step = state.automation.fameMode === "chronicle" ? nextFameChronicleStep(state) : null;
         const id = step ?? cheapestFameUpgrade(state);
         if (id === null || !buyFameUpgrade(state, id)) return;
+    }
+}
+
+// --- Insight upgrades (Astral Archivists) ---
+
+/**
+ * The next purchase in the Insight Chronicle (the last Planeshift's order) not
+ * matched yet since this Planeshift, or null once it's all been bought (as for Fame).
+ */
+export function nextInsightChronicleStep(state: GameState): string | null {
+    const seen: Record<string, number> = {};
+    for (const id of state.planes.insightChronicle) {
+        const u = INSIGHT_UPGRADES[id];
+        if (!u) continue;
+        seen[id] = (seen[id] ?? 0) + 1;
+        if (insightUpgradeLevel(state, id) < Math.min(seen[id], u.maxLevel)) return id;
+    }
+    return null;
+}
+
+function cheapestInsightUpgrade(state: GameState): string | null {
+    const affordable = INSIGHT_UPGRADE_ORDER.filter((id) => canBuyInsightUpgrade(state, id));
+    affordable.sort((a, b) => insightUpgradeCost(state, a) - insightUpgradeCost(state, b));
+    return affordable[0] ?? null;
+}
+
+/**
+ * Auto-buy Insight upgrades. Chronicle mode replays the last Planeshift's order,
+ * waiting for each purchase in turn, then buys cheapest-first once it's done.
+ */
+export function autoInsight(state: GameState): void {
+    for (let guard = 0; guard < 200; guard++) {
+        const step = state.automation.insightMode === "chronicle" ? nextInsightChronicleStep(state) : null;
+        const id = step ?? cheapestInsightUpgrade(state);
+        if (id === null || !buyInsightUpgrade(state, id)) return;
     }
 }
 
@@ -597,6 +640,8 @@ export function runAutomation(state: GameState, force = false): void {
         if (isAutomationActive(state,"refound") && autoRefound(state)) return;
         // Fame upgrades: the bot buys its own
         if (isAutomationActive(state, "fame")) autoFame(state);
+        // Insight upgrades: likewise
+        if (isAutomationActive(state, "insight")) autoInsight(state);
         // Myrran works: the bot buys its own
         if (isAutomationActive(state, "works")) autoWorks(state);
     }

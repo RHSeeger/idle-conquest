@@ -45,7 +45,8 @@ import { RETORTS, RETORT_ORDER } from "../content/retorts";
 import { fmt, fmtInt } from "../engine/format";
 import { askConfirm } from "./Confirm";
 import { game } from "./game";
-import { AutoPrestige } from "./AutoToggle";
+import { AutoMode, AutoPrestige, AutoToggle, ModeOption } from "./AutoToggle";
+import { isAutomationUnlocked, nextInsightChronicleStep } from "../engine/automation";
 import { heroAscendText } from "./HeroesSection";
 import { fameUpgradesValue } from "../engine/prestige";
 import { essenceUpgradeLevel } from "../engine/planes";
@@ -54,6 +55,37 @@ import { CHALLENGES, challengeGoalText } from "../content/challenges";
 import { ARCANUS_WIZARDS } from "../content/frontier";
 import { banishedCount, nextRivals } from "../engine/wards";
 import { RivalMatchups } from "./ContestSection";
+
+const INSIGHT_MODES: ModeOption<"chronicle" | "cheapest">[] = [
+    { value: "chronicle", label: "Chronicle", tip: "Replay the order you bought Insight upgrades in during your last Planeshift, then cheapest first" },
+    { value: "cheapest", label: "Cheapest", tip: "Always buy the cheapest affordable Insight upgrade" },
+];
+
+/** Auto-buy for Insight upgrades (Astral Archivists): toggle, mode, and what it will buy next */
+function InsightAutoBuy() {
+    const state = game();
+    if (!isAutomationUnlocked(state, "insight")) return null;
+    const auto = state.automation;
+    const chronicle = state.planes.insightChronicle;
+    const next = auto.insightMode === "chronicle" ? nextInsightChronicleStep(state) : null;
+    let status: string;
+    if (auto.insightMode === "cheapest") {
+        status = "Buys the cheapest affordable upgrade whenever it can.";
+    } else if (chronicle.length === 0) {
+        status = "No Insight Chronicle yet (it's recorded when you Planeshift), so it buys the cheapest first for now.";
+    } else if (next === null) {
+        status = `Last Planeshift's ${chronicle.length} purchases are all bought again; now buying the cheapest first.`;
+    } else {
+        status = `Replaying last Planeshift's ${chronicle.length} purchases. Next: ${INSIGHT_UPGRADES[next].name} (◈ ${insightUpgradeCost(state, next)}).`;
+    }
+    return (
+        <div class="row auto-prestige">
+            <AutoToggle kind="insight" label="Auto-buy" />
+            <AutoMode kind="insight" value={auto.insightMode} options={INSIGHT_MODES} onChange={(m) => (auto.insightMode = m)} />
+            <span class="hint">{status}</span>
+        </div>
+    );
+}
 
 /** Enduring Legacy (Essence): whether the next Ascension keeps the Fame upgrades */
 function KeepFameToggle() {
@@ -509,6 +541,7 @@ export function AscensionPanel() {
                             ends (Royal Stewards' auto-buy still works). You can still buy them.
                         </p>
                     )}
+                    <InsightAutoBuy />
                     <div class={"cards" + (off ? " off" : "")}>
                         {INSIGHT_UPGRADE_ORDER.map((id) => {
                             const u = INSIGHT_UPGRADES[id];

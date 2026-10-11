@@ -520,6 +520,17 @@ const essenceList: EssenceUpgradeDef[] = [
                 ? "Ascending resets your Fame upgrades"
                 : "Keep your Fame upgrades when you Ascend (can be switched off). Fame you earn afterwards first repays what they cost, before you can buy more",
     },
+    {
+        id: "astralArchivists",
+        name: "Astral Archivists",
+        maxLevel: 1,
+        cost: () => 15,
+        effects: [],
+        text: (l) =>
+            l === 0
+                ? "You buy Insight upgrades yourself"
+                : "Unlocks auto-buy for Insight upgrades: replay your last Planeshift's purchase order, or buy the cheapest first",
+    },
 ];
 
 export const ESSENCE_UPGRADES: Record<string, EssenceUpgradeDef> = Object.fromEntries(essenceList.map((u) => [u.id, u]));

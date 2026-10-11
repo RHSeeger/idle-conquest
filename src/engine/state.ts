@@ -161,6 +161,8 @@ export interface AscensionState {
     insight: Decimal;
     insightTotal: Decimal;
     upgrades: Record<string, number>;
+    /** Insight upgrades bought since the last Planeshift, in order (becomes the Insight Chronicle) */
+    insightOrder: string[];
     /** The wizard profile chosen at the last Ascension: spellbook picks per realm */
     books: Partial<Record<Realm, number>>;
     /** Retorts picked for this Ascension, and every retort ever unlocked */
@@ -204,6 +206,8 @@ export interface PlanesState {
     essence: Decimal;
     essenceTotal: Decimal;
     upgrades: Record<string, number>;
+    /** Insight upgrades bought during the last Planeshift, in order (auto-buy's Chronicle mode) */
+    insightChronicle: string[];
     /** Share (0..1) of the army the player wants fighting on Myrror (capped by links) */
     armyShare: number;
     /** Myrran wizards ever banished */
@@ -379,6 +383,10 @@ export interface Automation {
     keepFame: boolean;
     /** How auto-buy picks Fame upgrades: the last Ascension's purchase order, or cheapest first */
     fameMode: "chronicle" | "cheapest";
+    /** Auto-buy Insight upgrades (Astral Archivists, Essence) */
+    insight: boolean;
+    /** How auto-buy picks Insight upgrades: the last Planeshift's purchase order, or cheapest first */
+    insightMode: "chronicle" | "cheapest";
     /** Auto-buy Myrran works (Eternal Return, Planeshift milestone) */
     works: boolean;
     /** Myrran works auto-buy leaves alone (kept through every reset) */
@@ -522,6 +530,7 @@ export function newGame(now = Date.now()): GameState {
             insight: D(0),
             insightTotal: D(0),
             upgrades: {},
+            insightOrder: [],
             books: {},
             retorts: [],
             unlockedRetorts: [],
@@ -546,6 +555,7 @@ export function newGame(now = Date.now()): GameState {
             essence: D(0),
             essenceTotal: D(0),
             upgrades: {},
+            insightChronicle: [],
             armyShare: 0.1,
             wizardsDefeated: [],
             bestMyrror: 0,
@@ -581,6 +591,8 @@ export function newGame(now = Date.now()): GameState {
             fame: true,
             keepFame: true,
             fameMode: "chronicle",
+            insight: true,
+            insightMode: "chronicle",
             works: true,
             worksOff: [],
             repeatBoons: true,

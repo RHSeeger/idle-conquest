@@ -10,6 +10,12 @@ export interface ChangeEntry {
 
 export const CHANGES: ChangeEntry[] = [
     {
+        date: "2026-10-11",
+        items: [
+            "New Essence upgrade, Astral Archivists: auto-buy for Insight upgrades, as Royal Stewards is for Fame. It can replay the order you bought them in during your last Planeshift, or buy the cheapest first (Ascension tab).",
+        ],
+    },
+    {
         date: "2026-10-09",
         items: [
             "Every layer now has a mechanic of its own, and the choices you make in it matter. A stronger kingdom still helps the layers above, but it can't make them trivial.",

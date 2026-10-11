@@ -82,6 +82,13 @@ Items you've flagged as needing work. They're recorded here and picked up only w
 
 ## Work done
 
+### Insight auto-buy: Astral Archivists (2026-10-11, your request)
+
+- **What:** a new Essence upgrade, Astral Archivists (1 level, 15 Essence), unlocks auto-buy for Insight upgrades, as Royal Stewards (Insight) does for Fame. Same two modes: Chronicle replays the purchase order of the last Planeshift (Insight upgrades reset on Planeshift, as Fame upgrades do on Ascension), then buys cheapest first; Cheapest always buys the cheapest affordable one.
+- **Code:** `ascension.insightOrder` records purchases since the last Planeshift; `resetLayersBelowPlanes` (Planeshift and Mastery) turns it into `planes.insightChronicle`. `automation.insight` and `insightMode` (on and Chronicle by default); `autoInsight` and `nextInsightChronicleStep` in `engine/automation.ts`, run after Fame auto-buy. Like Royal Stewards it uses the owned level, so it keeps working in a challenge (no "off" tag there). The Ascension tab's Insight section has the toggle, mode and status line.
+- **My choices (reversible):** the name, the price (15, a little under Enduring Legacy's 20; not sim-checked against what a first Planeshift gives) and the Planeshift as the Chronicle's span. Existing saves start with no Insight Chronicle, so Chronicle mode buys cheapest first until the next Planeshift.
+- Tests: the order is recorded and handed on at a Planeshift; Chronicle mode waits for each purchase in turn; Cheapest buys one of the cheapest; nothing happens without the upgrade.
+
 ### Auto-tax (2026-10-09, decision #7 (b))
 
 - **What it does:** each automation pass (after auto-build), `taxPlan` in `engine/automation.ts` looks at what you're saving for: the first building in auto-build's queue, plus the next hero's hire while the Adventurers' Guild is open and a place is free. It sets the tax share at which the production and gold still needed arrive together, counting what's on hand. Production and gold are both linear in the share, so the balance is a closed form (Pn / (P1 + (P0 − P1)(1 − t)) = Gn / (G1 · t)), clamped between the floor and 100%. While nothing needs gold, it's the floor.

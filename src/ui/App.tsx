@@ -208,7 +208,9 @@ function ResourceBar() {
             <div class="resource siege">
                 <span class="resource-name">⚔ Army</span>
                 <span class="resource-amount">{fmt(siege)}/s</span>
-                <span class="resource-rate">{armyActivity(state)}</span>
+                <span class="resource-rate" title={armyActivity(state)}>
+                    {armyActivity(state)}
+                </span>
             </div>
         </div>
     );

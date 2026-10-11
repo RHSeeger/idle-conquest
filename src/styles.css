@@ -184,9 +184,15 @@ h3 {
 }
 
 /* --- resources --- */
+/*
+ * A grid of equal boxes: how many fit on a row depends only on the window's
+ * width, never on the text inside, so the bar's height doesn't jump as numbers
+ * and the army's target change. Text too long for its box is cut off with "…"
+ * (the full text is in its tooltip).
+ */
 .resources {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
     gap: 8px;
     margin-bottom: 10px;
 }
@@ -194,11 +200,34 @@ h3 {
 .resource {
     display: flex;
     flex-direction: column;
-    min-width: 120px;
+    min-width: 0;
     padding: 6px 10px;
     background: var(--panel);
     border: 1px solid var(--border);
     border-radius: 6px;
+}
+
+/* boxes with a breakdown tooltip are wrapped in a .tip, which is then the grid cell */
+.resources > .tip {
+    display: flex;
+    min-width: 0;
+}
+
+.resources > .tip > .resource {
+    flex: 1;
+}
+
+/* the army's line names its target, so it gets two boxes' width */
+.resource.siege {
+    grid-column: span 2;
+}
+
+.resource-name,
+.resource-amount,
+.resource-rate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .resource-name {
@@ -1402,6 +1431,16 @@ tr.current td {
 
 ul.boons {
     margin: 4px 0;
+    padding-left: 20px;
+}
+
+/* the contest's realm matchup rules (ContestSection) */
+.matchup-help {
+    margin: 8px 0;
+}
+
+ul.matchup-rules {
+    margin: 4px 0 0;
     padding-left: 20px;
 }
 

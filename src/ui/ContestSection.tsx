@@ -5,7 +5,7 @@
  */
 import { ARCANUS_WIZARDS } from "../content/frontier";
 import { REALM_DEFS, REALMS, Realm } from "../content/magic";
-import { realmMatchup, RIVAL_WIZARD_DEFS } from "../content/wizards";
+import { MATCHUP_OPPOSED, MATCHUP_SAME, MATCHUP_SORCERY, realmMatchup, RIVAL_WIZARD_DEFS } from "../content/wizards";
 import { getStats } from "../engine/collect";
 import { fmt, fmtTime } from "../engine/format";
 import {
@@ -73,11 +73,24 @@ export function RivalMatchups(props: { books: Partial<Record<Realm, number>>; ri
                     })}
                 </tbody>
             </table>
-            <p class="hint">
-                Your magic wears down wards according to your spellbooks: opposed realms (Life and Death, Chaos and Nature)
-                hit each other ×2, Sorcery dispels ×1.5 against any wards but Sorcery's, and a wizard's own realm only ×0.5.
-                Each realm counts by its share of your books.
-            </p>
+            <div class="hint matchup-help">
+                How well each of your realms wears down a rival's wards, counted by its share of your books:
+                <ul class="matchup-rules">
+                    <li>
+                        <b>×{MATCHUP_OPPOSED}</b> against the opposed realm: Life against Death wards and Death against
+                        Life, Chaos against Nature and Nature against Chaos
+                    </li>
+                    <li>
+                        <b>×{MATCHUP_SORCERY}</b> Sorcery against any wards that aren't Sorcery's (it's the art of
+                        dispelling)
+                    </li>
+                    <li>
+                        <b>×{MATCHUP_SAME}</b> against the rival's own realm: your Life books against a Life wizard's wards
+                        (they know its tricks)
+                    </li>
+                    <li>×1 otherwise. Hover a rival's number for how your books fare against them.</li>
+                </ul>
+            </div>
         </>
     );
 }

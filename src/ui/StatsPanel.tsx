@@ -17,13 +17,10 @@ const LAYER_NAMES: Record<LayerId, { name: string; tip: string }> = {
     run: { name: "Kingdom", tip: "From founding (or Refounding) a kingdom to the next reset of any kind" },
     ascension: { name: "Ascension", tip: "From an Ascension (or the start) to the next one, or a bigger reset" },
     planeshift: { name: "Planeshift", tip: "From a Planeshift (or the start) to the next one, or a Mastery" },
-    mastery: {
-        name: "Mastery / challenge",
-        tip: "From the start, a Mastery claimed, or a challenge begun or left, to the next of those",
-    },
+    mastery: { name: "Mastery", tip: "From the start, or a Mastery claimed, to the next Mastery claimed" },
 };
 
-/** How long the current Refound, Ascension, Planeshift and Mastery/challenge have lasted, and the last few of each */
+/** How long the current Refound, Ascension, Planeshift and Mastery have lasted, and the last few of each */
 function LayerTimesSection() {
     const state = game();
     const r = state.records;
@@ -41,7 +38,7 @@ function LayerTimesSection() {
             <p class="hint">
                 How long each lasted: the current one at the top, then the last {MAX_LAYER_TIMES}, newest first. A bigger
                 reset also ends the smaller ones (an Ascension starts a new kingdom too). Beginning or leaving a challenge is
-                an Ascension, and starts a new Mastery / challenge stretch.
+                an Ascension; challenges' own best times are on the Mastery tab.
             </p>
             <table class="layer-times">
                 <thead>

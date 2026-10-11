@@ -13,6 +13,10 @@ export const CHANGES: ChangeEntry[] = [
         date: "2026-10-11",
         items: [
             "New Essence upgrade, Astral Archivists: auto-buy for Insight upgrades, as Royal Stewards is for Fame. It can replay the order you bought them in during your last Planeshift, or buy the cheapest first (Ascension tab).",
+            "The boxes at the top of the page keep their size, so the page no longer jumps up and down as their text changes. Text too long for a box ends in \"…\"; hover the Army box for its full line.",
+            "Magic tab: the wizards' contest lists how each realm fares against a rival's wards (×2 opposed, ×1.5 Sorcery, ×0.5 against the rival's own realm), with examples.",
+            "Fixed: Exploration's Spellbooks section told wizards \"You are no wizard\". It now says what the books do for you (+25% Insight each) and what you need to Ascend again.",
+            "Statistics: the Mastery column of Time taken is now the time between Masteries; challenges no longer cut it short (older times that challenges cut short are cleared).",
         ],
     },
     {

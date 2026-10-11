@@ -1,9 +1,10 @@
 import { NODES } from "../content/exploration";
 import { REALM_DEFS, REALMS } from "../content/magic";
-import { ascensionProgress, ASCENSION_BOOKS, ASCENSION_REALMS } from "../engine/ascension";
+import { ascensionProgress, ASCENSION_BOOKS, ASCENSION_REALMS, INSIGHT_PER_BOOK } from "../engine/ascension";
 import { getStats } from "../engine/collect";
 import { exploreSpeed, nextSiteCost } from "../engine/exploration";
 import { fmt, fmtTime } from "../engine/format";
+import { isWizard } from "../engine/magic";
 import { Lairs } from "./ArmyPanel";
 import { ProgressBar } from "./components";
 import { game } from "./game";
@@ -59,11 +60,20 @@ export function ExplorationPanel() {
                         </div>
                     ))}
                 </div>
-                <p class="hint">
-                    You are no wizard, but your scholars puzzle over these books. With a <b>Wizards' Guild</b>{" "}
-                    {asc.wizardsGuild ? "✓" : "✗"} and {ASCENSION_BOOKS} books (you have {asc.books}) from {ASCENSION_REALMS}{" "}
-                    realms (you have {asc.realms}), you could learn to wield magic yourself.
-                </p>
+                {isWizard(state) ? (
+                    <p class="hint">
+                        Each book found in this kingdom adds +{INSIGHT_PER_BOOK * 100}% to the Insight you'd get by
+                        Ascending (×{fmt(1 + INSIGHT_PER_BOOK * asc.books)} now). To Ascend again you need a <b>Wizards' Guild</b>{" "}
+                        {asc.wizardsGuild ? "✓" : "✗"} and {ASCENSION_BOOKS} books (you have {asc.books}) from{" "}
+                        {ASCENSION_REALMS} realms (you have {asc.realms}).
+                    </p>
+                ) : (
+                    <p class="hint">
+                        You are no wizard, but your scholars puzzle over these books. With a <b>Wizards' Guild</b>{" "}
+                        {asc.wizardsGuild ? "✓" : "✗"} and {ASCENSION_BOOKS} books (you have {asc.books}) from{" "}
+                        {ASCENSION_REALMS} realms (you have {asc.realms}), you could learn to wield magic yourself.
+                    </p>
+                )}
             </section>
         </div>
     );

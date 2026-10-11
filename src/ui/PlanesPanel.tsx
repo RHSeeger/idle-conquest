@@ -59,7 +59,8 @@ import {
     planeshift,
     setArmyShare,
 } from "../engine/planes";
-import { profileText } from "./AscensionPanel";
+import { ProfileChips, profileText } from "./AscensionPanel";
+import { Checklist, Chip, ChoiceBox, HowItWorks, Notice, Part, SectionHead } from "./kit";
 import { ProgressBar, RegionList, Tip } from "./components";
 import { askConfirm } from "./Confirm";
 import { game } from "./game";
@@ -117,7 +118,6 @@ function PlaneshiftSection() {
     const breakdown = essenceBreakdown(state);
     const essence = breakdown.total;
     const profile = fitProfile(state.ascension.planBooks, state.ascension.planRetorts);
-    const check = (ok: boolean) => <span class={ok ? "good" : "bad"}>{ok ? "✓" : "✗"}</span>;
 
     const doShift = () => {
         askConfirm({
@@ -136,48 +136,71 @@ function PlaneshiftSection() {
 
     return (
         <section>
-            <h2>Planeshift</h2>
-            <p class="hint">
+            <SectionHead
+                title="Planeshift"
+                value={<span class="essence">+{fmtInt(essence)} ❖</span>}
+                note={gate.ready ? "Planar Essence on Planeshifting now" : "Planar Essence, once you can Planeshift"}
+            />
+            <HowItWorks id="planes.planeshift">
                 Towers of Wizardry stand where the walls between the worlds are thin. Through them lies <b>Myrror</b>.
-                Planeshifting starts everything below over, but from then on you fight on two planes at once: your
-                Arcanus kingdoms keep coming and going (Refound, Ascend) while part of its army pushes a Myrror campaign that
-                lasts until the next Planeshift.
-            </p>
-            <ul class="gate">
-                <li>{check(gate.towerUnsealed)} Banish a rival wizard of Arcanus, which unseals their Tower of Wizardry (Magic tab)</li>
-                <li>{check(gate.riteKnown)} Research the Rite of the Tower (Arcane; Plane Shift halves its cost)</li>
-            </ul>
-            <h3>Myrran beachhead</h3>
-            <p class="hint">Where your Myrror campaign begins. It decides the order you meet Myrror's races and wizards.</p>
-            <div class="race-choice">
-                {MYRROR_RING.map((r) => (
-                    <button key={r} class={"toggle" + (beachhead === r ? " on" : "")} onClick={() => setBeachhead(r)}>
-                        {RACES[r].plural}
-                    </button>
-                ))}
+                Planeshifting starts everything below over, but from then on you fight on two planes at once: your Arcanus
+                kingdoms keep coming and going (Refound, Ascend) while part of its army pushes a Myrror campaign that lasts
+                until the next Planeshift.
+            </HowItWorks>
+            <Checklist
+                title="To Planeshift"
+                items={[
+                    { ok: gate.towerUnsealed, text: "Banish a rival wizard of Arcanus, which unseals their Tower of Wizardry (Magic tab)" },
+                    { ok: gate.riteKnown, text: "Research the Rite of the Tower (Arcane; Plane Shift halves its cost)" },
+                ]}
+            />
+
+            <Part title="Next Planeshift">
+                <h4>Myrran beachhead</h4>
+                <p class="hint">Where your Myrror campaign begins: you meet its race first, then their neighbours.</p>
+                <div class="race-choice">
+                    {MYRROR_RING.map((r) => (
+                        <button key={r} class={"toggle" + (beachhead === r ? " on" : "")} onClick={() => setBeachhead(r)}>
+                            {RACES[r].plural}
+                        </button>
+                    ))}
+                </div>
+                <ChoiceBox tone="essence" label={`Beachhead: ${RACES[beachhead].plural}`}>
+                    <p>{RACES[beachhead].description}</p>
+                    <div class="chips">
+                        <Chip tone="essence">
+                            {RESOURCE_DEFS[RESOURCE_OF_RACE[beachhead]].icon} {RESOURCE_DEFS[RESOURCE_OF_RACE[beachhead]].name}
+                        </Chip>
+                        <Chip tone="essence" title="Each city of theirs you hold (stacking)">
+                            ×{1 + HOLDING_PER_CITY} {HOLDING_STAT[beachhead].text} per city held
+                        </Chip>
+                        <Chip tone="essence">Unit: {MYRRAN_UNIT[beachhead]}</Chip>
+                    </div>
+                </ChoiceBox>
+
+                <h4>Arcanus starting race</h4>
+                <div class="race-choice">
+                    {races.map((r) => (
+                        <button key={r} class={"toggle" + (startRace === r ? " on" : "")} onClick={() => setRace(r)}>
+                            {RACES[r].plural}
+                        </button>
+                    ))}
+                </div>
+
+                <h4>Wizard profile</h4>
+                <div class="chips">
+                    <ProfileChips books={profile.books} retorts={profile.retorts} familiar={null} />
+                </div>
+                <p class="hint">Your planned profile from the Ascension tab, fitted to a fresh Planeshift's picks.</p>
+            </Part>
+
+            <div class="action">
+                <EssenceSum b={breakdown} />
+                <button class="prestige-button planeshift" disabled={!canPlaneshift(state)} onClick={doShift}>
+                    Planeshift (+{fmtInt(essence)} Planar Essence)
+                </button>
+                {state.mastery.challenge && <Notice kind="challenge">Not during {state.mastery.challenge}'s challenge.</Notice>}
             </div>
-            <p class="hint">
-                {RACES[beachhead].description} Their cities on Myrror yield {RESOURCE_DEFS[RESOURCE_OF_RACE[beachhead]].name}, and
-                each one you hold gives ×{1 + HOLDING_PER_CITY} {HOLDING_STAT[beachhead].text} (stacking). Unit: {MYRRAN_UNIT[beachhead]}.
-                You meet them first, then their neighbours.
-            </p>
-            <h3>Arcanus starting race</h3>
-            <div class="race-choice">
-                {races.map((r) => (
-                    <button key={r} class={"toggle" + (startRace === r ? " on" : "")} onClick={() => setRace(r)}>
-                        {RACES[r].plural}
-                    </button>
-                ))}
-            </div>
-            <p>
-                Wizard profile: <b>{profileText(profile.books, profile.retorts)}</b>{" "}
-                <span class="hint">(your planned profile from the Ascension tab, fitted to a fresh Planeshift's picks)</span>
-            </p>
-            <EssenceSum b={breakdown} />
-            <button class="prestige-button planeshift" disabled={!canPlaneshift(state)} onClick={doShift}>
-                Planeshift (+{fmtInt(essence)} Planar Essence)
-            </button>
-            {state.mastery.challenge && <span class="hint"> Not during {state.mastery.challenge}'s challenge.</span>}
         </section>
     );
 }
@@ -201,22 +224,20 @@ function MyrrorSection() {
 
     return (
         <section>
-            <h2>
-                Myrror{" "}
-                {target && (
-                    <span class="count">
-                        · city {target.index + 1} of {myrrorEnd(plan)}
-                    </span>
-                )}
-            </h2>
+            <SectionHead
+                title="Myrror"
+                value={target ? `city ${target.index + 1} of ${myrrorEnd(plan)}` : "every city held"}
+                note={`${links} of ${MAX_LINKS} planar links`}
+            />
             <PendingBoons />
             {state.mastery.challenge && (
-                <p class="challenge-off">
+                <Notice kind="challenge">
                     <b>Paused during {state.mastery.challenge}'s challenge:</b> a challenge is one Ascension of Arcanus, so
                     the whole army fights there and Myrror's siege waits. Its works, boons and holdings do nothing until
                     it ends. The split you set comes back then.
-                </p>
+                </Notice>
             )}
+            <Part title="Your army on Myrror">
             <div class="slider-row">
                 <span>Arcanus {Math.round((1 - share) * 100)}%</span>
                 <input
@@ -231,7 +252,8 @@ function MyrrorSection() {
                 <span>Myrror {Math.round(share * 100)}%</span>
             </div>
             <p>
-                Planar links: <b>{links}</b> of {MAX_LINKS}. They carry at most <b>{fmt(capacity)}</b> power/s to this city
+                Your <b>{links}</b> planar link{links === 1 ? "" : "s"} carry at most <b>{fmt(capacity)}</b> power/s to this
+                city
                 {sent !== null && (
                     <>
                         ; you send <b class={capped ? "bad" : ""}>{fmt(sent)}</b>
@@ -240,14 +262,16 @@ function MyrrorSection() {
                 )}
                 .
             </p>
-            <p class="hint">
+            <HowItWorks id="planes.links">
                 Your power reaches Myrror only through the Towers of Wizardry. Each Tower you take on Myrror is another
                 link{towersLeft > 0 ? ` (${towersLeft} more to take)` : ""}
                 {myrranWorkLevel(state, "planarGate") > 0 && ", and so is each Planar Gate"}. Each link also lets{" "}
                 {SHARE_PER_LINK * 100}% of your army fight there{max > SHARE_PER_LINK * links && ", plus Planar Anchor"}: at most{" "}
                 {Math.round(max * 100)}% now. The rest besieges Arcanus and raids its lairs. Army power on Myrror boosts
                 (Essence, works, boons, holdings) act on what gets through.
-            </p>
+            </HowItWorks>
+            </Part>
+            <Part title="Siege">
             {target ? (
                 <div class="target orders">
                     <div class="target-head">
@@ -288,7 +312,8 @@ function MyrrorSection() {
                 </div>
             )}
             <RegionList plan={plan} current={regionIdx} />
-            <h3>Holdings</h3>
+            </Part>
+            <Part title="Holdings">
             {Object.keys(m.holdings).length === 0 ? (
                 <p class="hint">No Myrran cities yet. Each one you take is held until the next Planeshift.</p>
             ) : (
@@ -316,6 +341,7 @@ function MyrrorSection() {
                 </table>
             )}
             {m.wizardsDefeated.length > 0 && <p>Myrran wizards banished: {m.wizardsDefeated.join(", ")}</p>}
+            </Part>
         </section>
     );
 }
@@ -380,10 +406,10 @@ function MyrranRiches() {
     const off = upperLayersOff(state);
     return (
         <section>
-            <h2>
-                Myrran works <Resources /> <AutoToggle kind="works" label="Auto-buy" />
-            </h2>
-            <p class="hint">
+            <SectionHead title="Myrran works" value={<Resources />}>
+                <AutoToggle kind="works" label="Auto-buy" />
+            </SectionHead>
+            <HowItWorks id="planes.works">
                 Every Myrran city taken yields {CITY_YIELD} of its race's resource, region capitals and Fortresses{" "}
                 {CAPITAL_YIELD}: Adamantium from {RESOURCE_RACES("adamantium")}, Quork from {RESOURCE_RACES("quork")},
                 Crysx from {RESOURCE_RACES("crysx")}. Works last until the next Planeshift, as the campaign does. Each
@@ -391,12 +417,12 @@ function MyrranRiches() {
                 which to grow.
                 {isAutomationUnlocked(state, "works") &&
                     " Auto-buy buys the works ticked auto, whatever is affordable, cheapest first: untick the ones you'd rather not grow."}
-            </p>
+            </HowItWorks>
             {off && (
-                <p class="challenge-off">
+                <Notice kind="challenge">
                     <b>Off during {state.mastery.challenge}'s challenge:</b> Myrran works and boons do nothing until it
                     ends. You can still buy works.
-                </p>
+                </Notice>
             )}
             <div class={"cards" + (off ? " off" : "")}>
                 {MYRRAN_WORK_ORDER.map((id) => {
@@ -441,11 +467,11 @@ function MyrranRiches() {
                     );
                 })}
             </div>
-            <h3>Boons</h3>
-            <p class="hint">
+            <Part title="Boons" note={`${m.boons.length} chosen this Planeshift`}>
+            <HowItWorks id="planes.boons">
                 Each region capital you take offers two boons of its race: one for Arcanus, one for Myrror. A banished
                 Myrran wizard offers their vaults or their spellbooks.
-            </p>
+            </HowItWorks>
             {m.boons.length > 0 && (
                 <ul class={"boons" + (off ? " off" : "")}>
                     {Object.entries(counts).map(([id, n]) => {
@@ -471,6 +497,7 @@ function MyrranRiches() {
                         : "Every capital and Fortress asks you to choose."}
                 </span>
             </div>
+            </Part>
         </section>
     );
 }
@@ -490,21 +517,20 @@ function EssenceSection() {
     const off = upperLayersOff(state);
     return (
         <section>
-            <h2>
-                Planar Essence <span class="essence">{fmtInt(pl.essence)}</span>{" "}
-                <span class="count">
-                    · {pl.planeshifts} Planeshift{pl.planeshifts === 1 ? "" : "s"} · {fmtInt(pl.essenceTotal)} earned in total
-                </span>
-            </h2>
+            <SectionHead
+                title="Planar Essence"
+                value={<span class="essence">{fmtInt(pl.essence)} ❖</span>}
+                note={`${pl.planeshifts} Planeshift${pl.planeshifts === 1 ? "" : "s"} · ${fmtInt(pl.essenceTotal)} earned in total`}
+            />
             <p class="hint">
                 Essence on Planeshift = (Myrran cities taken by force ÷ 4)^1.3 × (1 + 0.25 per Myrran race held) × (1 +
                 Myrran wizards banished).
             </p>
             {off && (
-                <p class="challenge-off">
+                <Notice kind="challenge">
                     <b>Off during {state.mastery.challenge}'s challenge:</b> Essence upgrades do nothing until it ends
                     (Astral Archivists' auto-buy still works). You can still buy them.
-                </p>
+                </Notice>
             )}
             <div class={"cards" + (off ? " off" : "")}>
                 {ESSENCE_UPGRADE_ORDER.map((id) => {
@@ -531,17 +557,18 @@ function EssenceSection() {
                     );
                 })}
             </div>
-            <h3>Planeshift milestones</h3>
-            <ul class="milestones">
-                {PLANESHIFT_MILESTONES.map((m) => (
-                    <li key={m.id} class={pl.planeshifts >= m.planeshifts ? "done" : ""}>
-                        <b>
-                            {m.planeshifts} Planeshift{m.planeshifts > 1 ? "s" : ""}: {m.name}
-                        </b>{" "}
-                        — {m.text}
-                    </li>
-                ))}
-            </ul>
+            <Part title="Planeshift milestones">
+                <ul class="milestones">
+                    {PLANESHIFT_MILESTONES.map((m) => (
+                        <li key={m.id} class={pl.planeshifts >= m.planeshifts ? "done" : ""}>
+                            <b>
+                                {m.planeshifts} Planeshift{m.planeshifts > 1 ? "s" : ""}: {m.name}
+                            </b>{" "}
+                            — {m.text}
+                        </li>
+                    ))}
+                </ul>
+            </Part>
         </section>
     );
 }

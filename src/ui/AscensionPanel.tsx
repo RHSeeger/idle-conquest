@@ -124,7 +124,7 @@ function Gate() {
 }
 
 /** A profile as chips: realm books, retorts, and the familiar if any */
-function ProfileChips(props: { books: Partial<Record<Realm, number>>; retorts: readonly string[]; familiar: Realm | null; familiarText?: string }) {
+export function ProfileChips(props: { books: Partial<Record<Realm, number>>; retorts: readonly string[]; familiar: Realm | null; familiarText?: string }) {
     return (
         <>
             <BookChips books={props.books} />

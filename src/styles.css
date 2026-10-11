@@ -1533,3 +1533,169 @@ ul.matchup-rules {
     flex-wrap: wrap;
     gap: 8px;
 }
+
+/* --- kit: the shared look (ui/kit.tsx, decision #10) --- */
+
+/* a layer's colour for the pieces below */
+.tone-fame { --tone: var(--fame); }
+.tone-insight { --tone: var(--insight); }
+.tone-essence { --tone: var(--essence); }
+.tone-mastery { --tone: var(--mastery); }
+.tone-accent { --tone: var(--accent); }
+
+/* section header line: title, key number, note, switches on the right */
+h2.section-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 10px;
+    padding-bottom: 6px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+}
+.section-value {
+    font-family: var(--mono);
+    font-size: 15px;
+}
+.section-controls {
+    margin-left: auto;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    font-size: 13px;
+}
+
+/* a part of a section, with space and a line above */
+.part {
+    margin-top: 16px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+}
+.part:first-child {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+}
+h3.part-head {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--muted);
+    margin: 0 0 8px;
+}
+h3.part-head .count {
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+/* a heading inside a part (Spellbooks, Retorts, Familiar...) */
+.part h4 {
+    font-size: 13px;
+    margin: 12px 0 6px;
+}
+
+/* what you've chosen and what it gives */
+.choice-box {
+    border: 1px solid var(--tone);
+    border-left-width: 4px;
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--tone) 8%, var(--panel));
+    padding: 8px 12px;
+    margin: 8px 0;
+}
+.choice-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--tone);
+    margin-bottom: 4px;
+}
+.choice-box p {
+    margin: 4px 0 0;
+}
+
+/* compact facts */
+.chip {
+    display: inline-block;
+    margin: 2px 4px 2px 0;
+    padding: 1px 8px;
+    border-radius: 10px;
+    border: 1px solid var(--realm, var(--tone, var(--border)));
+    background: color-mix(in srgb, var(--realm, var(--tone, var(--border))) 14%, var(--panel));
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.chips {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0 4px;
+}
+.chips-label {
+    font-size: 12px;
+    color: var(--muted);
+    margin-right: 4px;
+}
+
+/* a labelled list of requirements */
+.checklist {
+    margin: 6px 0 10px;
+}
+.checklist-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+}
+.checklist ul.gate {
+    margin: 2px 0 0;
+}
+
+/* "How this works": a section's long explanation, folded away once read */
+.how {
+    margin: 0 0 8px;
+}
+.how-toggle {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 12px;
+    color: var(--accent);
+    cursor: pointer;
+}
+.how-toggle:hover {
+    text-decoration: underline;
+}
+.how-body {
+    margin-top: 4px;
+    padding: 6px 10px;
+    border-left: 2px solid var(--accent-soft);
+    color: var(--muted);
+    font-size: 13px;
+}
+.how-body p {
+    margin: 0 0 6px;
+}
+.how-body p:last-child {
+    margin-bottom: 0;
+}
+
+/* one style for notices */
+.notice {
+    --tone: var(--accent);
+    margin: 8px 0;
+    padding: 6px 10px;
+    border-left: 3px solid var(--tone);
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--tone) 10%, transparent);
+    font-size: 13px;
+}
+.notice-good { --tone: var(--good); }
+.notice-warn { --tone: var(--bad); }
+.notice-challenge { --tone: var(--mastery); }
+
+/* the action at the end of a section: the sum, the button, what blocks it */
+.action {
+    margin-top: 16px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+}

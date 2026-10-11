@@ -447,6 +447,8 @@ export interface GameState {
         playtime: number;
         /** New-player introductions already shown: "welcome" and tab ids (content/intro.ts) */
         introsSeen: string[];
+        /** "How this works" explanations the player has folded away (ui/kit.tsx), by id */
+        helpClosed: string[];
     };
     log: LogEntry[];
 }
@@ -608,7 +610,7 @@ export function newGame(now = Date.now()): GameState {
             taxFloor: 0.1,
         },
         settings: { buyAmount: 1, autosaveSeconds: 15, devSpeed: 1, showDevTools: false },
-        meta: { created: now, lastTick: now, playtime: 0, introsSeen: [] },
+        meta: { created: now, lastTick: now, playtime: 0, introsSeen: [], helpClosed: [] },
         log: [],
     };
 }

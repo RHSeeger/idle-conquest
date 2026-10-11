@@ -81,8 +81,14 @@ export function HowToPlay() {
                     </div>
                 ))}
             </dl>
-            <button class="toggle" onClick={() => (state.meta.introsSeen = [WELCOME_ID])}>
-                Show the tab introductions again
+            <button
+                class="toggle"
+                onClick={() => {
+                    state.meta.introsSeen = [WELCOME_ID];
+                    state.meta.helpClosed = [];
+                }}
+            >
+                Show the tab introductions and "How this works" again
             </button>
         </section>
     );

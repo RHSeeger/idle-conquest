@@ -410,13 +410,30 @@ function MyrranRiches() {
                 <AutoToggle kind="works" label="Auto-buy" />
             </SectionHead>
             <HowItWorks id="planes.works">
-                Every Myrran city taken yields {CITY_YIELD} of its race's resource, region capitals and Fortresses{" "}
-                {CAPITAL_YIELD}: Adamantium from {RESOURCE_RACES("adamantium")}, Quork from {RESOURCE_RACES("quork")},
-                Crysx from {RESOURCE_RACES("crysx")}. Works last until the next Planeshift, as the campaign does. Each
-                resource has two works, and every level of one makes the other ×{SHARED_WORK_GROWTH} dearer: choose
-                which to grow.
-                {isAutomationUnlocked(state, "works") &&
-                    " Auto-buy buys the works ticked auto, whatever is affordable, cheapest first: untick the ones you'd rather not grow."}
+                <ul>
+                    <li>
+                        Each Myrran city you take yields {CITY_YIELD} of its race's resource; region capitals and Fortresses
+                        yield {CAPITAL_YIELD}.
+                        <ul>
+                            {MYRRAN_RESOURCES.map((r) => (
+                                <li key={r}>
+                                    {RESOURCE_DEFS[r].icon} {RESOURCE_DEFS[r].name} comes from {RESOURCE_RACES(r)}
+                                </li>
+                            ))}
+                        </ul>
+                    </li>
+                    <li>Planeshifting clears your works, along with the rest of the Myrror campaign.</li>
+                    <li>
+                        Each resource buys two works. A level of either makes both ×{SHARED_WORK_GROWTH} dearer (Planar
+                        Gate's own price rises faster), so choose which one to grow.
+                    </li>
+                    {isAutomationUnlocked(state, "works") && (
+                        <li>
+                            Auto-buy buys the works ticked "auto", cheapest first, whenever it can afford one. Untick the
+                            ones you'd rather not grow.
+                        </li>
+                    )}
+                </ul>
             </HowItWorks>
             {off && (
                 <Notice kind="challenge">

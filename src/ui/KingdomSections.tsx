@@ -11,6 +11,7 @@ import { BUILDINGS } from "../content/buildings";
 import { AutoToggle } from "./AutoToggle";
 import { BreakdownView, Price, Tip } from "./components";
 import { game } from "./game";
+import { SectionHead } from "./kit";
 
 /** Master of Magic city size names (population in thousands) */
 export function sizeTier(pop: number): string {
@@ -87,7 +88,7 @@ export function KingdomSections() {
     return (
         <>
             <section>
-                <h2>Citizens</h2>
+                <SectionHead title="Citizens" note={`Work ${fmtPercent(1 - run.taxShare)} · Tax ${fmtPercent(run.taxShare)}`} />
                 <p class="hint">
                     Just enough citizens farm to feed each city. The rest either <b>work</b> (production) or{" "}
                     <b>pay taxes</b> (gold).
@@ -113,26 +114,24 @@ export function KingdomSections() {
 
             {isSettlersUnlocked(state) && (
                 <section>
-                    <h2>
-                        Settlers <AutoToggle kind="settlers" label="Auto-settle" />
-                    </h2>
+                    <SectionHead title="Settlers" note={`${run.settlersFounded} founded in this kingdom`}>
+                        <AutoToggle kind="settlers" label="Auto-settle" />
+                    </SectionHead>
                     <div class="row">
                         <button disabled={!canFoundSettlers(state)} onClick={() => foundSettlers(state)}>
                             Found a new {RACES[run.startingRace].adjective} town
                         </button>
                         <Price amount={settlersPrice(state, stats)} currency="food" have={run.food} />
-                        <span class="hint">Settlers founded: {run.settlersFounded}</span>
                     </div>
                 </section>
             )}
 
             <section>
-                <h2>
-                    Cities <span class="count">({run.cities.length})</span>{" "}
+                <SectionHead title="Cities" value={run.cities.length} note={`${fmt(econ.population * 1000)} citizens`}>
                     <button class="toggle" onClick={() => setShowAll(!showAll)}>
                         {showAll ? "Group by race" : "Show every city"}
                     </button>
-                </h2>
+                </SectionHead>
                 {!showAll && (
                     <table class="cities">
                         <thead>

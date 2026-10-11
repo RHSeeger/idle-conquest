@@ -7,6 +7,7 @@ import { GameState } from "../engine/state";
 import { Price, ProgressBar } from "./components";
 import { askConfirm } from "./Confirm";
 import { game } from "./game";
+import { Part, SectionHead } from "./kit";
 
 /** One reset's effect on the current heroes, e.g. "Hall of Heroes keeps your 2 most experienced heroes when you Refound: …" */
 function carrySentence(state: GameState, event: string, upgrade: string, where: string, slots: number, kept: Hero[]): string {
@@ -93,13 +94,13 @@ export function HeroesSection() {
     );
     return (
         <section>
-            <h2>
-                Heroes{" "}
-                <span class="count">
-                    {state.run.heroes.length}/{MAX_HEROES}
-                </span>
-            </h2>
+            <SectionHead
+                title="Heroes"
+                value={`${state.run.heroes.length} of ${MAX_HEROES}`}
+                note={isTavernOpen(state) && !full ? "a place is free" : undefined}
+            />
             {state.run.heroes.length > 0 && (
+                <Part title="Your heroes">
                 <div class="cards">
                     {state.run.heroes.map((h) => {
                         const def = HEROES[h.id];
@@ -147,13 +148,16 @@ export function HeroesSection() {
                         );
                     })}
                 </div>
+                <p class="hint">{heroCarryText(state)}</p>
+                </Part>
             )}
-            {state.run.heroes.length > 0 && <p class="hint">{heroCarryText(state)}</p>}
             {isTavernOpen(state) && !full && (
-                <>
-                    <p class="hint">
-                        At the Adventurers' Guild: hire a hero for <Price amount={cost} currency="gold" have={state.run.gold} />.
-                        Heroes gain experience from every city you take by force (+1) and every lair you clear (+10).
+                <Part title="Adventurers' Guild">
+                    <p>
+                        Hire a hero for <Price amount={cost} currency="gold" have={state.run.gold} />{" "}
+                        <span class="hint">
+                            Heroes gain experience from every city you take by force (+1) and every lair you clear (+10).
+                        </span>
                     </p>
                     <div class="cards">
                         {tavernOffers(state).map((id) => {
@@ -175,7 +179,7 @@ export function HeroesSection() {
                             );
                         })}
                     </div>
-                </>
+                </Part>
             )}
         </section>
     );

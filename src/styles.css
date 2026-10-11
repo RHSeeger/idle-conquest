@@ -327,6 +327,16 @@ details.section > summary h2 {
     display: inline;
     margin: 0;
 }
+/* a header line as the toggle: its rule only while open */
+details.section > summary h2.section-head {
+    display: flex;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+details.section[open] > summary h2.section-head {
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+}
 details.section > summary h2::before {
     content: "▸ ";
     color: var(--muted);
@@ -1557,6 +1567,9 @@ h2.section-head {
     font-family: var(--mono);
     font-size: 15px;
 }
+.army-power {
+    color: var(--siege);
+}
 .section-controls {
     margin-left: auto;
     display: flex;
@@ -1678,6 +1691,13 @@ h3.part-head .count {
 }
 .how-body p:last-child {
     margin-bottom: 0;
+}
+.how-body ul {
+    margin: 0;
+    padding-left: 18px;
+}
+.how-body li {
+    margin: 2px 0;
 }
 
 /* one style for notices */

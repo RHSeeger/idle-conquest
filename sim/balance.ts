@@ -190,7 +190,8 @@ if (runs <= 1) {
             `${ms.masteries}M ${ms.completed.length}c` +
             (ms.challenge ? ` @${ms.challenge}` : ms.cast ? " CAST" : ms.channelling ? ` ${Math.round(ms.progress.div(masteryCost(state)).toNumber() * 100)}%` : "");
         const rates = `${fmt(manaRate(state, stats)).padEnd(8)} ${fmt(realmEconomy(state, stats).knowledge).padEnd(8)}`;
-        totalTime += r.time;
+        // the game's own clock: a run's time restarts when a challenge completes inside it (an Ascension)
+        totalTime = state.meta.playtime;
         const myrror = state.planes.myrror ? `${state.planes.myrror.index}/${state.planes.myrror.links}L` : "-";
         const reg2 = r.regionTimes[2] !== undefined ? fmtTime(r.regionTimes[2]) : "-";
         const wall = r.regionTimes[5] !== undefined ? fmtTime(r.regionTimes[5]) : "-";

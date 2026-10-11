@@ -71,8 +71,8 @@ export function botAct(state: GameState): void {
 /** The bot Ascends rather than wait longer than this for the next rival's wards to break */
 const BOT_CONTEST_PATIENCE = 3600;
 
-/** A challenge the bot gives up on after this much play (it tries the next one later) */
-const BOT_CHALLENGE_SECONDS = 2 * 3600;
+/** A challenge the bot gives up on after this much play (it tries the next one later); mutable for the sims */
+export const BOT_TUNING = { challengeSeconds: 2 * 3600 };
 
 /** The next Challenge Wizard the bot hasn't beaten (in order, skipping the one just abandoned) */
 function nextChallenge(state: GameState): string | null {
@@ -146,7 +146,7 @@ export function botShouldRefound(state: GameState, tracker: BotRunTracker): bool
     // Layer 4: claim a cast Mastery, or give up a challenge that's taking too long
     const m = state.mastery;
     if (m.cast) return true;
-    if (m.challenge && state.meta.playtime - m.challengeStartedAt > BOT_CHALLENGE_SECONDS) return true;
+    if (m.challenge && state.meta.playtime - m.challengeStartedAt > BOT_TUNING.challengeSeconds) return true;
     if (!canRefound(state) || fameOnRefound(state).lte(0)) {
         return false;
     }
@@ -215,7 +215,7 @@ export function botEndRun(state: GameState): "mastery" | "challenge" | "abandon"
         spendFame(state);
         return "mastery";
     }
-    if (m.challenge && state.meta.playtime - m.challengeStartedAt > BOT_CHALLENGE_SECONDS) {
+    if (m.challenge && state.meta.playtime - m.challengeStartedAt > BOT_TUNING.challengeSeconds) {
         botLastAbandoned.set(state, m.challenge);
         abandonChallenge(state);
         spendFame(state);

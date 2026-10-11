@@ -50,6 +50,7 @@ import { heroAscendText } from "./HeroesSection";
 import { fameUpgradesValue } from "../engine/prestige";
 import { essenceUpgradeLevel } from "../engine/planes";
 import { upperLayersOff } from "../engine/upgradeLevels";
+import { CHALLENGES, challengeGoalText } from "../content/challenges";
 import { ARCANUS_WIZARDS } from "../content/frontier";
 import { banishedCount, nextRivals } from "../engine/wards";
 import { RivalMatchups } from "./ContestSection";
@@ -481,7 +482,7 @@ export function AscensionPanel() {
                         Not during {state.mastery.challenge}'s challenge.{" "}
                         {state.mastery.challengeDone
                             ? "It's won: complete it on the Mastery tab, which Ascends you back to your own profile."
-                            : "Completing it (Mastery tab, once all four rival wizards of Arcanus are banished) Ascends you instead, or you can abandon it there."}
+                            : `Completing it (Mastery tab, once you ${challengeGoalText(CHALLENGES[state.mastery.challenge])}) Ascends you instead, or you can abandon it there.`}
                     </span>
                 )}
                 {planError && <span class="bad"> Can't Ascend with this profile: {planError}.</span>}

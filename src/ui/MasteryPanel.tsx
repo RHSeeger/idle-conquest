@@ -4,7 +4,7 @@
  * screens, shown over any tab.
  */
 import { ARCANUS_WIZARDS } from "../content/frontier";
-import { CHALLENGE_ORDER, CHALLENGES, MASTERY_BONUS } from "../content/challenges";
+import { CHALLENGE_GOAL_RIVALS, CHALLENGE_ORDER, CHALLENGES, challengeGoalRivals, challengeGoalText, MASTERY_BONUS } from "../content/challenges";
 import { REALM_DEFS } from "../content/magic";
 import { MYRROR_WIZARDS } from "../content/myrror";
 import { RETORTS } from "../content/retorts";
@@ -207,7 +207,7 @@ function ChallengesSection() {
                     <b>Rule:</b> {c.rule}.
                 </p>,
                 <p>
-                    <b>Goal:</b> banish all {ARCANUS_WIZARDS} rival wizards of Arcanus by breaking their wards (Magic tab). Refounds are allowed and
+                    <b>Goal:</b> {challengeGoalText(c)} by breaking their wards (Magic tab). Refounds are allowed and
                     keep the progress; Ascending and Planeshifting aren't. Myrror pauses meanwhile.
                 </p>,
                 <p>
@@ -224,16 +224,15 @@ function ChallengesSection() {
                 Challenge Wizards <span class="count">· {m.completed.length} of {CHALLENGE_ORDER.length} beaten</span>
             </h2>
             <p class="hint">
-                One Ascension as a rival wizard, with their books, retort and rule. Goal: banish all {ARCANUS_WIZARDS} rival
-                wizards of Arcanus by breaking their wards. Refounds are allowed and keep the progress; Ascending and
-                Planeshifting aren't, and Myrror pauses. It's played from a fixed start: your Insight and Essence upgrades and
-                Myrror's works, boons and holdings are off until it ends. Rewards last forever, and count in later challenges.
+                One Ascension as a rival wizard, with their books, retort and rule. Goal: banish {CHALLENGE_GOAL_RIVALS} of
+                the {ARCANUS_WIZARDS} rival wizards of Arcanus by breaking their wards. Refounds are allowed and keep the
+                progress; Ascending and Planeshifting aren't, and Myrror pauses. Rewards last forever.
             </p>
             <p class="hint">
-                <b>Power up first.</b> A challenge isn't a fresh start like claiming a Mastery: you take your Insight, Planar
-                Essence and their upgrades into it, and they're what carry you through. Right after a Mastery you have
-                little of them, so challenges are slow and hard. Ascend and Planeshift a few times first, and come back
-                stronger.
+                <b>A fixed start.</b> Your Insight and Essence upgrades and Myrror's works, boons and holdings are off in a
+                challenge, so growing stronger elsewhere doesn't make it easier. What does: more Masteries, and the rewards
+                of the challenges you've won, which count in the later ones. So the order you take them in is up to you:
+                Kali's weaker rivals or Tlaloc's mana help with every challenge after them.
             </p>
             {m.challenge && <CurrentChallenge />}
             <div class="cards challenges">
@@ -301,7 +300,7 @@ function CurrentChallenge() {
                 {m.challengeWonIn !== null ? `won in ${fmtTime(m.challengeWonIn)}` : `${fmtTime(state.meta.playtime - m.challengeStartedAt)} so far`}
                 {m.challengeBest[c.wizard] !== undefined && ` (best ${fmtTime(m.challengeBest[c.wizard])})`} · Rivals banished:{" "}
                 <b>
-                    {banishedCount(state)} of {ARCANUS_WIZARDS}
+                    {banishedCount(state)} of {challengeGoalRivals(c)}
                 </b>
             </p>
             <p class="hint">Rule: {c.rule}.</p>
@@ -314,7 +313,7 @@ function CurrentChallenge() {
                         ? `Won! Completing it gives the reward (${c.reward}) and Ascends you back to your own profile` +
                           (insight.gt(0) ? ` (+${fmtInt(insight)} Insight)` : "") +
                           "."
-                        : `Once all ${ARCANUS_WIZARDS} rival wizards of Arcanus are banished (their wards broken, Magic tab). You can Refound as often as you like on the way (the contest's progress is kept), but you can't Ascend until it's complete. Completing it gives the reward and Ascends you back to your own profile (auto-Ascend does it for you).`}
+                        : `Once you ${challengeGoalText(c)} (their wards broken, Magic tab). You can Refound as often as you like on the way (the contest's progress is kept), but you can't Ascend until it's complete. Completing it gives the reward and Ascends you back to your own profile (auto-Ascend does it for you).`}
                 </span>
             </p>
             <button class="toggle" onClick={doAbandon}>
@@ -346,7 +345,7 @@ export function ChallengeBanner(props: { onOpen: () => void }) {
                 <span class="good">Won: complete it on the Mastery tab.</span>
             ) : (
                 <>
-                    Rivals banished: {banishedCount(state)} of {ARCANUS_WIZARDS}.
+                    Rivals banished: {banishedCount(state)} of the {challengeGoalRivals(c)} needed.
                 </>
             )}{" "}
             <button class="link" onClick={props.onOpen}>

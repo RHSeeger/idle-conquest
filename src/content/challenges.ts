@@ -2,17 +2,18 @@
  * Layer 4: the Spell of Mastery and the Challenge Wizards (DESIGN.md §8).
  *
  * Each of the 14 rival wizards is a challenge: one Ascension as that wizard,
- * with their spellbooks, a fixed retort and their rule. The goal is to banish
- * all four of the Ascension's rival wizards of Arcanus (the wizards' contest,
- * engine/wards.ts). Completing it grants a permanent reward that echoes the
- * rule's upside.
+ * with their spellbooks, a fixed retort and their rule, from a fixed baseline
+ * (engine/upgradeLevels.ts). The goal is to banish some of the Ascension's
+ * rival wizards of Arcanus (the wizards' contest, engine/wards.ts; see
+ * CHALLENGE_GOAL_RIVALS). Completing it grants a permanent reward that echoes
+ * the rule's upside.
  *
  * Rules are effects (applied while the challenge runs) plus a few bans that
  * the engine checks directly. First drafts: balance comes from play.
  */
 import type { EffectDef } from "../engine/effects";
 import type { GameState } from "../engine/state";
-import { RIVAL_WIZARDS } from "./frontier";
+import { ARCANUS_WIZARDS, RIVAL_WIZARDS } from "./frontier";
 import { Realm } from "./magic";
 import { RIVAL_WIZARD_DEFS } from "./wizards";
 
@@ -59,6 +60,24 @@ export interface ChallengeDef {
     bans?: ChallengeBan[];
     /** Spells known from the start of the challenge (so a ban doesn't leave nothing to do) */
     startSpells?: string[];
+    /** Rivals of Arcanus to banish to win, if not CHALLENGE_GOAL_RIVALS */
+    goalRivals?: number;
+}
+
+/**
+ * The goal: banish this many of the Ascension's four rivals of Arcanus
+ * (decision #3, 2026-10-10). From the fixed baseline at 1 Mastery the sim's bot
+ * banishes its 2nd in 34m–1h44m (Rjak 3h19m), and no 3rd within 6h.
+ */
+export const CHALLENGE_GOAL_RIVALS = 2;
+
+export function challengeGoalRivals(def: ChallengeDef): number {
+    return def.goalRivals ?? CHALLENGE_GOAL_RIVALS;
+}
+
+/** The goal in words, e.g. "banish 2 of the 4 rival wizards of Arcanus" */
+export function challengeGoalText(def: ChallengeDef): string {
+    return `banish ${challengeGoalRivals(def)} of the ${ARCANUS_WIZARDS} rival wizards of Arcanus`;
 }
 
 const mult = (stat: string, value: number): EffectDef => ({ stat, op: "mult", value });

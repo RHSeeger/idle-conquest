@@ -7,6 +7,7 @@
 import { ComponentChildren } from "preact";
 import { useStoredOpen } from "./components";
 import { ARCANUS_WIZARDS } from "../content/frontier";
+import { CHALLENGES, challengeGoalRivals } from "../content/challenges";
 import { MAX_HEROES } from "../content/heroes";
 import { MYRROR_WIZARDS } from "../content/myrror";
 import { Stats } from "../engine/effects";
@@ -268,7 +269,7 @@ function masteryLine(state: GameState, stats: Stats): string {
     if (m.challenge) {
         return m.challengeDone
             ? `${m.challenge}'s challenge is won: complete it`
-            : `${m.challenge}'s challenge · rivals banished ${gate.arcanus}/${ARCANUS_WIZARDS}`;
+            : `${m.challenge}'s challenge · rivals banished ${gate.arcanus}/${challengeGoalRivals(CHALLENGES[m.challenge])}`;
     }
     if (m.cast) return "the Spell is cast: claim your Mastery";
     const pct = Math.floor(m.progress.div(masteryCost(state)).toNumber() * 100);

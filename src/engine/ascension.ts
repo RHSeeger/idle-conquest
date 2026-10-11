@@ -40,7 +40,7 @@ import {
     keepsFameUpgrades,
 } from "./prestige";
 import { bump, GameState, log, newRun, recordRun, RunRecord } from "./state";
-import { insightLevel } from "./upgradeLevels";
+import { insightLevel, upperLayersOff } from "./upgradeLevels";
 
 export const ASCENSION_BOOKS = 6;
 export const ASCENSION_REALMS = 3;
@@ -148,6 +148,8 @@ export function hasAscensionMilestone(state: GameState, id: AscensionMilestoneId
 
 /** Echo of Glory: the Fame an Ascension starts with, a quarter of the Fame earned in the one before it */
 export function fameEchoAmount(state: GameState): Decimal {
+    // not into a challenge: it would carry your own Ascension's Fame past the fixed baseline
+    if (upperLayersOff(state)) return D(0);
     return hasAscensionMilestone(state, "fameEcho") ? state.ascension.lastFameEarned.times(0.25).floor() : D(0);
 }
 

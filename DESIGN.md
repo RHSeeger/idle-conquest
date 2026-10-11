@@ -323,7 +323,7 @@ Then **research the Spell of Mastery** (Arcane, 1e18 Knowledge). It only becomes
   - a fixed retort that suits them (unlocked or not);
   - **their rule**, for the whole challenge.
   - Your own planned profile is kept for afterwards.
-- **Goal:** take all 4 rival Fortresses of Arcanus in one run. Refounds within the challenge are allowed; Ascending and Planeshifting aren't (and auto-Ascend waits).
+- **Goal:** banish 2 of the Ascension's 4 rival wizards of Arcanus (`CHALLENGE_GOAL_RIVALS`; a challenge may set its own `goalRivals`). It was "all 4 Fortresses in one run", then "all 4 banished" (§15.7); with the fixed baseline the sim's bot banishes its 2nd rival in 34m–1h44m (Rjak 3h19m, the hardest) and no 3rd within 6h, so 2 fits the 30–90 minute target. Goals themed on a rule (e.g. Merlin: heroes) can come later, one at a time. Refounds within the challenge are allowed; Ascending and Planeshifting aren't (and auto-Ascend waits).
 - **A fixed baseline (decision #3, 2026-10-10).** After Mastery, challenges are for fun: "you did it; now do it another way". Play-testing showed that while a challenge kept your Insight and Essence upgrades, it was impossible right after a Mastery and trivial (seconds, no input) a few Ascensions and Planeshifts later. So in a challenge only these count: **Masteries, milestones** (automation, Planewalker...), **the rewards of challenges won** (so the order you take them in is a choice), the rule, and what you build within the challenge. Off until it ends: **Insight and Essence upgrades** (all their effects, including Extra Picks, Retort Mastery, Familiar, Spell Memory, Eternal Companions, Enduring Legacy, Planar Anchor), and **Myrror's works, boons and holdings**. Royal Stewards stays on: it's an automation, like the milestones. Nothing is reset: you keep everything you own, it can still be bought, and it works again once the challenge ends. Spell Memory keeps its spells through the challenge and doesn't remember the challenge's. Code: `engine/upgradeLevels.ts` (`insightLevel`, `essenceLevel`, `upperLayersOff`); `CHALLENGE_TUNING.upgradeLevels` (0) is the sim's knob (`cupgrades=`).
 - **Myrror pauses.** Entering a challenge is an Ascension, and Ascensions don't touch Layer 3, so a Myrror campaign you have stays. During the challenge no army is sent there, so it doesn't advance, and its holdings, works and boons are off. (Before your next Planeshift after a Mastery, there's simply no Myrror to pause.)
 - **Leaving:** completing the challenge, or abandoning it, is an Ascension back to your own planned profile (with Insight if the Ascension gate is met). Reaching the goal doesn't end it by itself: the challenge is then won (it stays won through Refounds), and the Mastery tab's "Complete the challenge" button (shown disabled until then, with why) ends it, so you can keep playing the run first. Auto-Ascend completes a won challenge. A completed challenge shows a short message.
@@ -353,7 +353,8 @@ Changes from the draft: Rjak's rule was first written around troop upkeep, which
 
 ### Pacing
 
-- First Spell of Mastery: about an hour of channelling once the gate is met. The bot meets the gate at about 9h (it holds all of Myrror and clears Arcanus in seconds by then). The original 12–15h target was dropped after play-testing: padding it with a long channel felt too slow.
+- First Spell of Mastery: about an hour of channelling once the gate is met. On the game's own clock (2026-10-10: the sim's earlier totals left out time when automation reset a run mid-run) the bot casts it at about 1d 2h, not 13h as reported before; its first Ascension (2h53m) and first Planeshift (4h33m) were right, later ones were undercounted (5th Planeshift 17h47m, not 8h18m). The original 12–15h target was dropped after play-testing: padding it with a long channel felt too slow.
+- Challenges (fixed baseline, goal 2 rivals): the bot starts its first at about 1d 13h and has all 14 by about 2d 4h, some 15 hours, with a normal Ascension between each.
 - All 14 challenges: target another 10–20 hours.
 - See PROGRESS.md for the sim's current numbers.
 
@@ -721,5 +722,7 @@ Two small things can happen at any time: describing the beachhead races on their
 | All four rivals in one Ascension | — | first at Planeshift 6, about 11h40m |
 | Myrror fully held | Planeshift 5, 8h52m | Planeshift 8, 12h56m |
 | The Spell of Mastery | channelling at about 9h | channelling at about 13h, so the first Mastery comes several hours later |
+
+Correction (2026-10-10): these sim totals summed each run's length, which restarts when automation Refounds or Ascends mid-run, so times after the first Planeshift were undercounted. On the game's clock the Spell is cast at about 1d 2h (§8 Pacing). The "after" times above from the first Planeshift on are low by the same cause.
 
 Layers 2 and 3 become trivial only late, through Essence (Astral Sorcery, Wellspring), which is the "upper layer may trivialise" rule at work.

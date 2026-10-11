@@ -14,6 +14,7 @@
  * last), and running enchantments take up some of it as upkeep. Fame upgrades
  * never touch spell power: a strong kingdom helps only through its mana.
  */
+import { activeChallenge, challengeGoalRivals } from "../content/challenges";
 import { ARCANUS_WIZARDS, rivalsFor } from "../content/frontier";
 import { LAIRS } from "../content/exploration";
 import { REALMS, Realm } from "../content/magic";
@@ -184,6 +185,7 @@ export function strikeWards(state: GameState, amount: Decimal): void {
 }
 
 export function tickWards(state: GameState, stats: Stats, dt: number): void {
+    checkChallengeGoal(state);
     const power = spellPower(state, stats);
     if (power.gt(0)) strikeWards(state, power.times(dt));
 }
@@ -201,22 +203,32 @@ function banish(state: GameState, wizard: string): void {
         `${wizard}'s wards break: ${wizard} is banished from Arcanus! Their domain lies open to your army, and their Tower of Wizardry is unsealed.` +
             (learned.length > 0 ? ` Their libraries teach you ${learned.join(" and ")} magic.` : ""),
     );
-    // a challenge's goal: all four rivals banished in its Ascension (then it can be completed, Mastery tab)
+    checkChallengeGoal(state);
+    bump(state);
+}
+
+/**
+ * A challenge's goal: enough rivals banished in its Ascension (then it can be
+ * completed, Mastery tab). Checked on each banishing, and every tick so a
+ * challenge already past a lowered goal (an older save) is won at once.
+ */
+export function checkChallengeGoal(state: GameState): void {
     const m = state.mastery;
-    if (m.challenge && !m.challengeDone && banishedCount(state) >= ARCANUS_WIZARDS) {
+    const challenge = activeChallenge(state);
+    if (challenge && !m.challengeDone && banishedCount(state) >= challengeGoalRivals(challenge)) {
         m.challengeDone = true;
         m.challengeWonIn = state.meta.playtime - m.challengeStartedAt;
-        const best = m.challengeBest[m.challenge];
+        const best = m.challengeBest[challenge.wizard];
         const record = best === undefined || m.challengeWonIn < best;
-        if (record) m.challengeBest[m.challenge] = m.challengeWonIn;
+        if (record) m.challengeBest[challenge.wizard] = m.challengeWonIn;
         log(
             state,
             "milestone",
-            `${m.challenge}'s challenge is won, in ${fmtTime(m.challengeWonIn)}` +
+            `${challenge.wizard}'s challenge is won, in ${fmtTime(m.challengeWonIn)}` +
                 (best === undefined ? "." : record ? ` (a new best, from ${fmtTime(best)}).` : ` (best ${fmtTime(best)}).`),
         );
+        bump(state);
     }
-    bump(state);
 }
 
 // --- Effect sources ---

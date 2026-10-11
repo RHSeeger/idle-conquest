@@ -11,7 +11,7 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { CHALLENGE_ORDER, CHALLENGE_TUNING } from "../src/content/challenges";
 import { heroLevel } from "../src/content/heroes";
-import { botAct, botEndRun, botShouldRefound, newTracker } from "../src/dev/bot";
+import { BOT_TUNING, botAct, botEndRun, botShouldRefound, newTracker } from "../src/dev/bot";
 import { fmtTime } from "../src/engine/format";
 import { startChallenge } from "../src/engine/mastery";
 import { deserialize, serialize } from "../src/engine/save";
@@ -28,6 +28,8 @@ const args = Object.fromEntries(
 const hours = Number(args.hours ?? 2);
 const only = args.only ? String(args.only).split(",") : CHALLENGE_ORDER;
 if (args.cupgrades) CHALLENGE_TUNING.upgradeLevels = Number(args.cupgrades);
+// the bot keeps at it for the whole time given
+BOT_TUNING.challengeSeconds = hours * 3600 + 60;
 
 const DT = 1;
 const BOT_EVERY = 5;
@@ -77,7 +79,9 @@ interface Result {
 
 function playChallenge(save: string, wizard: string): Result {
     const state = deserialize(save);
-    if (!startChallenge(state, wizard)) throw new Error(`can't start ${wizard}`);
+    // a save already in a challenge (diagnostics) plays that one
+    if (state.mastery.challenge) wizard = state.mastery.challenge;
+    else if (!startChallenge(state, wizard)) throw new Error(`can't start ${wizard}`);
     const r: Result = { wizard, won: null, banished: [null, null, null, null], fortresses: [null, null, null, null], frontier: 0, refounds: 0, lairs: 0, heroes: 0, heroRank: 0 };
     let tracker = newTracker();
     let fortresses = 0;
@@ -113,6 +117,8 @@ function playChallenge(save: string, wizard: string): Result {
         for (const h of state.run.heroes) r.heroRank = Math.max(r.heroRank, heroLevel(h.xp));
     }
     r.lairs += state.run.sites.filter((s) => s.cleared).length;
+    // auto-Ascend may complete a won challenge within the tick: its best time is the win
+    r.won = state.mastery.challengeBest[wizard] ?? r.won;
     return r;
 }
 

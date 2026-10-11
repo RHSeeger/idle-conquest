@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CHALLENGES, MASTERY_TUNING } from "../src/content/challenges";
+import { CHALLENGE_GOAL_RIVALS, CHALLENGES, MASTERY_TUNING } from "../src/content/challenges";
 import { frontierCity, regionPlan } from "../src/content/frontier";
 import { SPELLS } from "../src/content/spells";
 import { INSIGHT_UPGRADES } from "../src/content/wizards";
@@ -31,9 +31,9 @@ import { bump, GameState, newCampaign, newGame } from "../src/engine/state";
 import { tick } from "../src/engine/tick";
 import { ascensionRivals, banishedCount, currentRival, strikeWards, wardStrength } from "../src/engine/wards";
 
-/** Breaks every remaining rival's wards in a challenge but the last */
+/** Breaks rivals' wards in a challenge until one short of its goal */
 function banishAllButOne(state: GameState): void {
-    for (let i = banishedCount(state); i < 3; i++) strikeWards(state, wardStrength(state, currentRival(state)!));
+    for (let i = banishedCount(state); i < CHALLENGE_GOAL_RIVALS - 1; i++) strikeWards(state, wardStrength(state, currentRival(state)!));
 }
 
 function banishLast(state: GameState): void {
@@ -246,7 +246,7 @@ describe("Challenge Wizards", () => {
         expect(state.ascension.spellMemory).toEqual(["magicSpirit"]);
     });
 
-    it("end when all four rivals of Arcanus are banished in the challenge's Ascension, with a lasting reward", () => {
+    it("end when the goal's rivals of Arcanus are banished in the challenge's Ascension, with a lasting reward", () => {
         const state = master();
         startChallenge(state, "Raven");
         expect(ascensionRivals(state)).not.toContain("Raven"); // you play as Raven
@@ -269,6 +269,17 @@ describe("Challenge Wizards", () => {
         // back to your own profile, with the reward (the rule's ×2 is gone, the reward's ×1.5 stays)
         expect(state.ascension.retorts).not.toContain("runemaster");
         expect(getStats(state).num("explore.speed")).toBeCloseTo((before / 2) * 1.5);
+    });
+
+    it("are won at once when a save is already past the goal", () => {
+        const state = master();
+        startChallenge(state, "Raven");
+        // as if banished under an older goal, without the win registering
+        state.ascension.wizardsDefeatedThisAscension = ascensionRivals(state).slice(0, CHALLENGE_GOAL_RIVALS);
+        expect(state.mastery.challengeDone).toBe(false);
+        state.automation.ascend = false;
+        tick(state, 0.1);
+        expect(state.mastery.challengeDone).toBe(true);
     });
 
     it("keep the fastest win of each, and say when a replay beats it", () => {

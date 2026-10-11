@@ -150,6 +150,11 @@ export class Stats {
         this.cache.clear();
     }
 
+    /** Every source that adds a modifier to any stat */
+    sources(): string[] {
+        return [...new Set([...this.mods.values()].flat().map((m) => m.source))];
+    }
+
     /** Applies a list of effect definitions from a single source */
     applyEffects(source: string, effects: readonly EffectDef[], level = 1, selfScope?: string): void {
         for (const effect of effects) {

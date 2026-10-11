@@ -6,7 +6,7 @@
  *   npm run sim -- runs=6               several runs with Refounds in between
  *   npm run sim -- growth=1.7 base=20   override frontier defense tuning
  *   npm run sim -- verbose              also print 15-minute economy snapshots
- *   npm run sim -- smana=8e15 cinsight=0.5   Layer 4: Spell of Mastery mana, Insight levels in challenges
+ *   npm run sim -- smana=8e15 cupgrades=0.5  Layer 4: Spell of Mastery mana, share of Insight/Essence levels in challenges
  *
  * The greedy bot (src/dev/bot.ts) plays; the report shows when each region
  * was reached, and for multi-run mode how fast each successive run goes.
@@ -51,7 +51,7 @@ if (args.bcap) BUILDING_TUNING.stepCap = Number(args.bcap);
 if (args.oindex) FRONTIER_TUNING.openingIndex = Number(args.oindex);
 if (args.ogrowth) FRONTIER_TUNING.openingGrowth = Number(args.ogrowth);
 if (args.smana) MASTERY_TUNING.mana = Number(args.smana);
-if (args.cinsight) CHALLENGE_TUNING.insightLevels = Number(args.cinsight);
+if (args.cupgrades) CHALLENGE_TUNING.upgradeLevels = Number(args.cupgrades);
 
 const DT = 1;
 const BOT_EVERY = 5;

@@ -29,6 +29,7 @@ import {
 } from "../content/myrror";
 import { MyrranRaceId, MYRROR_RING, RACES, RaceId } from "../content/races";
 import { maxMyrrorShare, myrrorShare, planarLinks } from "../engine/army";
+import { upperLayersOff } from "../engine/upgradeLevels";
 import { planeshiftProgress } from "../engine/ascension";
 import { getStats } from "../engine/collect";
 import { fmt, fmtInt, fmtTime } from "../engine/format";
@@ -212,8 +213,8 @@ function MyrrorSection() {
             {state.mastery.challenge && (
                 <p class="challenge-off">
                     <b>Paused during {state.mastery.challenge}'s challenge:</b> a challenge is one Ascension of Arcanus, so
-                    the whole army fights there and Myrror's siege waits. The split you set comes back when the challenge
-                    ends.
+                    the whole army fights there and Myrror's siege waits. Its works, boons and holdings do nothing until
+                    it ends. The split you set comes back then.
                 </p>
             )}
             <div class="slider-row">
@@ -291,7 +292,7 @@ function MyrrorSection() {
             {Object.keys(m.holdings).length === 0 ? (
                 <p class="hint">No Myrran cities yet. Each one you take is held until the next Planeshift.</p>
             ) : (
-                <table>
+                <table class={upperLayersOff(state) ? "holdings off" : "holdings"}>
                     <thead>
                         <tr>
                             <th>Race</th>
@@ -376,6 +377,7 @@ function MyrranRiches() {
     const m = state.planes.myrror!;
     const counts = boonCounts(state);
     const repeat = state.automation.repeatBoons;
+    const off = upperLayersOff(state);
     return (
         <section>
             <h2>
@@ -390,7 +392,13 @@ function MyrranRiches() {
                 {isAutomationUnlocked(state, "works") &&
                     " Auto-buy buys the works ticked auto, whatever is affordable, cheapest first: untick the ones you'd rather not grow."}
             </p>
-            <div class="cards">
+            {off && (
+                <p class="challenge-off">
+                    <b>Off during {state.mastery.challenge}'s challenge:</b> Myrran works and boons do nothing until it
+                    ends. You can still buy works.
+                </p>
+            )}
+            <div class={"cards" + (off ? " off" : "")}>
                 {MYRRAN_WORK_ORDER.map((id) => {
                     const w = MYRRAN_WORKS[id];
                     const level = myrranWorkLevel(state, id);
@@ -403,6 +411,7 @@ function MyrranRiches() {
                                 <span class="count">
                                     {level}/{w.maxLevel}
                                 </span>
+                                {off && level > 0 && <span class="off-tag">off</span>}
                             </div>
                             <div class="card-text">
                                 {w.text(level)}
@@ -438,7 +447,7 @@ function MyrranRiches() {
                 Myrran wizard offers their vaults or their spellbooks.
             </p>
             {m.boons.length > 0 && (
-                <ul class="boons">
+                <ul class={"boons" + (off ? " off" : "")}>
                     {Object.entries(counts).map(([id, n]) => {
                         const b = boonDef(id);
                         return (
@@ -478,6 +487,7 @@ const MYRRAN_UNIT: Record<MyrranRaceId, string> = {
 function EssenceSection() {
     const state = game();
     const pl = state.planes;
+    const off = upperLayersOff(state);
     return (
         <section>
             <h2>
@@ -490,7 +500,13 @@ function EssenceSection() {
                 Essence on Planeshift = (Myrran cities taken by force ÷ 4)^1.3 × (1 + 0.25 per Myrran race held) × (1 +
                 Myrran wizards banished).
             </p>
-            <div class="cards">
+            {off && (
+                <p class="challenge-off">
+                    <b>Off during {state.mastery.challenge}'s challenge:</b> Essence upgrades do nothing until it ends. You
+                    can still buy them.
+                </p>
+            )}
+            <div class={"cards" + (off ? " off" : "")}>
                 {ESSENCE_UPGRADE_ORDER.map((id) => {
                     const u = ESSENCE_UPGRADES[id];
                     const level = essenceUpgradeLevel(state, id);
@@ -502,6 +518,7 @@ function EssenceSection() {
                                 <span class="count">
                                     {level}/{u.maxLevel}
                                 </span>
+                                {off && level > 0 && <span class="off-tag">off</span>}
                             </div>
                             <div class="card-text">
                                 {u.text(level)}

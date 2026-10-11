@@ -8,6 +8,7 @@ import { LORE } from "../content/lore";
 import { RACES, RaceId } from "../content/races";
 import { Stats } from "./effects";
 import { GameState } from "./state";
+import { upperLayersOff } from "./upgradeLevels";
 
 type Collector = (state: GameState, stats: Stats) => void;
 
@@ -24,7 +25,8 @@ export function racesInRealm(state: GameState): RaceId[] {
     for (const city of state.run.cities) {
         seen.add(city.race);
     }
-    const held = state.planes.myrror?.holdings ?? {};
+    // off in a challenge, like Myrror's other bonuses (upgradeLevels.ts)
+    const held = (!upperLayersOff(state) && state.planes.myrror?.holdings) || {};
     for (const [race, n] of Object.entries(held)) {
         if ((n ?? 0) > 0) seen.add(race as RaceId);
     }

@@ -675,11 +675,15 @@ td.buy-button button.full:not(:disabled) {
     font-size: 13px;
 }
 
-.fame-branches.off .card-text {
+.fame-branches.off .card-text,
+.cards.off .card-text,
+.boons.off li,
+.holdings.off tbody td {
     text-decoration: line-through;
 }
 
-.fame-branches.off .card {
+.fame-branches.off .card,
+.cards.off .card {
     opacity: 0.75;
 }
 

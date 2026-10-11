@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 import { CHALLENGES, MASTERY_TUNING } from "../src/content/challenges";
 import { frontierCity, regionPlan } from "../src/content/frontier";
 import { SPELLS } from "../src/content/spells";
+import { INSIGHT_UPGRADES } from "../src/content/wizards";
+import { ESSENCE_UPGRADES, MYRRAN_WORKS } from "../src/content/myrror";
 import { canAscend, hasAscensionMilestone } from "../src/engine/ascension";
 import { cityAt, conquer, currentPlan, currentTarget, isUnitAvailable, myrrorShare } from "../src/engine/army";
-import { getStats } from "../src/engine/collect";
+import { getStats, racesInRealm } from "../src/engine/collect";
 import { D } from "../src/engine/decimal";
 import { hireCost } from "../src/engine/heroes";
 import { canCastEnchantment, isWizard, knowsSpell, manaRate, masteryGate, research, spellAvailable } from "../src/engine/magic";
@@ -202,6 +204,46 @@ describe("Challenge Wizards", () => {
         state.run.sites.push({ index: 0, kind: "lair", type: "towerOfWizardry", traits: [], defense: D(1), cleared: true });
         state.ascension.spellsKnown.push("riteOfTheTower");
         expect(canPlaneshift(state)).toBe(false);
+    });
+
+    it("are played from a fixed baseline: no Insight or Essence upgrade, nor Myrror's works and holdings, counts", () => {
+        const state = master();
+        for (const id of Object.keys(INSIGHT_UPGRADES)) state.ascension.upgrades[id] = 1;
+        for (const id of Object.keys(ESSENCE_UPGRADES)) state.planes.upgrades[id] = 1;
+        const m = newCampaign("troll", 3);
+        for (const id of Object.keys(MYRRAN_WORKS)) m.works[id] = 2;
+        m.holdings = { troll: 3, klackon: 2 };
+        state.planes.myrror = m;
+        state.mastery.completed = ["Tlaloc"];
+        expect(startChallenge(state, "Raven")).toBe(true);
+        // the same game with none of them: every bonus that's left must be one it has too
+        const bare = deserialize(serialize(state));
+        bare.ascension.upgrades = {};
+        bare.planes.upgrades = {};
+        bare.planes.myrror = null;
+        expect(getStats(state).sources().sort()).toEqual(getStats(bare).sources().sort());
+        // nor do Myrran holdings lend their racial units
+        expect(racesInRealm(state)).toEqual(racesInRealm(bare));
+        // what does count: Masteries, challenge rewards, the rule
+        expect(getStats(state).sources()).toEqual(expect.arrayContaining(["Mastery ×1", "Tlaloc's challenge", "Raven's rule"]));
+        // what you own is untouched, and works again after the challenge
+        expect(state.ascension.upgrades.arcanePower).toBe(1);
+        abandonChallenge(state);
+        expect(getStats(state).sources().some((s) => s.startsWith("Insight: "))).toBe(true);
+        expect(getStats(state).sources().some((s) => s.startsWith("Essence: "))).toBe(true);
+    });
+
+    it("keep Spell Memory's spells for afterwards, without remembering the challenge's", () => {
+        const state = master();
+        state.ascension.upgrades.spellMemory = 2;
+        state.ascension.spellMemory = ["magicSpirit"];
+        startChallenge(state, "Raven");
+        expect(knowsSpell(state, "magicSpirit")).toBe(false);
+        expect(state.ascension.spellMemory).toEqual(["magicSpirit"]);
+        state.ascension.spellsKnown.push("detectMagic");
+        abandonChallenge(state);
+        expect(knowsSpell(state, "magicSpirit")).toBe(true);
+        expect(state.ascension.spellMemory).toEqual(["magicSpirit"]);
     });
 
     it("end when all four rivals of Arcanus are banished in the challenge's Ascension, with a lasting reward", () => {

@@ -1,5 +1,6 @@
 import { HEROES, HERO_RANKS, HERO_XP, heroLevel, MAX_HEROES } from "../content/heroes";
-import { heroesKeptOnAscend, insightUpgradeLevel } from "../engine/ascension";
+import { heroesKeptOnAscend } from "../engine/ascension";
+import { insightLevel } from "../engine/upgradeLevels";
 import { canHire, dismissHero, Hero, heroList, hireCost, hireHero, isTavernOpen, tavernOffers } from "../engine/heroes";
 import { heroesKeptOnRefound, refoundHeroKeeper } from "../engine/prestige";
 import { GameState } from "../engine/state";
@@ -31,7 +32,7 @@ export function heroRefoundText(state: GameState): string {
 
 export function heroAscendText(state: GameState): string {
     return carrySentence(state, "Ascend", "Eternal Companions", "Insight → Eternal Companions",
-        insightUpgradeLevel(state, "eternalCompanions"), heroesKeptOnAscend(state));
+        insightLevel(state, "eternalCompanions"), heroesKeptOnAscend(state));
 }
 
 /** What happens to the current heroes on Refound and, once you have Ascended, on Ascension */
@@ -42,7 +43,7 @@ export function heroCarryText(state: GameState): string {
     // Eternal Companions keeping heroes through Refounds too: one sentence covers both resets
     if (refoundHeroKeeper(state).name === "Eternal Companions") {
         return carrySentence(state, "Refound or Ascend", "Eternal Companions", "Insight → Eternal Companions",
-            insightUpgradeLevel(state, "eternalCompanions"), heroesKeptOnAscend(state));
+            insightLevel(state, "eternalCompanions"), heroesKeptOnAscend(state));
     }
     return `${heroRefoundText(state)} ${heroAscendText(state)}`;
 }

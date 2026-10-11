@@ -185,8 +185,9 @@ function ChallengesSection() {
                 <h2>Challenge Wizards</h2>
                 <p class="hint">
                     After your first Mastery, each of the 14 rival wizards offers a challenge: one Ascension as that wizard,
-                    under their rule, for a reward that lasts forever. They're easier once you've powered up again after
-                    the Mastery.
+                    under their rule, for a reward that lasts forever. Each is played from a fixed start, without your
+                    Insight and Essence upgrades, so what helps is more Masteries and the rewards of the challenges you've
+                    won.
                 </p>
             </section>
         );
@@ -201,7 +202,7 @@ function ChallengesSection() {
             confirm: replay ? "Replay challenge" : "Accept challenge",
             body: [
                 <p class="challenge-lore">{c.lore}</p>,
-                `This is an Ascension: your current Ascension ends (with Insight if its gate is met), and a new one begins as ${wizard}, with their books and retort. You keep your Insight, Planar Essence and their upgrades: the more of them you've built up, the easier it is.`,
+                `This is an Ascension: your current Ascension ends (with Insight if its gate is met), and a new one begins as ${wizard}, with their books and retort. It's played from a fixed start: your Insight and Essence upgrades and Myrror's works, boons and holdings are off until it ends (you keep them all for afterwards). Masteries, milestones and the rewards of challenges you've won still count.`,
                 <p>
                     <b>Rule:</b> {c.rule}.
                 </p>,
@@ -225,7 +226,8 @@ function ChallengesSection() {
             <p class="hint">
                 One Ascension as a rival wizard, with their books, retort and rule. Goal: banish all {ARCANUS_WIZARDS} rival
                 wizards of Arcanus by breaking their wards. Refounds are allowed and keep the progress; Ascending and
-                Planeshifting aren't, and Myrror pauses (its holdings, works and boons still count). Rewards last forever.
+                Planeshifting aren't, and Myrror pauses. It's played from a fixed start: your Insight and Essence upgrades and
+                Myrror's works, boons and holdings are off until it ends. Rewards last forever, and count in later challenges.
             </p>
             <p class="hint">
                 <b>Power up first.</b> A challenge isn't a fresh start like claiming a Mastery: you take your Insight, Planar
@@ -350,6 +352,10 @@ export function ChallengeBanner(props: { onOpen: () => void }) {
             <button class="link" onClick={props.onOpen}>
                 Details
             </button>
+            <div class="hint">
+                Played from a fixed start: your Insight and Essence upgrades and Myrror's works, boons and holdings are
+                off until it ends. Masteries, milestones and challenge rewards still count.
+            </div>
         </div>
     );
 }

@@ -48,6 +48,8 @@ import { game } from "./game";
 import { AutoPrestige } from "./AutoToggle";
 import { heroAscendText } from "./HeroesSection";
 import { fameUpgradesValue } from "../engine/prestige";
+import { essenceUpgradeLevel } from "../engine/planes";
+import { upperLayersOff } from "../engine/upgradeLevels";
 import { ARCANUS_WIZARDS } from "../content/frontier";
 import { banishedCount, nextRivals } from "../engine/wards";
 import { RivalMatchups } from "./ContestSection";
@@ -55,7 +57,7 @@ import { RivalMatchups } from "./ContestSection";
 /** Enduring Legacy (Essence): whether the next Ascension keeps the Fame upgrades */
 function KeepFameToggle() {
     const state = game();
-    if ((state.planes.upgrades.enduringLegacy ?? 0) === 0) return null;
+    if (essenceUpgradeLevel(state, "enduringLegacy") === 0) return null;
     const on = state.automation.keepFame;
     const value = fameUpgradesValue(state);
     return (
@@ -396,6 +398,7 @@ function InsightSum(props: { b: InsightBreakdown }) {
 export function AscensionPanel() {
     const state = game();
     const a = state.ascension;
+    const off = upperLayersOff(state);
     const books = a.planBooks;
     const retorts = a.planRetorts;
     const races = ascensionRaceOptions(state);
@@ -499,7 +502,13 @@ export function AscensionPanel() {
                             · {a.ascensions} Ascension{a.ascensions === 1 ? "" : "s"} · {fmtInt(a.insightTotal)} earned in total
                         </span>
                     </h2>
-                    <div class="cards">
+                    {off && (
+                        <p class="challenge-off">
+                            <b>Off during {state.mastery.challenge}'s challenge:</b> Insight upgrades do nothing until it
+                            ends (Royal Stewards' auto-buy still works). You can still buy them.
+                        </p>
+                    )}
+                    <div class={"cards" + (off ? " off" : "")}>
                         {INSIGHT_UPGRADE_ORDER.map((id) => {
                             const u = INSIGHT_UPGRADES[id];
                             const level = insightUpgradeLevel(state, id);
@@ -511,6 +520,7 @@ export function AscensionPanel() {
                                         <span class="count">
                                             {level}/{u.maxLevel}
                                         </span>
+                                        {off && level > 0 && id !== "royalStewards" && <span class="off-tag">off</span>}
                                     </div>
                                     <div class="card-text">
                                         {u.text(level)}

@@ -117,6 +117,7 @@ export function isAutomationUnlocked(state: GameState, kind: AutomationKind): bo
         case "works":
             return hasPlaneshiftMilestone(state, "autoAscend");
         case "fame":
+            // the owned level: an automation, not power, so it works in challenges too (like milestones)
             return insightUpgradeLevel(state, "royalStewards") > 0;
     }
 }

@@ -32,11 +32,12 @@ export const MASTERY_TUNING = {
 };
 
 /**
- * In a challenge you play as that wizard: your Insight upgrades' bonuses work
- * at this share of their levels (rounded down). Mutable for the balance simulator.
+ * In a challenge your Insight and Essence upgrades work at this share of their
+ * levels (rounded down): 0, a fixed baseline (decision #3, 2026-10-10). Myrror's
+ * works, boons and holdings are off too. Mutable for the balance simulator.
  */
 export const CHALLENGE_TUNING = {
-    insightLevels: 1,
+    upgradeLevels: 0,
 };
 
 /** Each Mastery multiplies production, gold, knowledge, mana, spell power and planar power by this */

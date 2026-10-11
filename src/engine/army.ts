@@ -28,6 +28,7 @@ import { D, Decimal, ONE, ZERO } from "./decimal";
 import { roleStat, Stats, unitPowerStat } from "./effects";
 import { effectiveTraits, isWizard, knowsSpell } from "./magic";
 import { activeFameLevel, renownLimit, scoutingInUse } from "./prestige";
+import { essenceLevel } from "./upgradeLevels";
 import { bump, GameState, log } from "./state";
 import { ascensionRivals, isBanished } from "./wards";
 
@@ -113,7 +114,7 @@ export function siegePowerFrom(state: GameState, byRole: Record<Role, Decimal>, 
 export function maxMyrrorShare(state: GameState): number {
     const m = state.planes.myrror;
     if (!m) return 0;
-    const anchor = state.planes.upgrades["planarAnchor"] ?? 0;
+    const anchor = essenceLevel(state, "planarAnchor");
     return Math.min(0.9, SHARE_PER_LINK * (planarLinks(state) + anchor));
 }
 

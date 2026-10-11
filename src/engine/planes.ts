@@ -49,6 +49,7 @@ import { applyRunStart, closeFameChronicle } from "./prestige";
 import { bump, GameState, log, newCampaign, newRun, recordRun } from "./state";
 import { traitRoleMult, ROLES } from "../content/traits";
 import { beginContest } from "./wards";
+import { essenceLevel, upperLayersOff } from "./upgradeLevels";
 
 /** A Master of Magic (any Mastery claimed) keeps every Planeshift milestone */
 export function hasPlaneshiftMilestone(state: GameState, id: PlaneshiftMilestoneId): boolean {
@@ -488,7 +489,7 @@ export function resetLayersBelowPlanes(state: GameState, startRace: RaceId): voi
  * covers half of what Bridgehead leaves (50% → 60/70/80/90% with Bridgehead 1–4).
  */
 export function myrrorHeadStartFraction(state: GameState): number {
-    const bridgehead = BRIDGEHEAD_PER_LEVEL * essenceUpgradeLevel(state, "bridgehead");
+    const bridgehead = BRIDGEHEAD_PER_LEVEL * essenceLevel(state, "bridgehead");
     const renown = hasPlaneshiftMilestone(state, "myrrorRenown") ? KNOWN_ON_TWO_WORLDS : 0;
     return Math.min(0.9, 1 - (1 - bridgehead) * (1 - renown));
 }
@@ -509,6 +510,7 @@ function applyMyrrorHeadStart(state: GameState): void {
 
 // --- Essence upgrades ---
 
+/** The level owned, for buying and showing; what applies is essenceLevel (off in a challenge) */
 export function essenceUpgradeLevel(state: GameState, id: string): number {
     return state.planes.upgrades[id] ?? 0;
 }
@@ -532,9 +534,10 @@ export function buyEssenceUpgrade(state: GameState, id: string): boolean {
 
 // --- Effect sources ---
 
+// Myrror's holdings, works and boons, and Essence upgrades, are off in a challenge (upgradeLevels.ts)
 registerCollector((state, stats) => {
     const h = state.planes.myrror?.holdings;
-    if (!h) return;
+    if (!h || upperLayersOff(state)) return;
     for (const r of Object.keys(h) as MyrranRaceId[]) {
         const n = h[r] ?? 0;
         if (n <= 0) continue;
@@ -545,7 +548,7 @@ registerCollector((state, stats) => {
 
 registerCollector((state, stats) => {
     const m = state.planes.myrror;
-    if (!m) return;
+    if (!m || upperLayersOff(state)) return;
     for (const [id, level] of Object.entries(m.works)) {
         const w = MYRRAN_WORKS[id];
         if (w && level > 0) stats.applyEffects(`Myrran works: ${w.name} ${level}`, w.effects, level);
@@ -558,8 +561,9 @@ registerCollector((state, stats) => {
 });
 
 registerCollector((state, stats) => {
-    for (const [id, level] of Object.entries(state.planes.upgrades)) {
+    for (const id of Object.keys(state.planes.upgrades)) {
         const u = ESSENCE_UPGRADES[id];
+        const level = essenceLevel(state, id);
         if (u && level > 0) stats.applyEffects(`Essence: ${u.name} ${level}`, u.effects, level);
     }
 });

@@ -40,6 +40,7 @@ import {
     keepsFameUpgrades,
 } from "./prestige";
 import { bump, GameState, log, newRun, recordRun, RunRecord } from "./state";
+import { insightLevel } from "./upgradeLevels";
 
 export const ASCENSION_BOOKS = 6;
 export const ASCENSION_REALMS = 3;
@@ -223,7 +224,8 @@ export function performAscension(
         a.planBooks = { ...a.books };
         a.planRetorts = [...a.retorts];
     }
-    rememberKnownSpells(state);
+    // a challenge's spells were learned without Spell Memory, so they aren't remembered
+    if (opts.ended !== "challenge") rememberKnownSpells(state);
     a.spellsKnown = [];
     const restored = restoreRememberedSpells(state);
     a.wizardsDefeatedThisAscension = [];
@@ -296,13 +298,14 @@ export function planeshiftProgress(state: GameState): PlaneshiftProgress {
 
 // --- Insight upgrades ---
 
+/** The level owned, for buying and showing; what applies is insightLevel (off in a challenge) */
 export function insightUpgradeLevel(state: GameState, id: string): number {
     return state.ascension.upgrades[id] ?? 0;
 }
 
 /** The heroes Eternal Companions would carry through an Ascension: the most experienced, one per level */
 export function heroesKeptOnAscend(state: GameState): Hero[] {
-    return mostExperienced(state, insightUpgradeLevel(state, "eternalCompanions"));
+    return mostExperienced(state, insightLevel(state, "eternalCompanions"));
 }
 
 export function insightUpgradeCost(state: GameState, id: string): number {

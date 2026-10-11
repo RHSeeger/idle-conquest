@@ -2,7 +2,8 @@
  * Layer 2 magic: mana, spell research, enchantments, instants and magic nodes.
  * Only wizards (after the first Ascension) have any of this.
  */
-import { CHALLENGE_TUNING, challengeBans, challengeFactor } from "../content/challenges";
+import { challengeBans, challengeFactor } from "../content/challenges";
+import { insightLevel, upperLayersOff } from "./upgradeLevels";
 import { LAIRS } from "../content/exploration";
 import { ARCANUS_WIZARDS } from "../content/frontier";
 import { MYRROR_WIZARDS } from "../content/myrror";
@@ -54,7 +55,7 @@ export function masteryGate(state: GameState): MasteryGate {
 // --- Wizard profile ---
 
 export function totalPicks(state: GameState): number {
-    return BASE_PICKS + (state.ascension.upgrades["extraPicks"] ?? 0);
+    return BASE_PICKS + insightLevel(state, "extraPicks");
 }
 
 export function booksIn(state: GameState, realm: Realm): number {
@@ -72,7 +73,7 @@ export function pickableRealms(state: GameState): Realm[] {
 
 /** Retort Mastery (Insight): how many retorts cost no picks */
 export function freeRetortSlots(state: GameState): number {
-    return state.ascension.upgrades["retortMastery"] ?? 0;
+    return insightLevel(state, "retortMastery");
 }
 
 /** The retorts that cost no picks: the `free` most expensive ones */
@@ -103,7 +104,7 @@ export function resolveFamiliar(choice: FamiliarChoice, books: Partial<Record<Re
 }
 
 export function familiarLevel(state: GameState): number {
-    return state.ascension.upgrades["familiar"] ?? 0;
+    return insightLevel(state, "familiar");
 }
 
 /** The familiar of this Ascension, if the upgrade is owned */
@@ -230,7 +231,7 @@ export function research(state: GameState, id: string): boolean {
 // has enough books in its realm for its rarity, and dormant otherwise.
 
 export function spellMemoryLevel(state: GameState): number {
-    return state.ascension.upgrades["spellMemory"] ?? 0;
+    return insightLevel(state, "spellMemory");
 }
 
 /** Whether the current profile has the books for a spell (Arcane needs none; ignores the Tower) */
@@ -241,7 +242,8 @@ export function hasBooksFor(state: GameState, spell: SpellDef): boolean {
 /** Adds every known spell to the memory (when Spell Memory is owned) */
 export function rememberKnownSpells(state: GameState): void {
     const a = state.ascension;
-    if (spellMemoryLevel(state) === 0) return;
+    // the owned level: entering a challenge (where Spell Memory is off) still remembers the Ascension it ends
+    if ((a.upgrades["spellMemory"] ?? 0) === 0) return;
     for (const id of a.spellsKnown) if (!a.spellMemory.includes(id)) a.spellMemory.push(id);
 }
 
@@ -253,6 +255,8 @@ export function rememberKnownSpells(state: GameState): void {
 export function restoreRememberedSpells(state: GameState): string[] {
     const a = state.ascension;
     const level = spellMemoryLevel(state);
+    // in a challenge Spell Memory is off: nothing comes back, but the memory waits for its end
+    if (upperLayersOff(state)) return [];
     if (level === 0) {
         a.spellMemory = [];
         return [];
@@ -518,11 +522,10 @@ registerCollector((state, stats) => {
 });
 
 registerCollector((state, stats) => {
-    // in a challenge you play as that wizard: Insight upgrades work at a reduced level
-    const share = state.mastery.challenge ? CHALLENGE_TUNING.insightLevels : 1;
-    for (const [id, owned] of Object.entries(state.ascension.upgrades)) {
+    // off in a challenge (upgradeLevels.ts)
+    for (const id of Object.keys(state.ascension.upgrades)) {
         const u = INSIGHT_UPGRADES[id];
-        const level = Math.floor(owned * share);
+        const level = insightLevel(state, id);
         if (u && level > 0) stats.applyEffects(`Insight: ${u.name} ${level}`, u.effects, level);
     }
 });

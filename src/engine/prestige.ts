@@ -15,6 +15,7 @@ import { fmtInt } from "./format";
 import { cityMaxPop } from "./economy";
 import { Hero, heroCarryLog, mostExperienced } from "./heroes";
 import { bump, GameState, log, newRun, recordRun, SCOUTING_ALL } from "./state";
+import { essenceLevel, insightLevel } from "./upgradeLevels";
 
 export const MAX_RACE_MASTERY = 5;
 
@@ -58,8 +59,7 @@ export function earnsMastery(state: GameState): boolean {
  */
 export function refoundHeroKeeper(state: GameState): { name: string; slots: number } {
     const hall = activeFameLevel(state, "hallOfHeroes");
-    // read directly: ascension.ts imports this module
-    const companions = state.ascension.upgrades.eternalCompanions ?? 0;
+    const companions = insightLevel(state, "eternalCompanions");
     return companions > 0 && companions >= hall
         ? { name: "Eternal Companions", slots: companions }
         : { name: "Hall of Heroes", slots: hall };
@@ -325,8 +325,7 @@ export function closeFameChronicle(state: GameState, reset = true): void {
 
 /** Whether the next Ascension keeps the Fame upgrades (owned and switched on) */
 export function keepsFameUpgrades(state: GameState): boolean {
-    // read directly: planes.ts imports this module
-    return (state.planes.upgrades.enduringLegacy ?? 0) > 0 && state.automation.keepFame;
+    return essenceLevel(state, "enduringLegacy") > 0 && state.automation.keepFame;
 }
 
 /** What the current Fame upgrades would cost to buy again from scratch */

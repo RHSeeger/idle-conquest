@@ -498,10 +498,10 @@ export function effectiveTraits(state: GameState, traits: readonly TraitId[]): T
 // --- Magic nodes ---
 
 /** Magic node lairs and the realm bonus they give once melded */
-export const NODE_BONUS: Record<string, { realm: Realm; text: string; stat: string; value: number }> = {
-    sorceryNode: { realm: "sorcery", text: "×1.25 knowledge", stat: "knowledge.mult", value: 1.25 },
-    natureNode: { realm: "nature", text: "×1.25 production", stat: "prod.mult", value: 1.25 },
-    chaosNode: { realm: "chaos", text: "×1.25 army power", stat: "army.power", value: 1.25 },
+export const NODE_BONUS: Record<string, { realm: Realm; text: string; label: string; stat: string; value: number }> = {
+    sorceryNode: { realm: "sorcery", text: "×1.25 knowledge", label: "knowledge", stat: "knowledge.mult", value: 1.25 },
+    natureNode: { realm: "nature", text: "×1.25 production", label: "production", stat: "prod.mult", value: 1.25 },
+    chaosNode: { realm: "chaos", text: "×1.25 army power", label: "army power", stat: "army.power", value: 1.25 },
 };
 
 /** Each melded node: +25% mana, plus its realm bonus */
@@ -510,6 +510,49 @@ export const NODE_MANA = 0.25;
 export function meldedNodes(state: GameState): string[] {
     if (!knowsSpell(state, "magicSpirit")) return [];
     return state.run.sites.filter((s) => s.kind === "lair" && s.cleared && LAIRS[s.type]?.magicNode).map((s) => s.type);
+}
+
+/** What one melded node gives now: its share of mana (added to the mana multiplier) and its realm bonus (a multiplier) */
+function nodeEach(state: GameState, type: string): { mana: number; bonus: number } {
+    // Node Mastery doubles node mana; read it from the retort list directly (stats may still be being collected)
+    const mastery = state.ascension.retorts.includes("nodeMastery") ? 2 : 1;
+    // Freya's rule and reward make nodes stronger
+    const power = challengeFactor(state, "node.power");
+    const b = NODE_BONUS[type];
+    return { mana: NODE_MANA * mastery * power, bonus: b ? 1 + (b.value - 1) * power : 1 };
+}
+
+export interface NodeSummary {
+    type: string;
+    melded: number;
+    /** Cleared this kingdom but not melded (without Magic Spirit) */
+    unmelded: number;
+    /** Each node's +mana (a share: 0.25 = +25%) and realm multiplier; the totals for all melded */
+    manaEach: number;
+    bonusEach: number;
+    manaTotal: number;
+    bonusTotal: number;
+}
+
+/** The magic nodes cleared this kingdom, by type (Magic tab) */
+export function nodeSummary(state: GameState): NodeSummary[] {
+    const melded = meldedNodes(state);
+    const cleared = state.run.sites.filter((s) => s.kind === "lair" && s.cleared && LAIRS[s.type]?.magicNode).map((s) => s.type);
+    return Object.keys(NODE_BONUS)
+        .map((type) => {
+            const n = melded.filter((t) => t === type).length;
+            const each = nodeEach(state, type);
+            return {
+                type,
+                melded: n,
+                unmelded: cleared.filter((t) => t === type).length - n,
+                manaEach: each.mana,
+                bonusEach: each.bonus,
+                manaTotal: each.mana * n,
+                bonusTotal: Math.pow(each.bonus, n),
+            };
+        })
+        .filter((s) => s.melded + s.unmelded > 0);
 }
 
 // --- Effect sources ---
@@ -541,17 +584,13 @@ registerCollector((state, stats) => {
 registerCollector((state, stats) => {
     const nodes = meldedNodes(state);
     if (nodes.length === 0) return;
-    // Node Mastery doubles node mana; read it from the retort list directly (stats are still being collected)
-    const mastery = state.ascension.retorts.includes("nodeMastery") ? 2 : 1;
-    // Freya's rule and reward make nodes stronger
-    const power = challengeFactor(state, "node.power");
     stats.addModifier("mana.mult", {
         source: `Melded nodes ×${nodes.length}`,
         op: "add",
-        value: D(NODE_MANA * nodes.length * mastery * power),
+        value: D(nodes.reduce((sum, type) => sum + nodeEach(state, type).mana, 0)),
     });
     for (const type of nodes) {
         const b = NODE_BONUS[type];
-        if (b) stats.addModifier(b.stat, { source: LAIRS[type].name, op: "mult", value: D(1 + (b.value - 1) * power) });
+        if (b) stats.addModifier(b.stat, { source: LAIRS[type].name, op: "mult", value: D(nodeEach(state, type).bonus) });
     }
 });

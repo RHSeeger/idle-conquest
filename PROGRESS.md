@@ -63,7 +63,7 @@ Items you've flagged as needing work. They're recorded here and picked up only w
 | 35 | **Kingdom tab: there's a lot on it.** See #34 for the scrolling. Also look at whether everything on it belongs together, and how it reads. | 2026-10-11 |
 | 36 | **Lore tab is undersized.** It holds a single thing. It doesn't obviously belong with anything else either; just noting that its tab holds less than it could. (Buildings and Exploration, for comparison, feel about right: everything is visible without scrolling and easy to take in.) | 2026-10-11 |
 | 37 | **"Your wizard this Ascension" is plain text** (Magic → Mana, and Ascension → This Ascension). If that's what you're looking for, your eye skips past it. Find a way to show the wizard (books, retorts, familiar) that stands out and is quick to read, the same in both places. | 2026-10-11 |
-| 38 | **Magic → Mana: the Magic nodes listing isn't readable.** Your idea, one of several possible: a line per node type with how many, the gain per node and the total. Find the best way to show it. | 2026-10-11 |
+| 38 | ~~**Magic → Mana: the Magic nodes listing isn't readable.**~~ Done: a table by node type (Work done, 2026-10-11). Original note: Your idea, one of several possible: a line per node type with how many, the gain per node and the total. Find the best way to show it. | 2026-10-11 |
 | 39 | ~~**The wizards' contest: "and a wizard's own realm only ×0.5" is confusing** (Magic tab).~~ Done: the rules are a list now (Work done, 2026-10-11). It means: casting from the same realm as the rival (your Life books against a Life wizard's wards) is only ×0.5. Rewrite the line (or show the matchups another way) so it's clear without explanation. | 2026-10-11 |
 | 40 | **Ascension tab is busy and hard to scan.** It's visited often and scrolled every time (#34). In particular: "This Ascension" and "Next Ascension" need something separating them; the checklist of what you need to Ascend has good checkmarks but no label saying what it is; the wizard shown as plain text (#37). Find ways to make the whole tab easier to read. | 2026-10-11 |
 | 41 | **Planes tab is busy and hard to scan.** Visited often and scrolled every time (#34). In particular: in the Myrran beachhead section, the text describing the race you've selected (and what it gives) doesn't read as belonging to the selection, all the more because the Arcanus starting race above has text under it that isn't that; the Wizard profile after it doesn't stand apart from the starting race part; the score section doesn't stand apart from the profile above it. | 2026-10-11 |
@@ -95,6 +95,13 @@ Items you've flagged as needing work. They're recorded here and picked up only w
 ---
 
 ## Work done
+
+### Magic nodes as a table (2026-10-11, TODO #38)
+
+- **What:** the Magic tab's one-line node list ("Magic nodes: Sorcery Node (×1.25 knowledge), Sorcery Node (…), …") is now a small "Magic nodes" table, a row per node type: its name in its realm's colour, how many are melded (and, in red, how many are cleared but not melded), what each gives (+25% mana · ×1.25 knowledge) and the total (+50% mana · ×1.56 knowledge). A line under it says node mana adds to the mana multiplier while realm bonuses multiply, and that cleared nodes need Magic Spirit.
+- **Why a table rather than your idea as-is:** it is your idea (a line per type with count, per node, total); the table just lines the columns up so they can be compared at a glance.
+- **Code:** `nodeSummary` in `engine/magic.ts`; the per-node values (Node Mastery, Freya's node power) come from `nodeEach`, which the stats collector now uses too, so the table can't drift from what applies.
+- Tests (`tests/nodes.test.ts`): the totals equal the change in the knowledge and mana multipliers; nodes without Magic Spirit count as not melded and give nothing.
 
 ### UI/UX: the items that needed no choices (2026-10-11, TODOs #30, #32, #39, #42)
 

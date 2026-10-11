@@ -19,7 +19,7 @@ import {
     instantCost,
     knowsSpell,
     manaRate,
-    meldedNodes,
+    nodeSummary,
     NODE_BONUS,
     research,
     researchCost,
@@ -192,12 +192,68 @@ function DormantSpells() {
     );
 }
 
+const pct = (share: number) => `+${Math.round(share * 100)}%`;
+const times = (m: number) => `×${fmt(m)}`;
+
+/** The magic nodes cleared this kingdom: a row per type, with what each gives and the total */
+function MagicNodes() {
+    const state = game();
+    const rows = nodeSummary(state);
+    if (rows.length === 0) return null;
+    const unmelded = rows.reduce((sum, r) => sum + r.unmelded, 0);
+    return (
+        <>
+            <h3>Magic nodes</h3>
+            <table class="nodes">
+                <thead>
+                    <tr>
+                        <th>Node</th>
+                        <th class="num">Melded</th>
+                        <th class="num">Each</th>
+                        <th class="num">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {rows.map((r) => {
+                        const b = NODE_BONUS[r.type];
+                        return (
+                            <tr key={r.type}>
+                                <td class={"node-name realm-" + b.realm}>{LAIRS[r.type].name}</td>
+                                <td class="num">
+                                    {r.melded}
+                                    {r.unmelded > 0 && <span class="bad"> (+{r.unmelded} not melded)</span>}
+                                </td>
+                                <td class="num">
+                                    <span class="mana">{pct(r.manaEach)} mana</span> · {times(r.bonusEach)} {b.label}
+                                </td>
+                                <td class="num">
+                                    {r.melded === 0 ? (
+                                        "—"
+                                    ) : (
+                                        <>
+                                            <span class="mana">{pct(r.manaTotal)} mana</span> · {times(r.bonusTotal)} {b.label}
+                                        </>
+                                    )}
+                                </td>
+                            </tr>
+                        );
+                    })}
+                </tbody>
+            </table>
+            <p class="hint">
+                {unmelded > 0 && (
+                    <span class="bad">Cleared nodes give nothing until you know Magic Spirit, which melds them. </span>
+                )}
+                Node mana adds to your mana multiplier; each node's realm bonus multiplies with the others.
+            </p>
+        </>
+    );
+}
+
 export function MagicPanel() {
     const state = game();
-    const stats = getStats(state);
     const realms: SpellRealm[] = ["arcane", ...REALMS.filter((r) => booksIn(state, r) > 0)];
-    const nodes = meldedNodes(state);
-    const unmelded = state.run.sites.filter((s) => s.cleared && LAIRS[s.type]?.magicNode).length - nodes.length;
+    const stats = getStats(state);
 
     return (
         <div class="panel">
@@ -220,12 +276,7 @@ export function MagicPanel() {
                 </p>
                 <CurrentProfile />
                 <DormantSpells />
-                {(nodes.length > 0 || unmelded > 0) && (
-                    <p>
-                        Magic nodes: {nodes.map((n) => `${LAIRS[n].name} (${NODE_BONUS[n]?.text})`).join(", ") || "none melded"}
-                        {unmelded > 0 && <span class="bad"> · {unmelded} cleared node(s) need Magic Spirit to meld</span>}
-                    </p>
-                )}
+                <MagicNodes />
             </section>
             <ContestSection />
             {realms.map((r) => (

@@ -10,6 +10,13 @@ export interface ChangeEntry {
 
 export const CHANGES: ChangeEntry[] = [
     {
+        date: "2026-10-12",
+        items: [
+            "New for wizards: Quests (their own tab, beside Magic and Ascension). Each Ascension brings 7 places of power; 3 are open at first and one more opens with each rival you banish. Send a hero with an escort to take one, alongside the frontier: it brings back casting skill, magic nodes or spellbooks for the rest of the Ascension, and more if the hero's calling (Warrior, Scout, Sage, Priest, Merchant, Beastmaster) suits the quest. A hero away gives no aura until they're back. Quests wait for you: progress is kept until you Ascend.",
+            "Auto-quest: the Ascension milestone Sworn Companions (3 Ascensions) sends idle heroes on quests; the Essence upgrade Questing Lodge makes it pick the best hero for each.",
+        ],
+    },
+    {
         date: "2026-10-11",
         items: [
             "Reset reports: after you Refound, Ascend or Planeshift, a card shows how it went against the last one: length, what you earned per minute or hour, and (for a Refound) whether you waited past the Fame-per-minute peak. Auto resets don't pop up by default (Options → Reset reports); the Chronicle says when one earned much less than the last, and Statistics → Last reset always has the latest.",

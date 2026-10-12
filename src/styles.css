@@ -1595,6 +1595,26 @@ ul.boons {
     color: var(--mastery);
 }
 
+/* Quests tab (DESIGN.md §16): an under-way quest is edged in the wizard's colour */
+.card.quest.active {
+    border-color: var(--insight);
+    box-shadow: inset 3px 0 0 var(--insight);
+}
+.card.quest .chips,
+.card.quest .progress {
+    margin: 4px 0;
+}
+.quest-pick {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 4px;
+}
+.quest-pick select {
+    flex: 1;
+    min-width: 0;
+}
+
 /* the report on the last reset, under the tabs (TODO #29 A1) */
 .reset-report {
     margin: 0 0 10px;

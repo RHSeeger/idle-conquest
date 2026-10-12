@@ -58,8 +58,14 @@ export function totalPicks(state: GameState): number {
     return BASE_PICKS + insightLevel(state, "extraPicks");
 }
 
+/** Books in a realm this Ascension: the profile's, plus those won on quests */
 export function booksIn(state: GameState, realm: Realm): number {
-    return state.ascension.books[realm] ?? 0;
+    return (state.ascension.books[realm] ?? 0) + (state.ascension.questBooks[realm] ?? 0);
+}
+
+/** This Ascension's books by realm (the profile's plus quests'), for spell power */
+export function effectiveBooks(state: GameState): Partial<Record<Realm, number>> {
+    return Object.fromEntries(REALMS.map((r) => [r, booksIn(state, r)]).filter(([, n]) => (n as number) > 0));
 }
 
 export function totalBooks(state: GameState): number {
@@ -507,9 +513,15 @@ export const NODE_BONUS: Record<string, { realm: Realm; text: string; label: str
 /** Each melded node: +25% mana, plus its realm bonus */
 export const NODE_MANA = 0.25;
 
-export function meldedNodes(state: GameState): string[] {
-    if (!knowsSpell(state, "magicSpirit")) return [];
+/** Magic nodes cleared this kingdom (melded only with Magic Spirit) */
+function clearedNodes(state: GameState): string[] {
     return state.run.sites.filter((s) => s.kind === "lair" && s.cleared && LAIRS[s.type]?.magicNode).map((s) => s.type);
+}
+
+/** Melded nodes: this kingdom's (with Magic Spirit), plus those won on quests this Ascension (melded already) */
+export function meldedNodes(state: GameState): string[] {
+    const fromRun = knowsSpell(state, "magicSpirit") ? clearedNodes(state) : [];
+    return [...fromRun, ...state.ascension.questNodes];
 }
 
 /** What one melded node gives now: its share of mana (added to the mana multiplier) and its realm bonus (a multiplier) */
@@ -534,10 +546,11 @@ export interface NodeSummary {
     bonusTotal: number;
 }
 
-/** The magic nodes cleared this kingdom, by type (Magic tab) */
+/** The magic nodes cleared this kingdom or won on quests, by type (Magic tab) */
 export function nodeSummary(state: GameState): NodeSummary[] {
     const melded = meldedNodes(state);
-    const cleared = state.run.sites.filter((s) => s.kind === "lair" && s.cleared && LAIRS[s.type]?.magicNode).map((s) => s.type);
+    const cleared = clearedNodes(state);
+    const spirit = knowsSpell(state, "magicSpirit");
     return Object.keys(NODE_BONUS)
         .map((type) => {
             const n = melded.filter((t) => t === type).length;
@@ -545,7 +558,7 @@ export function nodeSummary(state: GameState): NodeSummary[] {
             return {
                 type,
                 melded: n,
-                unmelded: cleared.filter((t) => t === type).length - n,
+                unmelded: spirit ? 0 : cleared.filter((t) => t === type).length,
                 manaEach: each.mana,
                 bonusEach: each.bonus,
                 manaTotal: each.mana * n,

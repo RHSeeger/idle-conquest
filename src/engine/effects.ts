@@ -51,6 +51,8 @@ export interface Breakdown {
 export const STAT_BASE: Record<string, number> = {
     // population (per city, thousands)
     "pop.max": 8,
+    /** Max population held but not grown into (a hero away on a quest, engine/quests.ts) */
+    "pop.maxHeld": 0,
     "pop.growth": 1,
     // food
     "food.perFarmer": 2,
@@ -76,6 +78,8 @@ export const STAT_BASE: Record<string, number> = {
     "summon.power": 1,
     /** Multiplies spell power, which wears down rival wizards' wards (engine/wards.ts) */
     "spell.power": 1,
+    /** Multiplies how fast quests are worn down (engine/quests.ts) */
+    "quest.power": 1,
     "cost.research": 1,
     "cost.summon": 1,
     /** Multiplies the siege damage of instant spells (Chaos familiar) */

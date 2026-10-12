@@ -7,7 +7,8 @@ import { BUILDING_ORDER } from "../content/buildings";
 import { SPELLS } from "../content/spells";
 import { canBuyBuilding } from "../engine/actions";
 import { isAutomationActive } from "../engine/automation";
-import { canHire, tavernOffers } from "../engine/heroes";
+import { canHire, heroesAllowed, tavernOffers } from "../engine/heroes";
+import { heroesOnQuests, openQuests } from "../engine/quests";
 import { availableSpells, canCastEnchantment, canResearch, isWizard } from "../engine/magic";
 import { MYRRAN_WORK_ORDER } from "../content/myrror";
 import { canBuyMyrranWork } from "../engine/planes";
@@ -53,7 +54,16 @@ function masteryAttention(state: GameState): string | null {
     return null;
 }
 
+function questsAttention(state: GameState): string | null {
+    if (!isWizard(state) || isAutomationActive(state, "quests") || !heroesAllowed(state)) return null;
+    const away = heroesOnQuests(state);
+    const idle = state.run.heroes.some((h) => !away.has(h.id));
+    const waiting = state.ascension.quests.some((q, k) => k < openQuests(state) && !q.done && !(q.active && q.hero));
+    return idle && waiting ? "A hero is free to go on a quest" : null;
+}
+
 const CHECKS: Partial<Record<string, (state: GameState) => string | null>> = {
+    quests: questsAttention,
     army: armyAttention,
     buildings: buildingsAttention,
     magic: magicAttention,

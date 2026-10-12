@@ -12,6 +12,7 @@ import { tickMastery } from "./mastery";
 import { tickMyrror } from "./planes";
 import { GameState } from "./state";
 import { tickWards } from "./wards";
+import { tickQuests } from "./quests";
 import { trackFameRate } from "./prestige";
 
 export function tick(state: GameState, dt: number): void {
@@ -22,6 +23,8 @@ export function tick(state: GameState, dt: number): void {
     tickMagic(state, getStats(state), dt);
     // Layer 2: spell power wears down the current rival wizard's wards
     tickWards(state, getStats(state), dt);
+    // ...and heroes on quests, alongside the frontier
+    tickQuests(state, getStats(state), dt);
     tickExploration(state, getStats(state), dt);
     // the army either raids a lair or besieges the frontier
     if (!tickLair(state, getStats(state), dt)) {

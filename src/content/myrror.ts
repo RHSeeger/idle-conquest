@@ -531,6 +531,17 @@ const essenceList: EssenceUpgradeDef[] = [
                 ? "You buy Insight upgrades yourself"
                 : "Unlocks auto-buy for Insight upgrades: replay your last Planeshift's purchase order, or buy the cheapest first",
     },
+    {
+        id: "questingLodge",
+        name: "Questing Lodge",
+        maxLevel: 1,
+        cost: () => 15,
+        effects: [],
+        text: (l) =>
+            l === 0
+                ? "Auto-quest sends the first idle hero"
+                : "Auto-quest sends the best idle hero for each quest (a favoured calling, then the highest rank)",
+    },
 ];
 
 export const ESSENCE_UPGRADES: Record<string, EssenceUpgradeDef> = Object.fromEntries(essenceList.map((u) => [u.id, u]));

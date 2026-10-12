@@ -7,7 +7,15 @@ import { GameState } from "../engine/state";
 import { Price, ProgressBar } from "./components";
 import { askConfirm } from "./Confirm";
 import { game } from "./game";
-import { Part, SectionHead } from "./kit";
+import { Chip, Part, SectionHead } from "./kit";
+import { CALLING_NAMES, HERO_CALLINGS, QUESTS } from "../content/quests";
+import { isWizard } from "../engine/magic";
+
+/** The quest a hero is away on, by name, or null */
+function questOf(state: GameState, heroId: string): string | null {
+    const q = state.ascension.quests.find((x) => x.active && !x.done && x.hero === heroId);
+    return q ? QUESTS[q.id].name : null;
+}
 
 /** One reset's effect on the current heroes, e.g. "Hall of Heroes keeps your 2 most experienced heroes when you Refound: …" */
 function carrySentence(state: GameState, event: string, upgrade: string, where: string, slots: number, kept: Hero[]): string {
@@ -130,6 +138,16 @@ export function HeroesSection() {
                                     </span>
                                 </div>
                                 <div class="card-text">{def.text(level)}</div>
+                                {isWizard(state) && (
+                                    <div class="chips">
+                                        {(HERO_CALLINGS[h.id] ?? []).map((c) => (
+                                            <Chip key={c} tone="insight" title="Calling: quests that favour it go faster and bring back more">
+                                                {CALLING_NAMES[c]}
+                                            </Chip>
+                                        ))}
+                                        {questOf(state, h.id) && <span class="hint">away on a quest: {questOf(state, h.id)} (no aura meanwhile)</span>}
+                                    </div>
+                                )}
                                 {next !== undefined ? (
                                     <ProgressBar
                                         class="xp"
@@ -156,7 +174,8 @@ export function HeroesSection() {
                     <p>
                         Hire a hero for <Price amount={cost} currency="gold" have={state.run.gold} />{" "}
                         <span class="hint">
-                            Heroes gain experience from every city you take by force (+1) and every lair you clear (+10).
+                            Heroes gain experience from every city you take by force (+1) and every lair you clear (+10)
+                            {isWizard(state) ? ", and plenty from quests" : ""}.
                         </span>
                     </p>
                     <div class="cards">
@@ -170,6 +189,15 @@ export function HeroesSection() {
                                     <div class="card-text">
                                         {def.text(1)} at first, {def.text(9)} as a Demi-God
                                     </div>
+                                    {isWizard(state) && (
+                                        <div class="chips">
+                                            {(HERO_CALLINGS[id] ?? []).map((c) => (
+                                                <Chip key={c} tone="insight" title="Calling: quests that favour it go faster and bring back more">
+                                                    {CALLING_NAMES[c]}
+                                                </Chip>
+                                            ))}
+                                        </div>
+                                    )}
                                     <div class="card-cost">
                                         <button disabled={!canHire(state, id)} onClick={() => hireHero(state, id)}>
                                             Hire

@@ -24,6 +24,8 @@ const SHRINK_RATE = 0.05;
 export interface CityEconomy {
     city: City;
     maxPop: number;
+    /** Population kept without growing into it: maxPop plus what a hero away on a quest holds */
+    holdPop: number;
     growth: number;
     farmers: number;
     workers: number;
@@ -46,6 +48,7 @@ export interface RealmEconomy {
 /** Everything about a city that depends only on its race (cached per Stats object) */
 interface RaceRates {
     maxPop: number;
+    heldPop: number;
     growthMult: number;
     perFarmer: number;
     flatFood: number;
@@ -68,6 +71,7 @@ function raceRates(stats: Stats, race: RaceId): RaceRates {
         const prodMult = stats.get("prod.mult", race);
         rates = {
             maxPop: Math.max(1, stats.num("pop.max", race)),
+            heldPop: Math.max(0, stats.num("pop.maxHeld", race)),
             growthMult: Math.max(0.1, stats.num("pop.growth", race)),
             perFarmer: Math.max(0.5, stats.num("food.perFarmer", race)),
             flatFood: stats.num("food.flat", race),
@@ -89,9 +93,15 @@ export function cityEconomy(state: GameState, stats: Stats, city: City): CityEco
     const r = raceRates(stats, city.race);
     const pop = city.pop;
     const maxPop = r.maxPop;
+    // population above maxPop but within what's held (a hero away on a quest) neither grows nor shrinks
+    const holdPop = maxPop + r.heldPop;
 
     const growth =
-        pop < maxPop ? ECONOMY_TUNING.growthScale * r.growthMult * ((maxPop - pop) / 2 + 1) : -SHRINK_RATE * (pop - maxPop);
+        pop < maxPop
+            ? ECONOMY_TUNING.growthScale * r.growthMult * ((maxPop - pop) / 2 + 1)
+            : pop > holdPop
+              ? -SHRINK_RATE * (pop - holdPop)
+              : 0;
 
     // farmers feed the citizens; food from buildings is surplus that goes to the stockpile
     const farmers = Math.min(pop, pop / r.perFarmer);
@@ -106,7 +116,7 @@ export function cityEconomy(state: GameState, stats: Stats, city: City): CityEco
     const gold = r.goldPerTaxpayer.times(taxpayers);
     const knowledge = r.knowledgePerPop.times(pop);
 
-    return { city, maxPop, growth, farmers, workers, taxpayers, foodSurplus, production, gold, knowledge };
+    return { city, maxPop, holdPop, growth, farmers, workers, taxpayers, foodSurplus, production, gold, knowledge };
 }
 
 export function realmEconomy(state: GameState, stats: Stats): RealmEconomy {
@@ -138,7 +148,8 @@ export function tickEconomy(state: GameState, stats: Stats, dt: number): RealmEc
     for (const c of econ.cities) {
         const next = c.city.pop + c.growth * dt;
         // never overshoot the maximum in either direction (matters for large offline steps)
-        c.city.pop = c.growth >= 0 ? Math.min(next, c.maxPop) : Math.max(next, c.maxPop);
+        if (c.growth > 0) c.city.pop = Math.min(next, c.maxPop);
+        else if (c.growth < 0) c.city.pop = Math.max(next, c.holdPop);
     }
     return econ;
 }

@@ -198,6 +198,32 @@ export interface AscensionState {
     skillMana: Decimal;
     /** Share (0..1) of mana income poured into casting skill (the player's choice, kept through resets) */
     skillShare: number;
+    /** This Ascension's quests (engine/quests.ts, DESIGN.md §16) and what they've given */
+    quests: QuestState[];
+    /** Which Ascension the quests belong to (they're dealt anew when it changes) */
+    questKey: string;
+    /** Casting skill from quests, as a share (0.15 = +15%) */
+    questSkill: number;
+    /** Magic nodes won on quests (node lair types), melded at once */
+    questNodes: string[];
+    /** Spellbooks won on quests, on top of the profile's */
+    questBooks: Partial<Record<Realm, number>>;
+}
+
+/** One quest of the Ascension: who's on it and how far along it is */
+export interface QuestState {
+    /** Quest id (content/quests.ts) */
+    id: string;
+    /** Strength worn down so far (kept when it stops, for as long as the Ascension lasts) */
+    progress: Decimal;
+    /** Under way: with `hero`, or without a hero (at most one at a time) */
+    active: boolean;
+    hero: string | null;
+    done: boolean;
+    /** Done with a hero of a favoured calling (the bigger reward) */
+    matched: boolean;
+    /** What it brought back, once done ("2 Life spellbooks") */
+    brought?: string;
 }
 
 /** Layer 3 (Planeshift) state. Everything here survives Refounds and Ascensions. */
@@ -417,6 +443,8 @@ export interface Automation {
     insightMode: "chronicle" | "cheapest";
     /** Auto-buy Myrran works (Eternal Return, Planeshift milestone) */
     works: boolean;
+    /** Auto-quest: send idle heroes on quests (Ascension milestone; the best hero for each with Questing Lodge, Essence) */
+    quests: boolean;
     /** Myrran works auto-buy leaves alone (kept through every reset) */
     worksOff: string[];
     /** Myrror boons: repeat the choice last made for the same race or wizard instead of asking */
@@ -581,6 +609,11 @@ export function newGame(now = Date.now()): GameState {
             wardProgress: D(0),
             skillMana: D(0),
             skillShare: 0.25,
+            quests: [],
+            questKey: "",
+            questSkill: 0,
+            questNodes: [],
+            questBooks: {},
         },
         planes: {
             planeshifts: 0,
@@ -626,6 +659,7 @@ export function newGame(now = Date.now()): GameState {
             insight: true,
             insightMode: "chronicle",
             works: true,
+            quests: true,
             worksOff: [],
             repeatBoons: true,
             unitMode: "doctrine",

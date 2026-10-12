@@ -205,7 +205,7 @@ function fmtNum(n: number): string {
 
 // --- Ascension milestones ------------------------------------------------------
 
-export type AscensionMilestoneId = "legacyAutomation" | "legacyRenown" | "keepAnnals" | "grimoire" | "fameEcho";
+export type AscensionMilestoneId = "legacyAutomation" | "legacyRenown" | "keepAnnals" | "grimoire" | "questers" | "fameEcho";
 
 export interface AscensionMilestoneDef {
     id: AscensionMilestoneId;
@@ -238,6 +238,12 @@ export const ASCENSION_MILESTONES: AscensionMilestoneDef[] = [
         ascensions: 3,
         name: "Grimoire",
         text: "Unlock auto-research and auto-cast: your apprentices research and cast spells for you.",
+    },
+    {
+        id: "questers",
+        ascensions: 3,
+        name: "Sworn Companions",
+        text: "Unlock auto-quest: idle heroes set out on the next open quest by themselves. Switch it on or off on the Quests tab, or with its marker in At a glance.",
     },
     {
         id: "fameEcho",

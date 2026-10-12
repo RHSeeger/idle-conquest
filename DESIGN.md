@@ -487,6 +487,7 @@ The layers make this worse: each one multiplies everything below it, so lower-la
 | P5 | **Remembered.** A choice made once is offered again as the default, as the planned profile and the Chronicle are now. This keeps §5's replay rule: replays stay free of re-thinking. | 5 |
 | P6 | **Automation carries out your plan, not its own.** Automation follows the choices you made instead of making them for you. | the feel of playing |
 | P7 | **Waiting doesn't replace thinking.** Grinding can catch up, but much more slowly than choosing well; otherwise P1 fails. | 1 |
+| P8 | **Nothing is lost while you're away** (added 2026-10-11). You can put the game down at any point: a thing left undone waits for you, and automation can carry on, but nothing undoes progress. Mechanics that punish inattention until automated (rivals striking back, timed responses) are out. | the feel of playing |
 
 ### 14.4 Proposals
 
@@ -726,3 +727,140 @@ Two small things can happen at any time: describing the beachhead races on their
 Correction (2026-10-10): these sim totals summed each run's length, which restarts when automation Refounds or Ascends mid-run, so times after the first Planeshift were undercounted. On the game's clock the Spell is cast at about 1d 2h (§8 Pacing). The "after" times above from the first Planeshift on are low by the same cause.
 
 Layers 2 and 3 become trivial only late, through Essence (Astral Sorcery, Wellspring), which is the "upper layer may trivialise" rule at work.
+
+---
+
+## 16. Quests: things to do as a Wizard (TODO #45)
+
+Status: **proposal 2026-10-11, answered 2026-10-12 (16.6): Layer B, the Ascension stretch on Arcanus. Built as a first pass (16.7).** The direction is yours: option B from the discussion, with heroes. Option A (rivals that strike back) was rejected by P8: it loses progress while you're away.
+
+### 16.1 The problem
+
+What you *do* in each stretch, and where it stops:
+
+- **A kingdom:** conquer cities, up to one of a second race. Then Refound.
+- **The kingdoms before Ascending:** conquer several races, up to the first rival wizard's domain, and gather spellbooks. The wards stop you, so you Ascend.
+- **As a Wizard:** much the same, plus one new action: banish the rival you were stopped at. Researching the Rite is background noise. Then Planeshift.
+
+The wizard layer has plenty of mechanics (realms, retorts, the contest), and its starting choices are robust, but it has only one action beyond the stretch before. It needs more to do *during* the layer, not another choice going in.
+
+### 16.2 The idea
+
+- **Quests:** places of power you choose to take on as a Wizard. They wait for you, like magic nodes and lairs, so nothing is lost by ignoring one (P8).
+- **Each quest needs a hero.** The hero leads forces there. The right hero for a quest makes it faster, or its reward bigger, or both.
+- **Without a hero** you can still try, but it takes much longer.
+- **Automation comes later, as a purchase with two levels:** (1) send the first available hero; (2) send the best hero for the job.
+
+### 16.3 How it would work (recommendations)
+
+**Where quests come from.** Recommend: **a set per Ascension**, not per kingdom. About 6–8, some there when you Ascend and more as each rival falls. They last the whole Ascension, through Refounds, so a Refound never throws one away (P8). The rewards last the Ascension too. The next Ascension brings a new set.
+
+*Why not found by exploration like lairs:* lairs belong to one kingdom, so a Refound would erase a half-done quest. That would be a loss, and it keeps quests in Layer 1's rhythm.
+
+**Kinds of quest, and heroes' callings.** Each hero gets one or two **callings**, and each quest favours one or two of them:
+
+| Calling | Heroes | Favoured by (examples) |
+|---|---|---|
+| Warrior | Gunther, Sir Harold, Taki, Warrax | Dragon's Lair, Abandoned Fortress |
+| Scout | Shuri, Marcus | Hidden Grove, Lost Pass |
+| Sage | Zaldron, Malleus, Greyfairer | Ruined Library, Sorcery Spire |
+| Priest | Serena, Elana | Fallen Temple, Haunted Barrow |
+| Merchant | Valana, Brax | Lost Mine, Smugglers' Hold |
+| Beastmaster | Rakir | Beast Den, Wyvern Aerie |
+
+**Speed.** Each quest has a strength to wear down, like a city's defense.
+- **Escort:** a hero's escort is a fixed share of the army's power. Recommend: the quest runs **alongside** the frontier, so a quest doesn't stop the siege.
+- **One quest per hero at a time.** More heroes means more quests at once, which is a reason to fill the six places.
+- **Multipliers:**
+  - the hero's level (rank);
+  - ×2–3 for a matching calling;
+  - the layer's own upgrades (Insight).
+- **Rule 1 of §15** (a lower layer helps but can't trivialise): the army's share counts with diminishing returns, as mana does for spell power.
+- **No hero:** one quest at a time, at a fifth of the speed.
+
+**The hero's cost.** Recommend: **a hero away on a quest doesn't give their aura** (Brax's production, Zaldron's knowledge…) until they're back. Picking a hero is then a trade-off, not just a match: send Brax, who's right for the Lost Mine, and lose his production meanwhile, or send someone weaker. This is a cost you choose, not a loss while you're away, so P8 holds.
+
+**Rewards.** These should feed the Wizard's own layer: spell power, the contest and Insight. They should not feed the kingdom, which Fame already covers. Candidates:
+- **a spellbook** for this Ascension: more spell power, higher rarities, more Insight;
+- **a spell**, learned at once;
+- **casting skill**;
+- **a magic node** (mana);
+- **Insight**: a bonus on your next Ascension;
+- **a hero**: a captive freed, joining at a higher rank;
+- **later, an item** for a hero (Master of Magic's artifacts).
+
+A matching hero could raise the reward as well as the speed, by ×1.5 or one size up (a Rare spell instead of Uncommon). Quests also give heroes plenty of experience, which pairs with Eternal Companions.
+
+**The choice it adds.** You have more quests than heroes, and each hero is better at some quests than others and costs their aura while away. So each Ascension asks which quests to do first (for the rewards that help against this Ascension's rivals) and whom to send. The quests are known when you Ascend, so you can plan around them (P3, P5).
+
+**Automation.**
+- Level 1 sends the first available hero to the next quest, in an order you set (P6).
+- Level 2 sends the best hero for each quest.
+
+Recommend: level 1 as an **Ascension milestone**, so quests aren't manual-only for hours, and level 2 bought with **Planar Essence**, as Astral Archivists is for Insight.
+
+**Where it shows.** Recommend: a **Quests** section on the **Army** tab, under Heroes, since that's where you pick heroes. At a glance gets a Quests line.
+
+### 16.4 What it changes
+
+- The wizard layer gains a sequence of actions with its own decisions: which quests, in what order, and whom to send. These run beside the contest and feed it.
+- Heroes matter more as a Wizard: their callings, their ranks, and how many places you've filled.
+- It touches Layer 1's power only through a damped channel, so §15's rules hold.
+- Like the contest, quest rewards need tuning in the simulator, and the bot needs to run quests.
+
+### 16.5 Not chosen
+
+- **Rivals strike back** (A): breaks P8.
+- **Quests from exploration, per kingdom:** a Refound would erase them.
+- **Quests that take the whole army** (as lairs do): this pauses the frontier, so every quest would cost conquest. It's simpler, but it makes quests something to put off. It's a fallback if parallel quests feel too free.
+
+### 16.6 Decisions for you
+
+**Your answers (2026-10-12):**
+1. Per Ascension, lasting through Refounds.
+2. Alongside the frontier, with an escort.
+3. A hero away gives no aura, with one exception: Elana's added max population stays while she's away, but no growth above the normal max happens until she's back.
+4. A matching hero improves both speed (×2–3) and reward (one size up).
+5. The candidates sound good but will need tuning. Your idea: a spell from a realm the rival controls, so you get one Death spell without any Death books; if so, spells may belong in the second reward level. ("Next" and "later" in the recommendation meant the order to build them in, not purchases.)
+6. Level 1 of the automation as an Ascension milestone, level 2 bought with Planar Essence.
+7. Its own **Quests tab**, in the wizard group with Magic and Ascension (Army and Magic are already full).
+
+**Settled 2026-10-12:** quests belong to **Layer B**, the stretch from the first Ascension to the first Planeshift, on Arcanus, as §16.1–16.3 say. (Answers 6 and 7 were first given assuming Myrror, then revised.) Your names for the stretches: **Layer A** from the start through the Refounds, **B** the Ascensions, **C** after the first Planeshift (Planes), **D** after Mastery (challenges).
+
+### 16.7 As built (first pass, 2026-10-12)
+
+- **Quests** (`content/quests.ts`, `engine/quests.ts`, Quests tab): 12 kinds; 7 dealt per Ascension (seeded by Planeshifts, Masteries, the Ascension number and any challenge). 3 are open at first, plus one per rival banished. They're dealt anew whenever that key changes, and the last Ascension's rewards are cleared with them.
+- **Strength:** the k-th quest has 4e4 × 1.6^k.
+- **Speed** = escort × hero × `quest.power`.
+  - Escort: 1 + log₁₀(1 + army power).
+  - Hero: their level (1–9), ×2.5 for a favoured calling.
+  - Without a hero: ×0.2, one such quest at a time.
+- **Callings:** Warrior (Brax, Gunther, Sir Harold, Taki, Warrax), Scout (Shuri, Marcus), Sage (Zaldron, Malleus, Greyfairer), Priest (Serena, Elana, Taki), Merchant (Valana, Brax), Beastmaster (Rakir, Greyfairer).
+- **Rewards**, plain / favoured:
+  - casting skill +15% / +25% (a multiplier on trained skill);
+  - 1 / 2 magic nodes of the quest's realm, melded at once (no Magic Spirit needed);
+  - 1 / 2 spellbooks in whichever of your realms best counters the current rival. These count for spell power, rarities and matchups, but not for picks or the profile.
+  - Heroes also get 15 + 10k experience.
+- **Auras:** a hero away gives none. The `pop.max` a hero adds becomes the new `pop.maxHeld`: cities neither grow into it nor shrink out of it.
+- **Automation:**
+  - Sworn Companions (Ascension milestone, 3 Ascensions) unlocks auto-quest: idle heroes go to the open quests in order. With no heroes, one quest goes on without one.
+  - Questing Lodge (Essence, 15) makes it pick the fastest hero for each quest, which means a favoured calling, then rank. The bot plays as if it owns Questing Lodge.
+- **UI:**
+  - Quests tab in the wizard group: a card per open quest with a "Led by" pick and its time.
+  - Hero cards show callings, and "away on a quest".
+  - At a glance has a Quests line; the tab gets a "!" when a hero is free and a quest waits.
+- **Not built yet:** the reward kinds for later (an Insight bonus, freed heroes, items), and your idea of a spell from the rival's realm (maybe as a favoured-hero reward).
+- **Simulator** (`runs=40 hours=16`, with quests against `quests=0`):
+  - The first Ascension stretch finishes its first 3 quests and leaves the 2 that open later.
+  - First Ascension (3h18m) and first Planeshift (5h39m) are unchanged, and the total is 13h49m against 13h44m.
+  - **Tuning question:** once Ascensions take only minutes (Layer C), 0–2 quests get done each. Quests matter in Layer B but fade after it. If they should stay relevant, their speed could grow with Insight or Essence upgrades.
+
+The questions as asked:
+
+1. **Per Ascension, lasting through Refounds** (recommended), or per kingdom?
+2. **Alongside the frontier with an escort** (recommended), or the whole army, as lairs?
+3. **A hero away gives no aura** (recommended), or keep auras on?
+4. **A matching hero: speed, reward, or both?** Recommended: speed ×2–3 and reward one size up.
+5. **Rewards:** which of the candidates? Recommended to start: spellbooks, spells, casting skill and magic nodes; Insight bonus and freed heroes after that; items later.
+6. **Automation:** level 1 as an Ascension milestone and level 2 with Essence (recommended), or both with Essence?
+7. **Where:** the Army tab under Heroes (recommended), or the Magic tab?

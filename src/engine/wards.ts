@@ -24,7 +24,7 @@ import { getStats, registerCollector } from "./collect";
 import { D, Decimal, ZERO } from "./decimal";
 import { Stats } from "./effects";
 import { fmtTime } from "./format";
-import { isWizard, knowsSpell } from "./magic";
+import { effectiveBooks, isWizard, knowsSpell } from "./magic";
 import { bump, GameState, log } from "./state";
 
 // --- The rivals ---
@@ -90,8 +90,13 @@ export function towersUnsealed(state: GameState): number {
 
 // --- Casting skill ---
 
-/** Casting skill: SKILL_TUNING.base, plus a point for every ×growth of the mana poured into it this Ascension */
+/** Casting skill: SKILL_TUNING.base, plus a point for every ×growth of the mana poured into it this Ascension, raised by quests */
 export function castingSkill(state: GameState): number {
+    return trainedSkill(state) * (1 + state.ascension.questSkill);
+}
+
+/** Casting skill from mana alone (manaToNextSkill counts in these points) */
+function trainedSkill(state: GameState): number {
     const t = SKILL_TUNING;
     return t.base + Math.log(1 + state.ascension.skillMana.div(t.mana).toNumber()) / Math.log(t.growth);
 }
@@ -99,7 +104,7 @@ export function castingSkill(state: GameState): number {
 /** Mana still to pour for the next whole point of casting skill */
 export function manaToNextSkill(state: GameState): Decimal {
     const t = SKILL_TUNING;
-    const next = Math.floor(castingSkill(state) - t.base) + 1;
+    const next = Math.floor(trainedSkill(state) - t.base) + 1;
     return D(t.mana).times(Math.pow(t.growth, next) - 1).minus(state.ascension.skillMana).max(0);
 }
 
@@ -131,7 +136,7 @@ export function setSkillShare(state: GameState, share: number): void {
 
 /** Your magic by realm: each realm's share of your spellbooks (Arcane alone without books) */
 export function realmShares(state: GameState): Array<{ realm: Realm | "arcane"; share: number }> {
-    const books = state.ascension.books;
+    const books = effectiveBooks(state);
     const total = REALMS.reduce((sum, r) => sum + (books[r] ?? 0), 0);
     if (total <= 0) return [{ realm: "arcane", share: 1 }];
     return REALMS.filter((r) => (books[r] ?? 0) > 0).map((r) => ({ realm: r, share: (books[r] ?? 0) / total }));
@@ -146,7 +151,7 @@ export function matchupFor(books: Partial<Record<Realm, number>>, wizard: string
 }
 
 export function matchupAgainst(state: GameState, wizard: string): number {
-    return matchupFor(state.ascension.books, wizard);
+    return matchupFor(effectiveBooks(state), wizard);
 }
 
 /** Spell power per second against a rival's wards */

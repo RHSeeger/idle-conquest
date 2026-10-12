@@ -74,6 +74,7 @@ import { SPELLS } from "../content/spells";
 import { GameState } from "./state";
 import { currentRival, wardSecondsLeft } from "./wards";
 import { markAutoReset } from "./report";
+import { autoQuests } from "./quests";
 import { hireCost, heroesAllowed, isTavernOpen } from "./heroes";
 import { MAX_HEROES } from "../content/heroes";
 
@@ -94,7 +95,8 @@ export type AutomationKind =
     | "ascend"
     | "fame"
     | "insight"
-    | "works";
+    | "works"
+    | "quests";
 
 /** Auto-Refound/Ascend also fire when no Arcanus city has fallen for this long (seconds) */
 export const AUTO_PRESTIGE_STALL_SECONDS = 600;
@@ -128,7 +130,14 @@ export function isAutomationUnlocked(state: GameState, kind: AutomationKind): bo
         case "insight":
             // likewise the owned level
             return essenceUpgradeLevel(state, "astralArchivists") > 0;
+        case "quests":
+            return hasAscensionMilestone(state, "questers");
     }
+}
+
+/** Auto-quest sends the best hero for each quest (Questing Lodge, Essence; the owned level, as above) */
+export function isBestQuestPick(state: GameState): boolean {
+    return essenceUpgradeLevel(state, "questingLodge") > 0;
 }
 
 // --- Fame upgrades (Royal Stewards) ---
@@ -669,6 +678,8 @@ function runAutomationSteps(state: GameState, force: boolean, budgeted: boolean)
     if (on("settlers")) autoSettle(state);
     if (on("lairs")) autoRaid(state);
     if (isWizard(state) && on("cast")) autoCast(state);
+    // the bot (force) plays as a player who picks the best hero
+    if (isWizard(state) && on("quests")) autoQuests(state, force || isBestQuestPick(state));
     if (on("units")) {
         // while saving for a building, leave half of what's on hand
         const reserve = {

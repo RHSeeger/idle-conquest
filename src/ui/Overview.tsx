@@ -37,6 +37,7 @@ import { GameState } from "../engine/state";
 import { armyOrders } from "./ArmyPanel";
 import { myrrorPower, myrrorTarget } from "../engine/planes";
 import { myrrorShare } from "../engine/army";
+import { openQuests, questSecondsLeft } from "../engine/quests";
 import { game } from "./game";
 
 /** Seconds until a price is affordable at current income (0 if it already is) */
@@ -93,6 +94,7 @@ const AUTO_NAMES: Partial<Record<AutomationKind, string>> = {
     refound: "Auto-Refound",
     ascend: "Auto-Ascend",
     works: "Myrran works auto-buy",
+    quests: "Auto-quest",
 };
 
 /** The marker's tooltip; warns when switching auto-Refound/Ascend on would act at once */
@@ -281,6 +283,7 @@ export function Overview(props: { onOpen: OpenTab }) {
                         </Line>
                     )}
                     {isWizard(state) && <RivalsLine state={state} stats={stats} onOpen={onOpen} />}
+                    {isWizard(state) && <QuestsLine state={state} stats={stats} onOpen={onOpen} />}
                     {(asc.books > 0 || asc.wizardsGuild || isWizard(state)) && (
                         <Line
                             icon="◈"
@@ -334,6 +337,31 @@ function RivalsLine(props: { state: GameState; stats: Stats; onOpen: OpenTab }) 
     }
     return (
         <Line icon="♜" label="Rivals" tab="magic" onOpen={props.onOpen} fact={fact}>
+            {text}
+        </Line>
+    );
+}
+
+/** Quests: the soonest one done, how many are under way and waiting */
+function QuestsLine(props: { state: GameState; stats: Stats; onOpen: OpenTab }) {
+    const { state } = props;
+    const quests = state.ascension.quests;
+    const open = openQuests(state);
+    const running = quests.map((q, k) => ({ q, k })).filter(({ q }) => q.active && !q.done);
+    const waiting = quests.filter((q, k) => k < open && !q.done && !q.active).length;
+    const more = quests.length - open;
+    let fact: Fact;
+    let text: string;
+    if (running.length > 0) {
+        fact = wait(Math.min(...running.map(({ k }) => questSecondsLeft(state, props.stats, k))), "Done");
+        text = `${running.length} under way${waiting > 0 ? ` · ${waiting} waiting` : ""}`;
+    } else if (waiting > 0) {
+        [fact, text] = [{ fact: "—", status: "stuck", tip: "No quest under way" }, `${waiting} waiting for a hero`];
+    } else {
+        [fact, text] = [DONE, more > 0 ? `every open quest done · ${more} more as rivals fall` : "every quest of this Ascension done"];
+    }
+    return (
+        <Line icon="⚑" label="Quests" tab="quests" onOpen={props.onOpen} auto="quests" fact={fact}>
             {text}
         </Line>
     );

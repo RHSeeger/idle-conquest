@@ -30,6 +30,7 @@ import { essenceOnPlaneshift } from "../src/engine/planes";
 import { manaRate } from "../src/engine/magic";
 import { masteryCost } from "../src/engine/mastery";
 import { CHALLENGE_TUNING, MASTERY_TUNING } from "../src/content/challenges";
+import { QUEST_TUNING } from "../src/content/quests";
 
 const args = Object.fromEntries(
     process.argv.slice(2).map((a) => {
@@ -52,6 +53,9 @@ if (args.oindex) FRONTIER_TUNING.openingIndex = Number(args.oindex);
 if (args.ogrowth) FRONTIER_TUNING.openingGrowth = Number(args.ogrowth);
 if (args.smana) MASTERY_TUNING.mana = Number(args.smana);
 if (args.cupgrades) CHALLENGE_TUNING.upgradeLevels = Number(args.cupgrades);
+// quests=0 deals none (to compare against the game without them)
+if (args.quests) QUEST_TUNING.count = Number(args.quests);
+if (args.qbase) QUEST_TUNING.base = Number(args.qbase);
 
 const DT = 1;
 const BOT_EVERY = 5;
@@ -177,7 +181,7 @@ if (runs <= 1) {
     console.log(`Sites ${r.sites}, spellbooks ${r.books}, Ascension ready at ${r.ascensionReady === null ? "never" : fmtTime(r.ascensionReady)}`);
 } else {
     console.log(
-        "run | ps | asc | race        | length   | total    | frontier | fame | reg2     wall(40) | gap      | sites books  | spells | wiz | myrror | asc ready | L3 ready  | mastery           | mana/s   know/s   | ended",
+        "run | ps | asc | race        | length   | total    | frontier | fame | reg2     wall(40) | gap      | sites books  | spells | wiz | quests | myrror | asc ready | L3 ready  | mastery           | mana/s   know/s   | ended",
     );
     let totalTime = 0;
     for (let i = 1; i <= runs; i++) {
@@ -197,11 +201,13 @@ if (runs <= 1) {
         const wall = r.regionTimes[5] !== undefined ? fmtTime(r.regionTimes[5]) : "-";
         const spells = state.ascension.spellsKnown.length;
         const wiz = state.ascension.wizardsDefeatedThisAscension.length;
+        // quests done this Ascension, of those dealt
+        const quests = `${state.ascension.quests.filter((q) => q.done).length}/${state.ascension.quests.length}`;
         const insight = insightOnAscend(state).toString();
         const essence = essenceOnPlaneshift(state).toString();
         const ended = i < runs ? botEndRun(state) : "";
         console.log(
-            `${String(i).padStart(3)} | ${String(ps).padStart(2)} | ${String(asc).padStart(3)} | ${RACES[r.race].plural.padEnd(11)} | ${fmtTime(r.time).padEnd(8)} | ${fmtTime(totalTime).padEnd(8)} | ${String(r.frontier).padStart(8)} | ${r.fame.padStart(4)} | ${reg2.padEnd(8)} ${wall.padEnd(8)} | ${fmtTime(r.longestGap).padEnd(8)} | ${String(r.sites).padStart(5)} ${r.books.padEnd(6)} | ${String(spells).padStart(6)} | ${String(wiz).padStart(3)} | ${myrror.padEnd(6)} | ${(r.ascensionReady === null ? "-" : fmtTime(r.ascensionReady)).padEnd(9)} | ${(r.planeshiftReady === null ? "-" : fmtTime(r.planeshiftReady)).padEnd(9)} | ${mastery.padEnd(17)} | ${rates} | ${ended}${ended === "ascend" ? ` (+${insight} Insight)` : ended === "planeshift" ? ` (+${essence} Essence)` : ""}`,
+            `${String(i).padStart(3)} | ${String(ps).padStart(2)} | ${String(asc).padStart(3)} | ${RACES[r.race].plural.padEnd(11)} | ${fmtTime(r.time).padEnd(8)} | ${fmtTime(totalTime).padEnd(8)} | ${String(r.frontier).padStart(8)} | ${r.fame.padStart(4)} | ${reg2.padEnd(8)} ${wall.padEnd(8)} | ${fmtTime(r.longestGap).padEnd(8)} | ${String(r.sites).padStart(5)} ${r.books.padEnd(6)} | ${String(spells).padStart(6)} | ${String(wiz).padStart(3)} | ${quests.padStart(6)} | ${myrror.padEnd(6)} | ${(r.ascensionReady === null ? "-" : fmtTime(r.ascensionReady)).padEnd(9)} | ${(r.planeshiftReady === null ? "-" : fmtTime(r.planeshiftReady)).padEnd(9)} | ${mastery.padEnd(17)} | ${rates} | ${ended}${ended === "ascend" ? ` (+${insight} Insight)` : ended === "planeshift" ? ` (+${essence} Essence)` : ""}`,
         );
     }
     const p = state.prestige;

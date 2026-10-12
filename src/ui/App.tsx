@@ -32,6 +32,7 @@ import { Overview } from "./Overview";
 import { PlanesPanel } from "./PlanesPanel";
 import { JumpBar } from "./kit";
 import { ResetReportCard } from "./ResetReport";
+import { QuestsPanel } from "./QuestsPanel";
 import { insightOnAscend, planeshiftProgress } from "../engine/ascension";
 import { essenceOnPlaneshift, isMyrrorOpen } from "../engine/planes";
 
@@ -44,6 +45,7 @@ type TabId =
     | "magic"
     | "prestige"
     | "ascension"
+    | "quests"
     | "planes"
     | "mastery"
     | "stats"
@@ -79,6 +81,7 @@ const TABS: TabDef[] = [
         render: () => <ExplorationPanel />,
     },
     { id: "magic", label: "Magic", group: "wizard", visible: () => isWizard(game()), render: () => <MagicPanel /> },
+    { id: "quests", label: "Quests", group: "wizard", visible: () => isWizard(game()), render: () => <QuestsPanel /> },
     {
         id: "ascension",
         label: "Ascension",

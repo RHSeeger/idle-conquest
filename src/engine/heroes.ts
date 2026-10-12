@@ -5,6 +5,7 @@ import { HEROES, HERO_ORDER, heroLevel, MAX_HEROES, TAVERN_SIZE } from "../conte
 import { challengeBans } from "../content/challenges";
 import { getStats, registerCollector } from "./collect";
 import { D, Decimal } from "./decimal";
+import { heroesOnQuests } from "./quests";
 import { hash } from "./rng";
 import { bump, GameState, log } from "./state";
 
@@ -117,8 +118,17 @@ export function grantHeroXp(state: GameState, xp: number): void {
 registerCollector((state, stats) => {
     // heroes carried into Kali's challenge sit it out
     if (!heroesAllowed(state)) return;
+    const away = heroesOnQuests(state);
     for (const h of state.run.heroes) {
         const def = HEROES[h.id];
-        if (def) stats.applyEffects(`${def.name} ${def.title}`, def.effects, heroLevel(h.xp));
+        if (!def) continue;
+        const name = `${def.name} ${def.title}`;
+        if (!away.has(h.id)) {
+            stats.applyEffects(name, def.effects, heroLevel(h.xp));
+            continue;
+        }
+        // away on a quest: no aura, except that the max population they add is held (cities don't grow into it)
+        const held = def.effects.filter((e) => e.stat === "pop.max").map((e) => ({ ...e, stat: "pop.maxHeld" }));
+        if (held.length > 0) stats.applyEffects(`${name} (away on a quest)`, held, heroLevel(h.xp));
     }
 });

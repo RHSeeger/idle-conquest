@@ -46,6 +46,10 @@ export const TAB_INTROS: Record<string, { title: string; text: string }> = {
         title: "Ascension",
         text: "The next layer: become a wizard. Ascending resets your Refounds and Fame but gives Insight and a wizard profile of spellbooks and retorts. Each Ascension faces four rival wizards (the planner shows the next ones): Insight comes mostly from banishing them. The requirements are listed here.",
     },
+    quests: {
+        title: "Quests",
+        text: "Places of power wait across Arcanus: send a hero with an escort to take one, alongside the frontier. Each brings back something for this Ascension (casting skill, magic nodes, spellbooks), more if the hero's calling suits it. A hero away gives no aura until they're back. More quests open as you banish rivals.",
+    },
     planes: {
         title: "Planes",
         text: "Through a banished wizard's Tower of Wizardry lies Myrror, a second world. Planeshift to open it, then send part of your army there. Your power reaches Myrror only through the Towers: each one you take on Myrror is another planar link, carrying more across. Myrror's conquests last through Refounds and Ascensions.",

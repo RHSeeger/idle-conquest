@@ -45,23 +45,28 @@ const BUY_AMOUNTS: Settings["buyAmount"][] = [1, 10, 100, "next", "max"];
 const RECRUIT_SHARES = [0.1, 0.25, 0.5, 0.75, 1];
 
 /** One line saying what the army is doing right now (also used in the resource bar) */
-export function armyActivity(state: GameState): string {
+/** What the army is doing, and how long until it's done (null: halted or idle) */
+export function armyOrders(state: GameState): { text: string; eta: number | null } {
     const stats = getStats(state);
     const raiding = lairTarget(state);
     if (raiding) {
         const power = siegePower(state, stats, raiding.traits);
         const eta = power.gt(0) ? raiding.defense!.minus(state.run.lairSiege).div(power).toNumber() : Infinity;
-        return `Raiding the ${siteName(raiding)} · ${fmtTime(eta)}`;
+        return { text: `Raiding the ${siteName(raiding)}`, eta };
     }
     const target = currentTarget(state);
     if (!target) {
         const rival = blockingRival(state);
-        return rival ? `Halted at ${rival}'s wards` : isWizard(state) ? "Halted at the edge of Arcanus" : "Halted at a rival wizard's wards";
+        return { text: rival ? `Halted at ${rival}'s wards` : isWizard(state) ? "Halted at the edge of Arcanus" : "Halted at a rival wizard's wards", eta: null };
     }
     const power = siegePower(state, stats, target.traits);
-    if (power.lte(0)) return "Idle: train troops";
-    const eta = target.defense.minus(state.run.frontier.siege).div(power).toNumber();
-    return `Besieging ${target.name} · ${fmtTime(eta)}`;
+    if (power.lte(0)) return { text: "Idle: train troops", eta: null };
+    return { text: `Besieging ${target.name}`, eta: target.defense.minus(state.run.frontier.siege).div(power).toNumber() };
+}
+
+export function armyActivity(state: GameState): string {
+    const o = armyOrders(state);
+    return o.eta === null ? o.text : `${o.text} · ${fmtTime(o.eta)}`;
 }
 
 function CurrentOrders() {

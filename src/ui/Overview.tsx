@@ -3,6 +3,10 @@
  * now and what comes next. Meant to be the place a player can glance at to
  * feel in control, instead of visiting every tab. Shown above the tabs on every
  * tab, collapsible.
+ *
+ * Each line leads with one key fact in its own column (a time, "now", a count),
+ * green when there's something to do now, so the eye can run down the column
+ * instead of reading every line (TODO #33); the rest of the line is detail.
  */
 import { ComponentChildren } from "preact";
 import { useStoredOpen } from "./components";
@@ -30,7 +34,7 @@ import { fmtInt, fmtTime } from "../engine/format";
 import { availableSpells, isWizard, knowsSpell, manaRate, researchCost } from "../engine/magic";
 import { canRefound, fameOnRefound } from "../engine/prestige";
 import { GameState } from "../engine/state";
-import { armyActivity } from "./ArmyPanel";
+import { armyOrders } from "./ArmyPanel";
 import { myrrorPower, myrrorTarget } from "../engine/planes";
 import { myrrorShare } from "../engine/army";
 import { game } from "./game";
@@ -47,9 +51,32 @@ function secondsToAfford(state: GameState, econ: RealmEconomy, mana: Decimal, pr
     );
 }
 
-function when(seconds: number): string {
-    return seconds <= 0 ? "affordable now" : seconds === Infinity ? "no income for it yet" : `in ${fmtTime(seconds)}`;
+/** Seconds until `need` is reached from `have` at `rate` per second */
+function secondsToReach(have: Decimal, need: Decimal, rate: Decimal): number {
+    return have.gte(need) ? 0 : rate.lte(0) ? Infinity : need.minus(have).div(rate).toNumber();
 }
+
+/**
+ * A line's key fact and how it stands: ready (something to do now), waiting,
+ * stuck (it won't move by itself) or done (nothing left to do)
+ */
+interface Fact {
+    fact: ComponentChildren;
+    status: "ready" | "wait" | "stuck" | "done";
+    tip?: string;
+}
+
+/** Past this, a wait reads as "not soon": shown as a dash rather than days */
+const TOO_LONG = 86400;
+
+function wait(seconds: number, what = "Affordable"): Fact {
+    if (seconds <= 0) return { fact: "now", status: "ready", tip: `${what} now` };
+    if (seconds === Infinity) return { fact: "—", status: "stuck", tip: "No income for it yet" };
+    if (seconds > TOO_LONG) return { fact: "—", status: "stuck", tip: `Over a day at the current rate (${fmtTime(seconds)})` };
+    return { fact: fmtTime(seconds), status: "wait", tip: `${what} in ${fmtTime(seconds)}` };
+}
+
+const DONE: Fact = { fact: "✓", status: "done" };
 
 /** Opens a tab by its id (App's setTab) */
 type OpenTab = (tab: string) => void;
@@ -79,16 +106,27 @@ function autoTip(state: GameState, kind: AutomationKind, on: boolean): string {
     return `${name} is off: click to turn it on.${now} Its settings are on the tab.`;
 }
 
-/** One system's line; its label is a link to the tab where that system lives, its marker switches its automation */
-function Line(props: { icon: string; label: string; tab: string; onOpen: OpenTab; auto?: AutomationKind; children: ComponentChildren }) {
+/** One system's line: its label links to its tab, then its key fact, the detail, and a marker that switches its automation */
+function Line(props: {
+    icon: string;
+    label: string;
+    tab: string;
+    onOpen: OpenTab;
+    auto?: AutomationKind;
+    fact: Fact;
+    children: ComponentChildren;
+}) {
     const state = game();
     const kind = props.auto && isAutomationUnlocked(state, props.auto) ? props.auto : undefined;
     const on = kind ? state.automation[kind] : false;
     return (
-        <li>
+        <li class={"ov-" + props.fact.status}>
             <button class="link ov-label" title="Go to it" onClick={() => props.onOpen(props.tab)}>
                 {props.icon} {props.label}
             </button>
+            <span class="ov-fact" title={props.fact.tip}>
+                {props.fact.fact}
+            </span>
             <span class="ov-text">{props.children}</span>
             {kind && (
                 <button class={"ov-auto " + (on ? "on" : "off")} title={autoTip(state, kind, on)} onClick={() => (state.automation[kind] = !on)}>
@@ -121,169 +159,238 @@ export function Overview(props: { onOpen: OpenTab }) {
     // auto-study only pays loreSpendCap of the Knowledge on hand while saving for a spell
     const spendCap = isAutomationUnlocked(state, "lore") && state.automation.lore && isSavingForSpell(state) ? state.automation.loreSpendCap : 1;
     const loreNeed = cheapestLore ? cheapestLore.price.div(spendCap) : ZERO;
-    const sites = run.sites.filter((s) => s.kind === "lair" && !s.cleared).length;
+    const lairs = run.sites.filter((s) => s.kind === "lair" && !s.cleared).length;
     const asc = ascensionProgress(state);
+    const ascMet = [asc.wizardsGuild, asc.books >= ASCENSION_BOOKS, asc.realms >= ASCENSION_REALMS].filter((x) => x).length;
     // the spell auto-research would pick next: the cheapest unknown one
     const nextSpell = isWizard(state)
         ? availableSpells(state)
               .filter((s) => !knowsSpell(state, s.id))
               .sort((x, y) => researchCost(state, stats, x).cmp(researchCost(state, stats, y)))[0]
         : undefined;
-    const spellCost = nextSpell ? researchCost(state, stats, nextSpell) : undefined;
+    const army = armyOrders(state);
+    const settlers = settlersPrice(state, stats);
 
     return (
         <details class="glance" open={open} onToggle={(e) => setOpen((e.currentTarget as HTMLDetailsElement).open)}>
             <summary>At a glance</summary>
             <div class="overview-columns">
-            <ul class="overview">
-                <Line icon="⚔" label="Army" tab="army" onOpen={onOpen} auto="units">
-                    {armyActivity(state)}
-                </Line>
-                <Line icon="⚒" label="Building" tab="buildings" onOpen={onOpen} auto="buildings">
-                    {nextBuilding ? (
-                        <>
-                            next: <b>{BUILDINGS[nextBuilding].name}</b>,{" "}
-                            {when(secondsToAfford(state, econ, mana, buildingPrice(stats, nextBuilding)))}
-                        </>
-                    ) : (
-                        "everything available is built"
-                    )}
-                </Line>
-                {cheapestLore && (
-                    <Line icon="✎" label="Lore" tab="lore" onOpen={onOpen} auto="lore">
-                        next: <b>{LORE[cheapestLore.id].name}</b>,{" "}
-                        {when(
-                            run.knowledge.gte(loreNeed)
-                                ? 0
-                                : econ.knowledge.lte(0)
-                                  ? Infinity
-                                  : loreNeed.minus(run.knowledge).div(econ.knowledge).toNumber(),
-                        )}
-                        {spendCap < 1 && <span class="hint"> (auto-study waits until it's {Math.round(spendCap * 100)}% of your Knowledge)</span>}
+                <ul class="overview">
+                    <Line
+                        icon="⚔"
+                        label="Army"
+                        tab="army"
+                        onOpen={onOpen}
+                        auto="units"
+                        fact={
+                            army.eta !== null
+                                ? wait(army.eta, "Taken")
+                                : army.text.startsWith("Idle")
+                                  ? { fact: "idle", status: "stuck" }
+                                  : {
+                                        fact: "halted",
+                                        status: "wait",
+                                        tip: isWizard(state)
+                                            ? "Your spell power has to banish the rival first (Magic tab)"
+                                            : "Only a wizard can break a rival wizard's wards (Ascension)",
+                                    }
+                        }
+                    >
+                        {army.text}
                     </Line>
-                )}
-                {isSettlersUnlocked(state) && (
-                    <Line icon="❦" label="Settlers" tab="prestige" onOpen={onOpen} auto="settlers">
-                        next town{" "}
-                        {when(
-                            run.food.gte(settlersPrice(state, stats))
-                                ? 0
-                                : econ.food.lte(0)
-                                  ? Infinity
-                                  : settlersPrice(state, stats).minus(run.food).div(econ.food).toNumber(),
-                        )}
-                    </Line>
-                )}
-                {heroesAllowed(state) && (isTavernOpen(state) || run.heroes.length > 0) && (
-                    <Line icon="♛" label="Heroes" tab="army" onOpen={onOpen}>
-                        {heroLine(state, econ, mana)}
-                    </Line>
-                )}
-                {isExplorationUnlocked(state) && (
-                    <Line icon="🧭" label="Expeditions" tab="explore" onOpen={onOpen} auto="lairs">
-                        next discovery in {fmtTime((nextSiteCost(state) - run.exploreProgress) / exploreSpeed(state, stats))}
-                        {sites > 0 && ` · ${sites} lair${sites === 1 ? "" : "s"} to raid`}
-                    </Line>
-                )}
-            </ul>
-            <ul class="overview">
-                {(canRefound(state) || state.prestige.refounds > 0 || isWizard(state)) && (
-                    <Line icon="✦" label="Refound" tab="fame" onOpen={onOpen} auto="refound">
-                        {canRefound(state) ? `+${fmtInt(fameOnRefound(state))} Fame if you Refound now` : "conquer a city of another race first"}
-                    </Line>
-                )}
-                {isWizard(state) && (
-                    <Line icon="✧" label="Research" tab="magic" onOpen={onOpen} auto="research">
-                        {nextSpell ? (
+                    <Line
+                        icon="⚒"
+                        label="Building"
+                        tab="buildings"
+                        onOpen={onOpen}
+                        auto="buildings"
+                        fact={nextBuilding ? wait(secondsToAfford(state, econ, mana, buildingPrice(stats, nextBuilding))) : DONE}
+                    >
+                        {nextBuilding ? (
                             <>
-                                next spell: <b>{nextSpell.name}</b>,{" "}
-                                {when(
-                                    run.knowledge.gte(spellCost!)
-                                        ? 0
-                                        : econ.knowledge.lte(0)
-                                          ? Infinity
-                                          : spellCost!.minus(run.knowledge).div(econ.knowledge).toNumber(),
-                                )}
+                                next: <b>{BUILDINGS[nextBuilding].name}</b>
                             </>
                         ) : (
-                            "every spell you can research is known"
+                            "everything available is built"
                         )}
                     </Line>
-                )}
-                {isWizard(state) && (
-                    <Line icon="✺" label="Casting" tab="magic" onOpen={onOpen} auto="cast">
-                        {run.enchantments.length} enchantment{run.enchantments.length === 1 ? "" : "s"} active
-                    </Line>
-                )}
-                {isWizard(state) && (
-                    <Line icon="♜" label="Rivals" tab="magic" onOpen={onOpen}>
-                        {contestLine(state, stats)}
-                    </Line>
-                )}
-                {(asc.books > 0 || asc.wizardsGuild || isWizard(state)) && (
-                    <Line icon="◈" label="Ascension" tab="ascension" onOpen={onOpen} auto="ascend">
-                        {canAscend(state)
-                            ? "ready"
-                            : `Wizards' Guild ${asc.wizardsGuild ? "✓" : "✗"} · books ${asc.books}/${ASCENSION_BOOKS} · realms ${asc.realms}/${ASCENSION_REALMS}`}
-                    </Line>
-                )}
-                {state.planes.myrror && (
-                    <Line icon="❖" label="Myrror" tab="planes" onOpen={onOpen} auto="works">
-                        {(() => {
-                            const t = myrrorTarget(state);
-                            const share = myrrorShare(state);
-                            if (!t) return "all of Myrror is yours";
-                            if (state.mastery.challenge) return `paused during ${state.mastery.challenge}'s challenge`;
-                            if (share <= 0) return "no troops sent";
-                            const power = myrrorPower(state, stats, t.traits);
-                            const eta = power.gt(0) ? t.defense.minus(state.planes.myrror!.siege).div(power).toNumber() : Infinity;
-                            return `${Math.round(share * 100)}% of the army besieging ${t.name} · ${eta > 86400 ? "too strong for now" : fmtTime(eta)}`;
-                        })()}
-                    </Line>
-                )}
-                {isMasteryTabVisible(state) && (
-                    <Line icon="★" label="Mastery" tab="mastery" onOpen={onOpen}>
-                        {masteryLine(state, stats)}
-                    </Line>
-                )}
-            </ul>
+                    {cheapestLore && (
+                        <Line icon="✎" label="Lore" tab="lore" onOpen={onOpen} auto="lore" fact={wait(secondsToReach(run.knowledge, loreNeed, econ.knowledge))}>
+                            next: <b>{LORE[cheapestLore.id].name}</b>
+                            {spendCap < 1 && <span class="hint"> (auto-study waits until it's {Math.round(spendCap * 100)}% of your Knowledge)</span>}
+                        </Line>
+                    )}
+                    {isSettlersUnlocked(state) && (
+                        <Line icon="❦" label="Settlers" tab="prestige" onOpen={onOpen} auto="settlers" fact={wait(secondsToReach(run.food, settlers, econ.food))}>
+                            next town
+                        </Line>
+                    )}
+                    {heroesAllowed(state) && (isTavernOpen(state) || run.heroes.length > 0) && <HeroLine state={state} econ={econ} mana={mana} onOpen={onOpen} />}
+                    {isExplorationUnlocked(state) && (
+                        <Line
+                            icon="🧭"
+                            label="Expeditions"
+                            tab="explore"
+                            onOpen={onOpen}
+                            auto="lairs"
+                            fact={wait((nextSiteCost(state) - run.exploreProgress) / exploreSpeed(state, stats), "Discovered")}
+                        >
+                            next discovery
+                            {lairs > 0 && ` · ${lairs} lair${lairs === 1 ? "" : "s"} to raid`}
+                        </Line>
+                    )}
+                </ul>
+                <ul class="overview">
+                    {(canRefound(state) || state.prestige.refounds > 0 || isWizard(state)) && (
+                        <Line
+                            icon="✦"
+                            label="Refound"
+                            tab="fame"
+                            onOpen={onOpen}
+                            auto="refound"
+                            fact={
+                                canRefound(state)
+                                    ? { fact: <span class="fame">+{fmtInt(fameOnRefound(state))}</span>, status: "wait", tip: "Fame if you Refound now" }
+                                    : { fact: "—", status: "stuck" }
+                            }
+                        >
+                            {canRefound(state) ? "Fame if you Refound now" : "conquer a city of another race first"}
+                        </Line>
+                    )}
+                    {isWizard(state) && (
+                        <Line
+                            icon="✧"
+                            label="Research"
+                            tab="magic"
+                            onOpen={onOpen}
+                            auto="research"
+                            fact={nextSpell ? wait(secondsToReach(run.knowledge, researchCost(state, stats, nextSpell), econ.knowledge)) : DONE}
+                        >
+                            {nextSpell ? (
+                                <>
+                                    next spell: <b>{nextSpell.name}</b>
+                                </>
+                            ) : (
+                                "every spell you can research is known"
+                            )}
+                        </Line>
+                    )}
+                    {isWizard(state) && (
+                        <Line icon="✺" label="Casting" tab="magic" onOpen={onOpen} auto="cast" fact={{ fact: String(run.enchantments.length), status: "wait" }}>
+                            enchantment{run.enchantments.length === 1 ? "" : "s"} active
+                        </Line>
+                    )}
+                    {isWizard(state) && <RivalsLine state={state} stats={stats} onOpen={onOpen} />}
+                    {(asc.books > 0 || asc.wizardsGuild || isWizard(state)) && (
+                        <Line
+                            icon="◈"
+                            label="Ascension"
+                            tab="ascension"
+                            onOpen={onOpen}
+                            auto="ascend"
+                            fact={canAscend(state) ? { fact: "ready", status: "ready" } : { fact: `${ascMet}/3`, status: "wait", tip: "Requirements met" }}
+                        >
+                            Wizards' Guild {asc.wizardsGuild ? "✓" : "✗"} · books {asc.books}/{ASCENSION_BOOKS} · realms {asc.realms}/{ASCENSION_REALMS}
+                        </Line>
+                    )}
+                    {state.planes.myrror && <MyrrorLine state={state} stats={stats} onOpen={onOpen} />}
+                    {isMasteryTabVisible(state) && <MasteryLine state={state} stats={stats} onOpen={onOpen} />}
+                </ul>
             </div>
         </details>
     );
 }
 
+/** Heroes: how many serve, and when the next can be hired */
+function HeroLine(props: { state: GameState; econ: RealmEconomy; mana: Decimal; onOpen: OpenTab }) {
+    const { state } = props;
+    const n = state.run.heroes.length;
+    const count = `${n}/${MAX_HEROES} heroes`;
+    const [fact, text]: [Fact, string] =
+        n >= MAX_HEROES
+            ? [DONE, `${count}, every place filled`]
+            : !isTavernOpen(state)
+              ? [{ fact: "—", status: "stuck" }, `${count} · hiring needs an Adventurers' Guild`]
+              : [wait(secondsToAfford(state, props.econ, props.mana, { gold: hireCost(state) })), `next hire · ${count}`];
+    return (
+        <Line icon="♛" label="Heroes" tab="army" onOpen={props.onOpen} fact={fact}>
+            {text}
+        </Line>
+    );
+}
+
 /** The wizards' contest: whose wards are falling, and how soon */
-function contestLine(state: GameState, stats: Stats): string {
+function RivalsLine(props: { state: GameState; stats: Stats; onOpen: OpenTab }) {
+    const { state } = props;
     const rival = currentRival(state);
     const done = `${banishedCount(state)}/${ARCANUS_WIZARDS} banished`;
-    if (!rival) return `${done}: every rival of this Ascension has fallen`;
-    const pct = Math.floor(state.ascension.wardProgress.div(wardStrength(state, rival)).toNumber() * 100);
-    const left = wardSecondsLeft(state, stats);
-    return `${done} · ${rival}'s wards ${pct}% worn down, ${left === Infinity ? "no casting skill free" : `${fmtTime(left)} left`}`;
+    let fact: Fact = DONE;
+    let text = `${done}: every rival of this Ascension has fallen`;
+    if (rival) {
+        const pct = Math.floor(state.ascension.wardProgress.div(wardStrength(state, rival)).toNumber() * 100);
+        const left = wardSecondsLeft(state, props.stats);
+        fact = left === Infinity ? { fact: "—", status: "stuck", tip: "No casting skill free" } : wait(left, "Banished");
+        text = `${rival}'s wards ${pct}% worn down · ${done}${left === Infinity ? " · no casting skill free" : ""}`;
+    }
+    return (
+        <Line icon="♜" label="Rivals" tab="magic" onOpen={props.onOpen} fact={fact}>
+            {text}
+        </Line>
+    );
+}
+
+/** Myrror's siege, with the share of the army sent there */
+function MyrrorLine(props: { state: GameState; stats: Stats; onOpen: OpenTab }) {
+    const { state } = props;
+    const t = myrrorTarget(state);
+    const share = myrrorShare(state);
+    let fact: Fact;
+    let text: string;
+    if (!t) [fact, text] = [DONE, "all of Myrror is yours"];
+    else if (state.mastery.challenge) [fact, text] = [{ fact: "paused", status: "stuck" }, `paused during ${state.mastery.challenge}'s challenge`];
+    else if (share <= 0) [fact, text] = [{ fact: "—", status: "stuck" }, "no troops sent"];
+    else {
+        const power = myrrorPower(state, props.stats, t.traits);
+        const eta = power.gt(0) ? t.defense.minus(state.planes.myrror!.siege).div(power).toNumber() : Infinity;
+        fact = wait(eta, "Taken");
+        text = `${Math.round(share * 100)}% of the army besieging ${t.name}${eta > TOO_LONG ? " · too strong for now" : ""}`;
+    }
+    return (
+        <Line icon="❖" label="Myrror" tab="planes" onOpen={props.onOpen} auto="works" fact={fact}>
+            {text}
+        </Line>
+    );
 }
 
 /** What the Mastery layer is waiting on: a challenge, the Spell's channel, or the gate */
-function masteryLine(state: GameState, stats: Stats): string {
+function MasteryLine(props: { state: GameState; stats: Stats; onOpen: OpenTab }) {
+    const { state } = props;
     const m = state.mastery;
     const gate = masteryGate(state);
-    if (m.challenge) {
-        return m.challengeDone
-            ? `${m.challenge}'s challenge is won: complete it`
-            : `${m.challenge}'s challenge · rivals banished ${gate.arcanus}/${challengeGoalRivals(CHALLENGES[m.challenge])}`;
-    }
-    if (m.cast) return "the Spell is cast: claim your Mastery";
     const pct = Math.floor(m.progress.div(masteryCost(state)).toNumber() * 100);
-    if (m.channelling) return `channelling the Spell: ${pct}% · ${fmtTime(masterySecondsLeft(state, stats))} left`;
-    if (m.progress.gt(0)) return `the Spell is ${pct}% channelled (paused)`;
-    if (gate.ready) return knowsSpell(state, SPELL_OF_MASTERY) ? "every rival wizard has fallen: channel the Spell" : "every rival wizard has fallen: research the Spell";
-    return `Myrran wizards ${gate.myrran}/${MYRROR_WIZARDS} · Arcanus rivals ${gate.arcanus}/${ARCANUS_WIZARDS} this Ascension`;
-}
-
-/** Heroes: how many serve, and when the next can be hired */
-function heroLine(state: GameState, econ: RealmEconomy, mana: Decimal): string {
-    const n = state.run.heroes.length;
-    const count = `${n}/${MAX_HEROES} heroes`;
-    if (n >= MAX_HEROES) return `${count}, every place filled`;
-    if (!isTavernOpen(state)) return `${count} · hiring needs an Adventurers' Guild`;
-    return `${count} · next hire ${when(secondsToAfford(state, econ, mana, { gold: hireCost(state) }))}`;
+    let fact: Fact;
+    let text: string;
+    if (m.challenge) {
+        const goal = challengeGoalRivals(CHALLENGES[m.challenge]);
+        [fact, text] = m.challengeDone
+            ? [{ fact: "won", status: "ready" }, `${m.challenge}'s challenge is won: complete it`]
+            : [{ fact: `${gate.arcanus}/${goal}`, status: "wait", tip: "Rivals banished" }, `${m.challenge}'s challenge · rivals banished`];
+    } else if (m.cast) [fact, text] = [{ fact: "claim", status: "ready" }, "the Spell is cast: claim your Mastery"];
+    else if (m.channelling) [fact, text] = [wait(masterySecondsLeft(state, props.stats), "Cast"), `channelling the Spell: ${pct}%`];
+    else if (m.progress.gt(0)) [fact, text] = [{ fact: `${pct}%`, status: "stuck" }, "of the Spell channelled (paused)"];
+    else if (gate.ready)
+        [fact, text] = [
+            { fact: "now", status: "ready" },
+            knowsSpell(state, SPELL_OF_MASTERY) ? "every rival wizard has fallen: channel the Spell" : "every rival wizard has fallen: research the Spell",
+        ];
+    else
+        [fact, text] = [
+            { fact: `${gate.myrran + gate.arcanus}/${MYRROR_WIZARDS + ARCANUS_WIZARDS}`, status: "wait", tip: "Rival wizards fallen" },
+            `Myrran wizards ${gate.myrran}/${MYRROR_WIZARDS} · Arcanus rivals ${gate.arcanus}/${ARCANUS_WIZARDS} this Ascension`,
+        ];
+    return (
+        <Line icon="★" label="Mastery" tab="mastery" onOpen={props.onOpen} fact={fact}>
+            {text}
+        </Line>
+    );
 }

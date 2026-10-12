@@ -118,6 +118,32 @@ export function OptionsPanel() {
             </section>
 
             <section>
+                <h2>Reset reports</h2>
+                <div class="row">
+                    <span class="hint">After a Refound, Ascension or Planeshift, show how it went:</span>
+                    {(
+                        [
+                            ["manual", "After my own resets"],
+                            ["always", "After every reset"],
+                            ["never", "Never"],
+                        ] as const
+                    ).map(([value, label]) => (
+                        <button
+                            key={value}
+                            class={"toggle" + (state.settings.resetReports === value ? " on" : "")}
+                            onClick={() => (state.settings.resetReports = value)}
+                        >
+                            {label}
+                        </button>
+                    ))}
+                </div>
+                <p class="hint">
+                    Auto-Refound and auto-Ascend can reset every few minutes, so by default their reports don't pop up. The Chronicle
+                    still says when one earned much less per hour than the last, and Statistics always has the latest report.
+                </p>
+            </section>
+
+            <section>
                 <h2>
                     Developer tools{" "}
                     <button class="toggle" onClick={() => (state.settings.showDevTools = !state.settings.showDevTools)}>

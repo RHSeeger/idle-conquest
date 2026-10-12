@@ -73,6 +73,7 @@ import { lairTarget } from "./exploration";
 import { SPELLS } from "../content/spells";
 import { GameState } from "./state";
 import { currentRival, wardSecondsLeft } from "./wards";
+import { markAutoReset } from "./report";
 import { hireCost, heroesAllowed, isTavernOpen } from "./heroes";
 import { MAX_HEROES } from "../content/heroes";
 
@@ -253,7 +254,9 @@ export function stallAction(state: GameState): "ascend" | "refound" | null {
 export function autoAscend(state: GameState): boolean {
     if (!autoPrestigeDue(state, "ascend")) return false;
     const a = state.ascension;
-    return ascend(state, a.planBooks, leastMastered(state, ascensionRaceOptions(state)), a.planRetorts);
+    if (!ascend(state, a.planBooks, leastMastered(state, ascensionRaceOptions(state)), a.planRetorts)) return false;
+    markAutoReset(state);
+    return true;
 }
 
 /**
@@ -279,7 +282,9 @@ export function autoPrestigeDue(state: GameState, kind: "ascend" | "refound"): b
 export function autoRefound(state: GameState): boolean {
     if (!autoPrestigeDue(state, "refound")) return false;
     const options = [...new Set([...state.prestige.annals, ...state.run.racesConquered])];
-    return refound(state, leastMastered(state, options));
+    if (!refound(state, leastMastered(state, options))) return false;
+    markAutoReset(state);
+    return true;
 }
 
 /** Whether an automation is unlocked and switched on */

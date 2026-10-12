@@ -212,7 +212,7 @@ export function performAscension(
     const a = state.ascension;
     const p = state.prestige;
     const insight = opts.insight;
-    recordRun(state, opts.ended, insight);
+    recordRun(state, opts.ended, insight, { rivals: banishedCount(state) });
 
     a.ascensions++;
     state.records.totalAscensions++;

@@ -314,6 +314,26 @@ export interface RunRecord {
     /** Fame (refound) or Insight (ascend) gained */
     gain: Decimal;
     ascensions: number;
+    /** How long the stretch this reset ended took: the kingdom, Ascension or Planeshift (older records: absent) */
+    stretch?: number;
+    /** Refound: when this kingdom's Fame per minute peaked (seconds into it) */
+    peakAt?: number;
+    /** Ascend: kingdoms in the Ascension, and rivals banished in it */
+    kingdoms?: number;
+    rivals?: number;
+    /** Done by auto-Refound or auto-Ascend */
+    auto?: boolean;
+}
+
+/** The kinds of reset that get a report (TODO #29 A1) */
+export type ReportKind = "refound" | "ascend" | "planeshift";
+
+/** The last reset, compared with the one before it of the same kind (in the same stretch above) */
+export interface ResetReport {
+    current: RunRecord;
+    /** null: the first of its kind in the layer above (nothing fair to compare with) */
+    previous: RunRecord | null;
+    dismissed: boolean;
 }
 
 export interface Records {
@@ -326,7 +346,13 @@ export interface Records {
     history: RunRecord[];
     /** When the current run, Ascension, Planeshift and Mastery began (playtime), and how long the last few took */
     layers: Record<LayerId, LayerTimes>;
+    /** The last reset of each reported kind (kept apart from the history, which Refounds can crowd out) */
+    lastByKind: Partial<Record<ReportKind, RunRecord>>;
+    report: ResetReport | null;
 }
+
+/** Each reported reset is compared only within the stretch above it (a new Ascension resets Fame, so its first Refound isn't comparable) */
+const REPORT_PARENT: Record<ReportKind, LayerId> = { refound: "ascension", ascend: "planeshift", planeshift: "mastery" };
 
 /**
  * The resets, from the run up: a Refound ends a run; a Mastery ends all four.
@@ -365,6 +391,8 @@ export interface Settings {
     /** Simulation speed multiplier (dev tool) */
     devSpeed: number;
     showDevTools: boolean;
+    /** When a reset's report card shows: after your own resets (not auto ones), after every one, or never */
+    resetReports: "manual" | "always" | "never";
 }
 
 export interface Automation {
@@ -581,7 +609,7 @@ export function newGame(now = Date.now()): GameState {
             challengeBest: {},
             notice: null,
         },
-        records: { totalRefounds: 0, totalAscensions: 0, totalPlaneshifts: 0, fastestToWall: null, history: [], layers: newLayerTimes() },
+        records: { totalRefounds: 0, totalAscensions: 0, totalPlaneshifts: 0, fastestToWall: null, history: [], layers: newLayerTimes(), lastByKind: {}, report: null },
         automation: {
             buildings: true,
             units: true,
@@ -611,7 +639,7 @@ export function newGame(now = Date.now()): GameState {
             taxAuto: true,
             taxFloor: 0.1,
         },
-        settings: { buyAmount: 1, autosaveSeconds: 15, devSpeed: 1, showDevTools: false },
+        settings: { buyAmount: 1, autosaveSeconds: 15, devSpeed: 1, showDevTools: false, resetReports: "manual" },
         meta: { created: now, lastTick: now, playtime: 0, introsSeen: [], helpClosed: [], folds: {} },
         log: [],
     };
@@ -625,21 +653,36 @@ export function bump(state: GameState): void {
 export const MAX_HISTORY = 30;
 
 /** Records the run that is ending (call before replacing state.run) */
-export function recordRun(state: GameState, ended: RunRecord["ended"], gain: Decimal): void {
+export function recordRun(state: GameState, ended: RunRecord["ended"], gain: Decimal, extra: { rivals?: number } = {}): void {
     const run = state.run;
-    state.records.history.push({
-        endedAt: state.meta.playtime,
+    const r = state.records;
+    const now = state.meta.playtime;
+    const layers = LAYERS_ENDED[ended];
+    const record: RunRecord = {
+        endedAt: now,
         ended,
         race: run.startingRace,
         length: run.time,
         frontier: run.frontier.index,
         gain,
         ascensions: state.ascension.ascensions,
-    });
-    if (state.records.history.length > MAX_HISTORY) {
-        state.records.history.splice(0, state.records.history.length - MAX_HISTORY);
+        stretch: now - r.layers[layers[layers.length - 1]].start,
+    };
+    if (ended === "refound") record.peakAt = run.bestFameRateAt;
+    if (ended === "ascend") {
+        record.kingdoms = state.prestige.refounds + 1;
+        record.rivals = extra.rivals;
     }
-    const now = state.meta.playtime;
+    r.history.push(record);
+    if (r.history.length > MAX_HISTORY) {
+        r.history.splice(0, r.history.length - MAX_HISTORY);
+    }
+    if (ended === "refound" || ended === "ascend" || ended === "planeshift") {
+        const prev = r.lastByKind[ended];
+        const comparable = prev !== undefined && prev.endedAt >= r.layers[REPORT_PARENT[ended]].start;
+        r.lastByKind[ended] = record;
+        r.report = { current: record, previous: comparable ? prev : null, dismissed: false };
+    }
     for (const id of LAYERS_ENDED[ended]) {
         const l = state.records.layers[id];
         l.past.push(now - l.start);

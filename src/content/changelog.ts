@@ -12,6 +12,7 @@ export const CHANGES: ChangeEntry[] = [
     {
         date: "2026-10-11",
         items: [
+            "Reset reports: after you Refound, Ascend or Planeshift, a card shows how it went against the last one: length, what you earned per minute or hour, and (for a Refound) whether you waited past the Fame-per-minute peak. Auto resets don't pop up by default (Options → Reset reports); the Chronicle says when one earned much less than the last, and Statistics → Last reset always has the latest.",
             "When you scroll down, the resource boxes shrink to a single line of icons and numbers at the top of the window, so your stock and income stay in sight.",
             "At a glance is easier to scan: each line leads with its key fact (how long until it's ready, \"now\", the Fame you'd get) in a column of its own, in green when there's something you can do now.",
             "New Fame tab: Refound, Fame upgrades, Milestones and Annals moved there from the Kingdom tab, which now holds your citizens, settlers and cities. The tabs are grouped by layer, each group tinted in its colour (your kingdom, the wizard, Planes, Mastery), with Statistics, Options and About on the right.",

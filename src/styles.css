@@ -1594,6 +1594,49 @@ ul.boons {
 .modal.victory h2 {
     color: var(--mastery);
 }
+
+/* the report on the last reset, under the tabs (TODO #29 A1) */
+.reset-report {
+    margin: 0 0 10px;
+    padding: 8px 10px 8px 12px;
+    border: 1px solid color-mix(in srgb, var(--tone) 55%, var(--border));
+    border-left: 5px solid var(--tone);
+    background: color-mix(in srgb, var(--tone) 18%, var(--panel));
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    font-size: 13px;
+}
+.report-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+/* a button, not a link: a square with a border */
+.report-close {
+    margin-left: auto;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    font-size: 20px;
+    line-height: 1;
+    font-weight: 600;
+    color: var(--text);
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    cursor: pointer;
+}
+.report-close:hover:not(:disabled) {
+    background: var(--button-hover);
+    border-color: var(--tone);
+}
+.report-body > div {
+    margin-top: 2px;
+}
+.report-facts {
+    font-family: var(--mono);
+    font-size: 12px;
+}
 .modal .row {
     display: flex;
     flex-wrap: wrap;

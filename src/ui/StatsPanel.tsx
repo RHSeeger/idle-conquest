@@ -3,6 +3,7 @@ import { fmtInt, fmtTime } from "../engine/format";
 import { LAYER_IDS, LayerId, MAX_LAYER_TIMES, RunRecord } from "../engine/state";
 import { game } from "./game";
 import { SectionHead } from "./kit";
+import { ReportBody, ReportTitle } from "./ResetReport";
 
 const ENDED: Record<RunRecord["ended"], { verb: string; currency: string; cls: string }> = {
     refound: { verb: "Refounded", currency: "Fame", cls: "fame" },
@@ -136,6 +137,12 @@ export function StatsPanel() {
                     </tbody>
                 </table>
             </section>
+            {r.report && (
+                <section>
+                    <SectionHead title="Last reset" note={<ReportTitle report={r.report} />} />
+                    <ReportBody report={r.report} />
+                </section>
+            )}
             <LayerTimesSection />
             <section>
                 <SectionHead title="Recent kingdoms" note={`the last ${r.history.length}`} />

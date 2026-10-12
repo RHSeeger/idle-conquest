@@ -25,6 +25,7 @@ import {
 } from "../engine/wards";
 import { BreakdownView, ProgressBar, Tip } from "./components";
 import { game } from "./game";
+import { HowItWorks, Part, SectionHead } from "./kit";
 
 function realmsOf(wizard: string): string {
     return (RIVAL_WIZARD_DEFS[wizard]?.realms ?? []).map((r) => REALM_DEFS[r].name).join(" & ");
@@ -73,9 +74,9 @@ export function RivalMatchups(props: { books: Partial<Record<Realm, number>>; ri
                     })}
                 </tbody>
             </table>
-            <div class="hint matchup-help">
+            <HowItWorks id="contest.matchups">
                 How well each of your realms wears down a rival's wards, counted by its share of your books:
-                <ul class="matchup-rules">
+                <ul>
                     <li>
                         <b>×{MATCHUP_OPPOSED}</b> against the opposed realm: Life against Death wards and Death against
                         Life, Chaos against Nature and Nature against Chaos
@@ -90,7 +91,7 @@ export function RivalMatchups(props: { books: Partial<Record<Realm, number>>; ri
                     </li>
                     <li>×1 otherwise. Hover a rival's number for how your books fare against them.</li>
                 </ul>
-            </div>
+            </HowItWorks>
         </>
     );
 }
@@ -107,17 +108,16 @@ export function ContestSection() {
     const power = spellPower(state, stats);
     return (
         <section>
-            <h2>
-                The wizards' contest{" "}
-                <span class="count">
-                    · {banishedCount(state)} of {ARCANUS_WIZARDS} rivals banished this Ascension
-                </span>
-            </h2>
-            <p class="hint">
+            <SectionHead
+                title="The wizards' contest"
+                value={`${banishedCount(state)} of ${ARCANUS_WIZARDS}`}
+                note="rivals banished this Ascension"
+            />
+            <HowItWorks id="magic.contest">
                 Four rival wizards hold Arcanus this Ascension, each behind wards your army cannot cross. Your spell power
                 wears them down one at a time, and the progress lasts through Refounds. A banished wizard's domain opens to
                 your army, and their Tower of Wizardry is unsealed: the way to Myrror.
-            </p>
+            </HowItWorks>
             {rival ? (
                 <>
                     <p>
@@ -148,9 +148,7 @@ export function ContestSection() {
                 <p class="good">Every rival of this Ascension is banished. Instants now strike your army's target.</p>
             )}
             <RivalMatchups books={a.books} rivals={rivals} status />
-            <h3>
-                Casting skill <span class="count">{fmt(skill)}</span>
-            </h3>
+            <Part title={<>Casting skill <span class="section-value">{fmt(skill)}</span></>}>
             <p>
                 Running enchantments take up <b>{fmt(upkeep)}</b>, leaving <b>{fmt(free)}</b> for the contest. Each point of
                 casting skill costs more mana than the last; it lasts the whole Ascension.{" "}
@@ -171,6 +169,7 @@ export function ContestSection() {
             <p class="hint">
                 The share of your mana income that trains casting skill; the rest is yours to spend on spells and summons.
             </p>
+            </Part>
         </section>
     );
 }

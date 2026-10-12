@@ -8,6 +8,7 @@ import { isWizard } from "../engine/magic";
 import { Lairs } from "./ArmyPanel";
 import { ProgressBar } from "./components";
 import { game } from "./game";
+import { SectionHead } from "./kit";
 
 export function ExplorationPanel() {
     const state = game();
@@ -24,19 +25,18 @@ export function ExplorationPanel() {
     return (
         <div class="panel">
             <section>
-                <h2>Expeditions</h2>
+                <SectionHead title="Expeditions" value={run.sites.length} note="sites discovered in this kingdom" />
                 <ProgressBar
                     class="explore"
                     fraction={run.exploreProgress / cost}
                     label={`Next discovery: ${fmtTime((cost - run.exploreProgress) / speed)} · speed ×${fmt(speed)} (more cities, more lands to explore)`}
                 />
-                <p class="hint">{run.sites.length} sites discovered in this kingdom.</p>
             </section>
 
             <Lairs />
 
             <section>
-                <h2>Resource sites</h2>
+                <SectionHead title="Resource sites" value={Object.values(nodeCounts).reduce((a, b) => a + b, 0)} />
                 {Object.keys(nodeCounts).length === 0 && <p class="hint">None yet.</p>}
                 <ul class="built">
                     {Object.entries(nodeCounts).map(([id, n]) => (
@@ -51,7 +51,7 @@ export function ExplorationPanel() {
             </section>
 
             <section>
-                <h2>Spellbooks</h2>
+                <SectionHead title="Spellbooks" value={asc.books} note={`from ${asc.realms} realm${asc.realms === 1 ? "" : "s"}`} />
                 <div class="books">
                     {REALMS.map((r) => (
                         <div key={r} class={"book realm-" + r + ((run.spellbooks[r] ?? 0) > 0 ? "" : " none")}>

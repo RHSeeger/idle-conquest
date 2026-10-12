@@ -38,6 +38,7 @@ import { INSTANT_RESERVE_SECONDS, isAutomationUnlocked } from "../engine/automat
 import { BreakdownView, Price, Tip } from "./components";
 import { game } from "./game";
 import { CurrentProfile } from "./AscensionPanel";
+import { HowItWorks, Notice, Part, SectionHead } from "./kit";
 
 const REALM_LABEL: Record<SpellRealm, string> = { arcane: "Arcane", ...Object.fromEntries(REALMS.map((r) => [r, REALM_DEFS[r].name])) } as Record<
     SpellRealm,
@@ -130,12 +131,15 @@ function RealmSpells(props: { realm: SpellRealm }) {
     const state = game();
     const spells = SPELL_ORDER.map((id) => SPELLS[id]).filter((s) => s.realm === props.realm);
     const books = props.realm === "arcane" ? null : booksIn(state, props.realm);
+    const known = spells.filter((s) => knowsSpell(state, s.id)).length;
     return (
         <section class={"realm-" + props.realm}>
-            <h2 class="realm-head">
-                {REALM_LABEL[props.realm]}{" "}
-                <span class="count">{books === null ? "· known to every wizard" : `· ${books} book${books === 1 ? "" : "s"}`}</span>
-            </h2>
+            <SectionHead
+                class="realm-head"
+                title={REALM_LABEL[props.realm]}
+                value={`${known} of ${spells.length} known`}
+                note={books === null ? "known to every wizard" : `${books} book${books === 1 ? "" : "s"}`}
+            />
             <table class="spells">
                 <tbody>
                     {spells.map((s) => {
@@ -181,14 +185,14 @@ function DormantSpells() {
     if (dormant.length === 0) return null;
     const byRealm = REALMS.map((r) => ({ realm: r, spells: dormant.filter((s) => s.realm === r) })).filter((g) => g.spells.length > 0);
     return (
-        <p class="hint">
+        <Notice kind="info">
             <span class="insight">Spell Memory:</span> {dormant.length} remembered spell{dormant.length === 1 ? "" : "s"} wait for
             the books to use them:{" "}
             {byRealm
                 .map((g) => `${REALM_DEFS[g.realm].name} (${g.spells.map((s) => `${s.name}, ${RARITY_BOOKS[s.rarity]} books`).join("; ")})`)
                 .join(" · ")}
             .
-        </p>
+        </Notice>
     );
 }
 
@@ -202,8 +206,7 @@ function MagicNodes() {
     if (rows.length === 0) return null;
     const unmelded = rows.reduce((sum, r) => sum + r.unmelded, 0);
     return (
-        <>
-            <h3>Magic nodes</h3>
+        <Part title="Magic nodes">
             <table class="nodes">
                 <thead>
                     <tr>
@@ -246,7 +249,7 @@ function MagicNodes() {
                 )}
                 Node mana adds to your mana multiplier; each node's realm bonus multiplies with the others.
             </p>
-        </>
+        </Part>
     );
 }
 
@@ -258,22 +261,26 @@ export function MagicPanel() {
     return (
         <div class="panel">
             <section>
-                <h2>
-                    Mana <span class="mana">{fmt(state.run.mana)}</span>{" "}
-                    <Tip tip={<BreakdownView stats={stats} stat="mana.mult" title="Mana multiplier" />}>
-                        <span class="count">{fmtSigned(manaRate(state, stats))}/s</span>
-                    </Tip>
+                <SectionHead
+                    title="Mana"
+                    value={<span class="mana">{fmt(state.run.mana)} ✧</span>}
+                    note={
+                        <Tip tip={<BreakdownView stats={stats} stat="mana.mult" title="Mana multiplier" />}>
+                            {fmtSigned(manaRate(state, stats))}/s
+                        </Tip>
+                    }
+                >
                     <AutoToggle kind="research" label="Auto-research" />
                     <AutoToggle kind="cast" label="Auto-cast" />
-                </h2>
-                <p class="hint">
+                </SectionHead>
+                <HowItWorks id="magic.mana">
                     Your Fortress channels {fortressMana(state)} mana/s (1 + one per spellbook). Shrines, Temples and
                     Cathedrals add mana in every city; the Wizards' Guild and melded magic nodes multiply it. Spells are
                     researched with Knowledge and stay known until you Ascend again
                     {spellMemoryLevel(state) > 0 && " (Spell Memory brings them back after an Ascension, if your profile has the books)"}.
                     Enchantments last until this kingdom ends, and take up casting skill while they run. Auto-cast keeps the
                     ones ticked "auto-cast" running, as far as your casting skill allows, and casts every instant whenever it's ready.
-                </p>
+                </HowItWorks>
                 <CurrentProfile />
                 <DormantSpells />
                 <MagicNodes />

@@ -14,9 +14,15 @@ export type Tone = "fame" | "insight" | "essence" | "mastery" | "accent";
  * A section's header line: the title, its key number (and a muted note), then
  * the section's switches on the right. The same on every tab.
  */
-export function SectionHead(props: { title: ComponentChildren; value?: ComponentChildren; note?: ComponentChildren; children?: ComponentChildren }) {
+export function SectionHead(props: {
+    title: ComponentChildren;
+    value?: ComponentChildren;
+    note?: ComponentChildren;
+    class?: string;
+    children?: ComponentChildren;
+}) {
     return (
-        <h2 class="section-head">
+        <h2 class={"section-head" + (props.class ? " " + props.class : "")}>
             <span class="section-title">{props.title}</span>
             {props.value !== undefined && <span class="section-value">{props.value}</span>}
             {props.note !== undefined && <span class="count">{props.note}</span>}

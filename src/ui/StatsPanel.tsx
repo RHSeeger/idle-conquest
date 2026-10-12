@@ -2,6 +2,7 @@ import { RACES } from "../content/races";
 import { fmtInt, fmtTime } from "../engine/format";
 import { LAYER_IDS, LayerId, MAX_LAYER_TIMES, RunRecord } from "../engine/state";
 import { game } from "./game";
+import { SectionHead } from "./kit";
 
 const ENDED: Record<RunRecord["ended"], { verb: string; currency: string; cls: string }> = {
     refound: { verb: "Refounded", currency: "Fame", cls: "fame" },
@@ -34,7 +35,7 @@ function LayerTimesSection() {
     };
     return (
         <section>
-            <h2>Time taken</h2>
+            <SectionHead title="Time taken" />
             <p class="hint">
                 How long each lasted: the current one at the top, then the last {MAX_LAYER_TIMES}, newest first. A bigger
                 reset also ends the smaller ones (an Ascension starts a new kingdom too). Beginning or leaving a challenge is
@@ -75,7 +76,7 @@ export function StatsPanel() {
     return (
         <div class="panel">
             <section>
-                <h2>Records</h2>
+                <SectionHead title="Records" value={fmtTime(state.meta.playtime)} note="played" />
                 <table class="records">
                     <tbody>
                         <tr>
@@ -137,9 +138,7 @@ export function StatsPanel() {
             </section>
             <LayerTimesSection />
             <section>
-                <h2>
-                    Recent kingdoms <span class="count">(last {r.history.length})</span>
-                </h2>
+                <SectionHead title="Recent kingdoms" note={`the last ${r.history.length}`} />
                 {history.length === 0 && <p class="hint">No finished kingdoms yet.</p>}
                 {history.length > 0 && (
                     <table>

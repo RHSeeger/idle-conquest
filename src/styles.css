@@ -252,6 +252,64 @@ h3 {
 .resource.knowledge .resource-amount { color: var(--knowledge); }
 .resource.siege .resource-amount { color: var(--siege); }
 
+/* the resource boxes as one line, at the top of the window once the boxes have scrolled away (TODO #32) */
+.resource-strip {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 16px;
+    overflow: hidden;
+    white-space: nowrap;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+    font-size: 13px;
+}
+/* each item's width depends only on the window, never on its numbers, so nothing
+   shifts as they change; all shrink alike to fit the window (rates are left out
+   when they wouldn't fit: App.tsx, STRIP_*) */
+.strip-item {
+    flex: 1 1 100px;
+    min-width: 0;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+}
+.strip-item.has-rate {
+    flex-basis: 165px;
+    max-width: 260px;
+}
+.strip-item .resource-amount {
+    font-size: 13px;
+    color: var(--text);
+}
+.strip-rate {
+    font-family: var(--mono);
+    font-size: 11px;
+}
+.strip-item.production .resource-amount { color: var(--production); }
+.strip-item.gold .resource-amount { color: var(--gold); }
+.strip-item.food .resource-amount { color: var(--food); }
+.strip-item.knowledge .resource-amount { color: var(--knowledge); }
+.strip-item.mana .resource-amount { color: var(--mana); }
+.strip-item.fame .resource-amount { color: var(--fame); }
+.strip-item.insight .resource-amount { color: var(--insight); }
+.strip-item.essence .resource-amount { color: var(--essence); }
+.strip-item.mastery .resource-amount { color: var(--mastery); }
+.strip-item.siege .resource-amount { color: var(--siege); }
+/* the jump bar sits under the strip */
+.app.compact-resources .jump-bar {
+    top: 30px;
+}
+
 /* --- tabs & layout --- */
 .tabs {
     display: flex;

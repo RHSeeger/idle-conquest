@@ -12,6 +12,7 @@ export const CHANGES: ChangeEntry[] = [
     {
         date: "2026-10-11",
         items: [
+            "When you scroll down, the resource boxes shrink to a single line of icons and numbers at the top of the window, so your stock and income stay in sight.",
             "At a glance is easier to scan: each line leads with its key fact (how long until it's ready, \"now\", the Fame you'd get) in a column of its own, in green when there's something you can do now.",
             "New Fame tab: Refound, Fame upgrades, Milestones and Annals moved there from the Kingdom tab, which now holds your citizens, settlers and cities. The tabs are grouped by layer, each group tinted in its colour (your kingdom, the wizard, Planes, Mastery), with Statistics, Options and About on the right.",
             "Busy tabs are quicker to get around: click a section's title to fold it down to its header line (the game remembers it), and tabs with four or more sections get a bar of links to each one that stays at the top while you scroll. A link opens the section if it's folded.",

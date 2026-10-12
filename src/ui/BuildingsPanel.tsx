@@ -15,6 +15,7 @@ import { buildingPrice, wallet } from "../engine/costs";
 import { AutoMode, AutoToggle } from "./AutoToggle";
 import { Price, Tip } from "./components";
 import { game } from "./game";
+import { SectionHead } from "./kit";
 
 export function BuildingsPanel() {
     const state = game();
@@ -33,8 +34,8 @@ export function BuildingsPanel() {
     return (
         <div class="panel">
             <section>
-                <h2>
-                    Available <AutoToggle kind="buildings" label="Auto-build" />
+                <SectionHead title="Available" value={available.length} note="to build">
+                    <AutoToggle kind="buildings" label="Auto-build" />
                     <AutoMode
                         kind="buildings"
                         value={state.automation.buildMode}
@@ -44,7 +45,7 @@ export function BuildingsPanel() {
                             { value: "chronicle", label: "Chronicle", tip: "Follow your last kingdom's build order" },
                         ]}
                     />
-                </h2>
+                </SectionHead>
                 {available.length === 0 && <p class="hint">Nothing to build right now.</p>}
                 <div class="cards">
                     {available.map((id) => {
@@ -81,7 +82,7 @@ export function BuildingsPanel() {
 
             {upcoming.length > 0 && (
                 <section>
-                    <h2>Locked</h2>
+                    <SectionHead title="Locked" value={upcoming.length} note="partly unlocked" />
                     <ul class="locked">
                         {upcoming.map((id) => {
                             const missing = BUILDINGS[id].requires.filter((r) => !owned.includes(r)).map((r) => BUILDINGS[r].name);
@@ -102,9 +103,7 @@ export function BuildingsPanel() {
 
             {owned.length > 0 && (
                 <section>
-                    <h2>
-                        Built <span class="count">({owned.length})</span>
-                    </h2>
+                    <SectionHead title="Built" value={owned.length} />
                     <ul class="built">
                         {owned.map((id) => (
                             <li key={id}>

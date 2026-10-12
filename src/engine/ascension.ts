@@ -83,6 +83,9 @@ export function insightOnAscend(state: GameState): Decimal {
     return insightBreakdown(state).total;
 }
 
+/** Insight × (1 + this per spellbook found in the kingdom) */
+export const INSIGHT_PER_BOOK = 0.25;
+
 /** Every factor of insightOnAscend, for showing the sum beside the Ascend button */
 export interface InsightBreakdown {
     /** Fame earned this Ascension, plus what refounding now would give */
@@ -114,7 +117,7 @@ export function insightBreakdown(state: GameState): InsightBreakdown {
     const fameSoftcapped = root > INSIGHT_FAME_SOFTCAP;
     const famePart = fameSoftcapped ? INSIGHT_FAME_SOFTCAP * Math.pow(root / INSIGHT_FAME_SOFTCAP, INSIGHT_FAME_SOFTCAP_POWER) : root;
     const spellbooks = spellbookCount(state);
-    const booksMult = 1 + 0.25 * spellbooks;
+    const booksMult = 1 + INSIGHT_PER_BOOK * spellbooks;
     const contest = contestScore(state);
     const contestMult = Math.pow(1 + contest, INSIGHT_WARD_POWER);
     const raw = famePart * booksMult * contestMult;

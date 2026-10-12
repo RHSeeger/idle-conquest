@@ -37,30 +37,36 @@ import { isExplorationUnlocked, lairPower, lairTarget, setArmyTarget, siteName }
 import { isWizard } from "../engine/magic";
 import { AutoMode, AutoToggle } from "./AutoToggle";
 import { HeroesSection } from "./HeroesSection";
-import { BreakdownView, Price, ProgressBar, RegionList, Tip, useStoredOpen } from "./components";
+import { HowItWorks, Part, SectionHead } from "./kit";
+import { BreakdownView, Price, ProgressBar, RegionList, Tip } from "./components";
 import { game } from "./game";
 
 const BUY_AMOUNTS: Settings["buyAmount"][] = [1, 10, 100, "next", "max"];
 const RECRUIT_SHARES = [0.1, 0.25, 0.5, 0.75, 1];
 
 /** One line saying what the army is doing right now (also used in the resource bar) */
-export function armyActivity(state: GameState): string {
+/** What the army is doing, and how long until it's done (null: halted or idle) */
+export function armyOrders(state: GameState): { text: string; eta: number | null } {
     const stats = getStats(state);
     const raiding = lairTarget(state);
     if (raiding) {
         const power = siegePower(state, stats, raiding.traits);
         const eta = power.gt(0) ? raiding.defense!.minus(state.run.lairSiege).div(power).toNumber() : Infinity;
-        return `Raiding the ${siteName(raiding)} · ${fmtTime(eta)}`;
+        return { text: `Raiding the ${siteName(raiding)}`, eta };
     }
     const target = currentTarget(state);
     if (!target) {
         const rival = blockingRival(state);
-        return rival ? `Halted at ${rival}'s wards` : isWizard(state) ? "Halted at the edge of Arcanus" : "Halted at a rival wizard's wards";
+        return { text: rival ? `Halted at ${rival}'s wards` : isWizard(state) ? "Halted at the edge of Arcanus" : "Halted at a rival wizard's wards", eta: null };
     }
     const power = siegePower(state, stats, target.traits);
-    if (power.lte(0)) return "Idle: train troops";
-    const eta = target.defense.minus(state.run.frontier.siege).div(power).toNumber();
-    return `Besieging ${target.name} · ${fmtTime(eta)}`;
+    if (power.lte(0)) return { text: "Idle: train troops", eta: null };
+    return { text: `Besieging ${target.name}`, eta: target.defense.minus(state.run.frontier.siege).div(power).toNumber() };
+}
+
+export function armyActivity(state: GameState): string {
+    const o = armyOrders(state);
+    return o.eta === null ? o.text : `${o.text} · ${fmtTime(o.eta)}`;
 }
 
 function CurrentOrders() {
@@ -183,10 +189,9 @@ export function Lairs() {
 
     return (
         <section>
-            <h2>
-                Monster lairs <AutoToggle kind="lairs" label="Auto-raid" />
-                <span class="count"> · {cleared} cleared in this kingdom</span>
-            </h2>
+            <SectionHead title="Monster lairs" value={lairs.length} note={`to raid · ${cleared} cleared in this kingdom`}>
+                <AutoToggle kind="lairs" label="Auto-raid" />
+            </SectionHead>
             <p class="hint">
                 {autoOn
                     ? `Auto-raid sends the army to the quickest lair it can clear in under ${fmtTime(AUTO_RAID_SECONDS)}, then back to the frontier. Slower lairs are left for you (or for a stronger army).`
@@ -273,14 +278,7 @@ function Campaign() {
 
     return (
         <section>
-            <h2>
-                Campaign{" "}
-                {target && (
-                    <span class="count">
-                        · city {target.index + 1} of {frontierEnd(plan, isWizard(state))}
-                    </span>
-                )}
-            </h2>
+            <SectionHead title="Campaign" value={target ? `city ${target.index + 1} of ${frontierEnd(plan, isWizard(state))}` : undefined} />
             <CurrentOrders />
             <RegionList plan={plan} current={regionIdx} />
             <RouteChoices />
@@ -313,8 +311,8 @@ function RouteChoices() {
     if (choices.length === 0) return null;
     const met = new Set([state.run.startingRace, ...state.run.racesConquered]);
     return (
+        <Part title="The road ahead" note={`your choice is kept for later kingdoms of ${RACES[state.run.startingRace].plural}`}>
         <div class="route">
-            <span class="hint">The road ahead (your choice is kept for later kingdoms of {RACES[state.run.startingRace].plural}):</span>
             {choices.map((c, i) => (
                 <div key={c.raceRegion} class="route-choice">
                     <span class="hint">{i === 0 ? "Next region:" : "Then:"}</span>
@@ -337,6 +335,7 @@ function RouteChoices() {
                 which troops work there.
             </span>
         </div>
+        </Part>
     );
 }
 
@@ -352,7 +351,7 @@ function Troops() {
     if (units.length === 0) {
         return (
             <section>
-                <h2>Troops</h2>
+                <SectionHead title="Troops" />
                 <p class="hint">Build a Barracks to train troops.</p>
             </section>
         );
@@ -360,8 +359,16 @@ function Troops() {
 
     return (
         <section>
-            <h2>
-                Troops <AutoToggle kind="units" label="Auto-recruit" />
+            <SectionHead
+                title="Troops"
+                value={
+                    <Tip tip={<BreakdownView stats={stats} stat="army.power" title="Army power multiplier" />}>
+                        <span class="army-power">⚔ {fmt(siegePower(state, stats, traits))}/s</span>
+                    </Tip>
+                }
+                note={target ? `against ${target.name}` : undefined}
+            >
+                <AutoToggle kind="units" label="Auto-recruit" />
                 {isEfficientRecruitUnlocked(state) && (
                     <AutoMode
                         kind="units"
@@ -389,7 +396,7 @@ function Troops() {
                         </select>
                     </span>
                 )}
-            </h2>
+            </SectionHead>
             {isRecruitBudgeted(state) && (
                 <p class="hint">
                     Auto-recruit saves {state.automation.recruitShare * 100}% of the production, gold
@@ -498,11 +505,6 @@ function Troops() {
                     })}
                 </tbody>
             </table>
-            <div class="hint">
-                <Tip tip={<BreakdownView stats={stats} stat="army.power" title="Army power multiplier" />}>
-                    Army power ×{fmt(stats.get("army.power"))}
-                </Tip>
-            </div>
         </section>
     );
 }
@@ -532,26 +534,24 @@ function Doctrine() {
     const best = ROLES.filter((r) => trainable.has(r)).sort((a, b) => avg[b] - avg[a])[0];
     const efficient = state.automation.unitMode === "efficient" && isEfficientRecruitUnlocked(state);
     const following = isAutomationUnlocked(state, "units") && !efficient;
-    // closed by default while auto-recruit is on Most efficient; the player's own choice is remembered
-    const [open, setOpen] = useStoredOpen("doctrine", !efficient);
     if (units.length === 0) return null;
     return (
-        <details class="section" open={open} onToggle={(e) => setOpen((e.currentTarget as HTMLDetailsElement).open)}>
-            <summary>
-                <h2>
-                    Doctrine{" "}
-                    <span class="count">
-                        · {state.automation.doctrine ? "your mix" : "following your last kingdom's army until you change it"}
-                        {efficient && " · auto-recruit is on Most efficient"}
-                    </span>
-                </h2>
-            </summary>
-            <p class="hint">
+        <section>
+            {/* folded by default while auto-recruit is on Most efficient; the player's own choice is remembered */}
+            <SectionHead
+                title="Doctrine"
+                foldedByDefault={efficient}
+                note={
+                    (state.automation.doctrine ? "your mix" : "following your last kingdom's army until you change it") +
+                    (efficient ? " · auto-recruit is on Most efficient" : "")
+                }
+            />
+            <HowItWorks id="army.doctrine">
                 City defenses favour some troops and punish others (hover a trait). Set how much of your army's power each
                 role should have
                 {following ? ": auto-recruit buys whichever role is furthest below its share" : isAutomationUnlocked(state, "units") ? " (auto-recruit is on Most efficient now)" : " (auto-recruit follows it once unlocked)"}.
                 Your choice is kept for every later kingdom.
-            </p>
+            </HowItWorks>
             <table class="doctrine">
                 <thead>
                     <tr>
@@ -591,7 +591,7 @@ function Doctrine() {
                     {best && <span class="hint">Best here: {ROLE_NAMES[best]} (×{fmt(avg[best])} on average).</span>}
                 </p>
             )}
-        </details>
+        </section>
     );
 }
 

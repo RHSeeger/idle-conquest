@@ -10,7 +10,7 @@ import { MyrranRaceId, RaceId } from "../content/races";
 import { Role, TraitId } from "../content/traits";
 import { D, Decimal } from "./decimal";
 
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 
 export interface City {
     id: number;
@@ -330,8 +330,8 @@ export interface Records {
 
 /**
  * The resets, from the run up: a Refound ends a run; a Mastery ends all four.
- * "mastery" is the stretch since the game began, the last Mastery claimed, or
- * a challenge began or ended (a challenge is its own stretch).
+ * "mastery" is the stretch since the game began or the last Mastery claimed
+ * (challenges are inside it: they have their own records, MasteryState.challengeBest).
  */
 export type LayerId = "run" | "ascension" | "planeshift" | "mastery";
 export const LAYER_IDS: LayerId[] = ["run", "ascension", "planeshift", "mastery"];
@@ -342,12 +342,12 @@ export interface LayerTimes {
     past: number[];
 }
 
-/** Which layers each kind of reset ends (entering or leaving a challenge is an Ascension, and ends a "mastery" stretch) */
+/** Which layers each kind of reset ends (entering or leaving a challenge is an Ascension) */
 export const LAYERS_ENDED: Record<RunRecord["ended"], LayerId[]> = {
     refound: ["run"],
     ascend: ["run", "ascension"],
-    enterChallenge: ["run", "ascension", "mastery"],
-    challenge: ["run", "ascension", "mastery"],
+    enterChallenge: ["run", "ascension"],
+    challenge: ["run", "ascension"],
     planeshift: ["run", "ascension", "planeshift"],
     mastery: ["run", "ascension", "planeshift", "mastery"],
 };
@@ -447,6 +447,10 @@ export interface GameState {
         playtime: number;
         /** New-player introductions already shown: "welcome" and tab ids (content/intro.ts) */
         introsSeen: string[];
+        /** "How this works" explanations the player has folded away (ui/kit.tsx), by id */
+        helpClosed: string[];
+        /** Sections the player has folded (true) or opened (false), by title (ui/kit.tsx); absent: the section's default */
+        folds: Record<string, boolean>;
     };
     log: LogEntry[];
 }
@@ -608,7 +612,7 @@ export function newGame(now = Date.now()): GameState {
             taxFloor: 0.1,
         },
         settings: { buyAmount: 1, autosaveSeconds: 15, devSpeed: 1, showDevTools: false },
-        meta: { created: now, lastTick: now, playtime: 0, introsSeen: [] },
+        meta: { created: now, lastTick: now, playtime: 0, introsSeen: [], helpClosed: [], folds: {} },
         log: [],
     };
 }

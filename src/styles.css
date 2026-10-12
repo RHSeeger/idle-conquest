@@ -184,9 +184,15 @@ h3 {
 }
 
 /* --- resources --- */
+/*
+ * A grid of equal boxes: how many fit on a row depends only on the window's
+ * width, never on the text inside, so the bar's height doesn't jump as numbers
+ * and the army's target change. Text too long for its box is cut off with "…"
+ * (the full text is in its tooltip).
+ */
 .resources {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
     gap: 8px;
     margin-bottom: 10px;
 }
@@ -194,11 +200,34 @@ h3 {
 .resource {
     display: flex;
     flex-direction: column;
-    min-width: 120px;
+    min-width: 0;
     padding: 6px 10px;
     background: var(--panel);
     border: 1px solid var(--border);
     border-radius: 6px;
+}
+
+/* boxes with a breakdown tooltip are wrapped in a .tip, which is then the grid cell */
+.resources > .tip {
+    display: flex;
+    min-width: 0;
+}
+
+.resources > .tip > .resource {
+    flex: 1;
+}
+
+/* the army's line names its target, so it gets two boxes' width */
+.resource.siege {
+    grid-column: span 2;
+}
+
+.resource-name,
+.resource-amount,
+.resource-rate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .resource-name {
@@ -223,28 +252,111 @@ h3 {
 .resource.knowledge .resource-amount { color: var(--knowledge); }
 .resource.siege .resource-amount { color: var(--siege); }
 
+/* the resource boxes as one line, at the top of the window once the boxes have scrolled away (TODO #32) */
+.resource-strip {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 16px;
+    overflow: hidden;
+    white-space: nowrap;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+    font-size: 13px;
+}
+/* each item's width depends only on the window, never on its numbers, so nothing
+   shifts as they change; all shrink alike to fit the window (rates are left out
+   when they wouldn't fit: App.tsx, STRIP_*) */
+.strip-item {
+    flex: 1 1 100px;
+    min-width: 0;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+}
+.strip-item.has-rate {
+    flex-basis: 165px;
+    max-width: 260px;
+}
+.strip-item .resource-amount {
+    font-size: 13px;
+    color: var(--text);
+}
+.strip-rate {
+    font-family: var(--mono);
+    font-size: 11px;
+}
+.strip-item.production .resource-amount { color: var(--production); }
+.strip-item.gold .resource-amount { color: var(--gold); }
+.strip-item.food .resource-amount { color: var(--food); }
+.strip-item.knowledge .resource-amount { color: var(--knowledge); }
+.strip-item.mana .resource-amount { color: var(--mana); }
+.strip-item.fame .resource-amount { color: var(--fame); }
+.strip-item.insight .resource-amount { color: var(--insight); }
+.strip-item.essence .resource-amount { color: var(--essence); }
+.strip-item.mastery .resource-amount { color: var(--mastery); }
+.strip-item.siege .resource-amount { color: var(--siege); }
+/* the jump bar sits under the strip */
+.app.compact-resources .jump-bar {
+    top: 30px;
+}
+
 /* --- tabs & layout --- */
 .tabs {
     display: flex;
-    gap: 4px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 4px 3px;
     border-bottom: 1px solid var(--border);
     margin-bottom: 10px;
 }
 
-.tab {
-    border: 1px solid transparent;
-    border-bottom: none;
-    border-radius: 6px 6px 0 0;
-    background: transparent;
-    padding: 6px 14px;
-    color: var(--muted);
+/* tab groups, one per layer in its colour (TODO #44): each tab is tinted and
+   topped with the colour; a gap sets each group apart, utilities on the right */
+.tab.group-kingdom { --group: var(--fame); }
+.tab.group-wizard { --group: var(--insight); }
+.tab.group-planes { --group: var(--essence); }
+.tab.group-mastery { --group: var(--mastery); }
+.tab.group-utility { --group: var(--muted); }
+.tab.group-start {
+    margin-left: 14px;
+}
+.tab.group-utility.group-start {
+    margin-left: auto;
 }
 
-.tab.active {
+.tab {
+    border: 1px solid var(--border);
+    border-top: 3px solid color-mix(in srgb, var(--group, var(--border)) 45%, var(--border));
+    border-bottom: none;
+    border-radius: 6px 6px 0 0;
+    background: color-mix(in srgb, var(--group, var(--border)) 7%, var(--bg));
+    padding: 5px 13px;
+    color: var(--muted);
+}
+.tab:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--group, var(--border)) 14%, var(--bg));
+    color: var(--text);
+}
+
+/* the open tab: joined to the page below it, full colour on top */
+.tab.active,
+.tab.active:hover:not(:disabled) {
     background: var(--panel);
-    border-color: var(--border);
+    border-top-color: var(--group, var(--accent));
     color: var(--text);
     font-weight: 600;
+    position: relative;
+    padding-bottom: 6px;
     margin-bottom: -1px;
 }
 
@@ -277,36 +389,12 @@ h3 {
     }
 }
 
-.panel section,
-.panel details.section {
+.panel section {
     background: var(--panel);
     border: 1px solid var(--border);
     border-radius: 6px;
     padding: 10px 12px;
     margin-bottom: 10px;
-}
-
-/* a collapsible section: its heading is the toggle */
-details.section > summary {
-    cursor: pointer;
-    list-style: none;
-}
-details.section > summary::-webkit-details-marker {
-    display: none;
-}
-details.section > summary h2 {
-    display: inline;
-    margin: 0;
-}
-details.section > summary h2::before {
-    content: "▸ ";
-    color: var(--muted);
-}
-details.section[open] > summary h2::before {
-    content: "▾ ";
-}
-details.section[open] > summary {
-    margin-bottom: 8px;
 }
 
 .row {
@@ -435,6 +523,23 @@ table.doctrine th {
 
 table.doctrine tr.unavailable td {
     color: var(--muted);
+}
+
+/* Magic tab: magic nodes by type */
+table.nodes {
+    width: auto;
+    margin: 4px 0;
+}
+
+table.nodes th,
+table.nodes td {
+    padding: 2px 14px 2px 0;
+    white-space: nowrap;
+}
+
+table.nodes td.node-name {
+    color: var(--realm);
+    font-weight: 600;
 }
 
 /* the wizards' contest: rivals and their wards */
@@ -667,14 +772,6 @@ td.buy-button button.full:not(:disabled) {
 }
 
 /* Fame upgrades switched off by a challenge (Sss'ra) */
-.challenge-off {
-    border: 1px solid var(--mastery);
-    background: color-mix(in srgb, var(--mastery) 10%, transparent);
-    border-radius: 5px;
-    padding: 6px 10px;
-    font-size: 13px;
-}
-
 .fame-branches.off .card-text,
 .cards.off .card-text,
 .boons.off li,
@@ -1289,6 +1386,31 @@ button.toggle.auto {
 
 .ov-text {
     flex: 1;
+    color: var(--muted);
+}
+.ov-text b {
+    color: var(--text);
+    font-weight: 600;
+}
+
+/* each line's key fact, in a column of its own so the eye can run down it (TODO #33) */
+.ov-fact {
+    flex: 0 0 64px;
+    text-align: right;
+    font-family: var(--mono);
+    font-size: 12px;
+    white-space: nowrap;
+    color: var(--text);
+}
+/* something to do now */
+.ov-ready .ov-fact {
+    color: var(--good);
+    font-weight: 700;
+}
+/* won't move by itself, or nothing left to do */
+.ov-stuck .ov-fact,
+.ov-done .ov-fact {
+    color: var(--muted);
 }
 
 .ov-auto {
@@ -1476,4 +1598,240 @@ ul.boons {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
+}
+
+/* --- kit: the shared look (ui/kit.tsx, decision #10) --- */
+
+/* a layer's colour for the pieces below */
+.tone-fame { --tone: var(--fame); }
+.tone-insight { --tone: var(--insight); }
+.tone-essence { --tone: var(--essence); }
+.tone-mastery { --tone: var(--mastery); }
+.tone-accent { --tone: var(--accent); }
+
+/* section header line: title, key number, note, switches on the right */
+h2.section-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 10px;
+    padding-bottom: 6px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    /* clear of the jump bar when jumped to */
+    scroll-margin-top: 48px;
+}
+/* the title folds the section: a plain-looking button */
+h2.section-head > .section-title {
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    text-align: left;
+}
+h2.section-head > .section-title:hover {
+    color: var(--accent);
+    background: none;
+}
+.fold-mark {
+    display: inline-block;
+    width: 1.1em;
+    color: var(--muted);
+    font-size: 0.8em;
+}
+/* folded: just the header line */
+h2.section-head.folded {
+    padding-bottom: 0;
+    margin-bottom: 0;
+    border-bottom: none;
+}
+section:has(> h2.section-head.folded) > :not(h2.section-head) {
+    display: none;
+}
+
+/* links to each section of a busy tab, staying at the top while you scroll */
+.jump-bar {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 6px 0;
+    margin-bottom: 4px;
+    background: var(--bg);
+}
+.jump-bar.empty {
+    display: none;
+}
+.jump-bar .jump {
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+.jump-bar .jump.folded {
+    color: var(--muted);
+    border-style: dashed;
+}
+.section-value {
+    font-family: var(--mono);
+    font-size: 15px;
+}
+.army-power {
+    color: var(--siege);
+}
+.section-value .knowledge {
+    color: var(--knowledge);
+}
+.section-controls {
+    margin-left: auto;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    font-size: 13px;
+}
+
+/* a part of a section, with space and a line above */
+.part {
+    margin-top: 16px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+}
+.part:first-child,
+h2.section-head + .part {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+}
+h3.part-head {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--muted);
+    margin: 0 0 8px;
+}
+h3.part-head .count {
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+/* a heading inside a part (Spellbooks, Retorts, Familiar...) */
+.part h4 {
+    font-size: 13px;
+    margin: 12px 0 6px;
+}
+
+/* what you've chosen and what it gives */
+.choice-box {
+    border: 1px solid var(--tone);
+    border-left-width: 4px;
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--tone) 8%, var(--panel));
+    padding: 8px 12px;
+    margin: 8px 0;
+}
+.choice-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--tone);
+    margin-bottom: 4px;
+}
+.choice-box p {
+    margin: 4px 0 0;
+}
+
+/* compact facts */
+.chip {
+    display: inline-block;
+    margin: 2px 4px 2px 0;
+    padding: 1px 8px;
+    border-radius: 10px;
+    border: 1px solid var(--realm, var(--tone, var(--border)));
+    background: color-mix(in srgb, var(--realm, var(--tone, var(--border))) 14%, var(--panel));
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.chips {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0 4px;
+}
+.chips-label {
+    font-size: 12px;
+    color: var(--muted);
+    margin-right: 4px;
+}
+
+/* a labelled list of requirements */
+.checklist {
+    margin: 6px 0 10px;
+}
+.checklist-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+}
+.checklist ul.gate {
+    margin: 2px 0 0;
+}
+
+/* "How this works": a section's long explanation, folded away once read */
+.how {
+    margin: 0 0 8px;
+}
+.how-toggle {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 12px;
+    color: var(--accent);
+    cursor: pointer;
+}
+.how-toggle:hover {
+    text-decoration: underline;
+}
+.how-body {
+    margin-top: 4px;
+    padding: 6px 10px;
+    border-left: 2px solid var(--accent-soft);
+    color: var(--muted);
+    font-size: 13px;
+}
+.how-body p {
+    margin: 0 0 6px;
+}
+.how-body p:last-child {
+    margin-bottom: 0;
+}
+.how-body ul {
+    margin: 0;
+    padding-left: 18px;
+}
+.how-body li {
+    margin: 2px 0;
+}
+
+/* one style for notices */
+.notice {
+    --tone: var(--accent);
+    margin: 8px 0;
+    padding: 6px 10px;
+    border-left: 3px solid var(--tone);
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--tone) 10%, transparent);
+    font-size: 13px;
+}
+.notice-good { --tone: var(--good); }
+.notice-warn { --tone: var(--bad); }
+.notice-challenge { --tone: var(--mastery); }
+
+/* the action at the end of a section: the sum, the button, what blocks it */
+.action {
+    margin-top: 16px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
 }

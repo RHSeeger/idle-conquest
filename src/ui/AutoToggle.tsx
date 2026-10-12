@@ -18,7 +18,7 @@ const STALL_MINUTES = AUTO_PRESTIGE_STALL_SECONDS / 60;
  * Auto-Refound / auto-Ascend: the toggle, "when the gain reaches N× what you've
  * earned so far", the shared stall rule, and what a stall would do right now.
  */
-export function AutoPrestige(props: { kind: "refound" | "ascend" }) {
+export function AutoPrestige(props: { kind: "refound" | "ascend"; /** false when the toggle is already in the section's header */ toggle?: boolean }) {
     const state = game();
     if (!isAutomationUnlocked(state, props.kind)) return null;
     const refound = props.kind === "refound";
@@ -29,7 +29,7 @@ export function AutoPrestige(props: { kind: "refound" | "ascend" }) {
     return (
         <div class="auto-prestige">
             <div class="row">
-                <AutoToggle kind={props.kind} label={label} />
+                {props.toggle === false ? <span class="hint">{label}:</span> : <AutoToggle kind={props.kind} label={label} />}
                 <span class="hint">when it gives at least</span>
                 <select
                     value={String(state.automation[key])}

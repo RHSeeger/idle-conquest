@@ -1,5 +1,5 @@
 import { ComponentChildren } from "preact";
-import { useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 import { isLoreUnlocked } from "../engine/actions";
 import { currentTarget, siegePower } from "../engine/army";
 import { getStats } from "../engine/collect";
@@ -15,7 +15,7 @@ import { LorePanel } from "./LorePanel";
 import { OfflineSummary, OfflineReport } from "./OfflineReport";
 import { OptionsPanel } from "./OptionsPanel";
 import { AboutPanel, AboutSection, Footer } from "./AboutPanel";
-import { PrestigePanel } from "./PrestigePanel";
+import { FamePanel, isRefoundShown, PrestigePanel } from "./PrestigePanel";
 import { canRefound, fameOnRefound } from "../engine/prestige";
 import { isExplorationUnlocked } from "../engine/exploration";
 import { ExplorationPanel } from "./ExplorationPanel";
@@ -30,10 +30,12 @@ import { tabAttention } from "./attention";
 import { isWizard, manaRate } from "../engine/magic";
 import { Overview } from "./Overview";
 import { PlanesPanel } from "./PlanesPanel";
+import { JumpBar } from "./kit";
 import { insightOnAscend, planeshiftProgress } from "../engine/ascension";
 import { essenceOnPlaneshift, isMyrrorOpen } from "../engine/planes";
 
 type TabId =
+    | "fame"
     | "buildings"
     | "army"
     | "lore"
@@ -47,29 +49,39 @@ type TabId =
     | "options"
     | "about";
 
+/**
+ * The tab bar's groups, one per layer (in the layer's colour) and the utilities;
+ * each group's tabs share a tint (TODO #44)
+ */
+type TabGroup = "kingdom" | "wizard" | "planes" | "mastery" | "utility";
+
 interface TabDef {
     id: TabId;
     label: string;
+    group: TabGroup;
     visible: () => boolean;
     render: () => ComponentChildren;
 }
 
 const TABS: TabDef[] = [
-    // named for the layer, like Ascension, Planes and Mastery (Refound is the verb); the id is kept for saves
-    { id: "prestige", label: "Kingdom", visible: () => true, render: () => <PrestigePanel /> },
-    { id: "buildings", label: "Buildings", visible: () => true, render: () => <BuildingsPanel /> },
-    { id: "army", label: "Army", visible: () => true, render: () => <ArmyPanel /> },
-    { id: "lore", label: "Lore", visible: () => isLoreUnlocked(game()), render: () => <LorePanel /> },
+    // the id is from when this tab held the Refound too; kept for old ?tab= links
+    { id: "prestige", label: "Kingdom", group: "kingdom", visible: () => true, render: () => <PrestigePanel /> },
+    { id: "fame", label: "Fame", group: "kingdom", visible: () => isRefoundShown(game()), render: () => <FamePanel /> },
+    { id: "buildings", label: "Buildings", group: "kingdom", visible: () => true, render: () => <BuildingsPanel /> },
+    { id: "army", label: "Army", group: "kingdom", visible: () => true, render: () => <ArmyPanel /> },
+    { id: "lore", label: "Lore", group: "kingdom", visible: () => isLoreUnlocked(game()), render: () => <LorePanel /> },
     {
         id: "explore",
         label: "Exploration",
+        group: "kingdom",
         visible: () => isExplorationUnlocked(game()),
         render: () => <ExplorationPanel />,
     },
-    { id: "magic", label: "Magic", visible: () => isWizard(game()), render: () => <MagicPanel /> },
+    { id: "magic", label: "Magic", group: "wizard", visible: () => isWizard(game()), render: () => <MagicPanel /> },
     {
         id: "ascension",
         label: "Ascension",
+        group: "wizard",
         // not in the very first kingdom: it has enough to take in already
         visible: () => {
             const s = game();
@@ -84,6 +96,7 @@ const TABS: TabDef[] = [
     {
         id: "planes",
         label: "Planes",
+        group: "planes",
         visible: () => {
             const s = game();
             const gate = planeshiftProgress(s);
@@ -91,126 +104,146 @@ const TABS: TabDef[] = [
         },
         render: () => <PlanesPanel />,
     },
-    { id: "mastery", label: "Mastery", visible: () => isMasteryTabVisible(game()), render: () => <MasteryPanel /> },
+    { id: "mastery", label: "Mastery", group: "mastery", visible: () => isMasteryTabVisible(game()), render: () => <MasteryPanel /> },
     {
         id: "stats",
         label: "Statistics",
+        group: "utility",
         visible: () => game().records.totalRefounds > 0 || game().ascension.ascensions > 0,
         render: () => <StatsPanel />,
     },
-    { id: "options", label: "Options", visible: () => true, render: () => <OptionsPanel /> },
+    { id: "options", label: "Options", group: "utility", visible: () => true, render: () => <OptionsPanel /> },
     // rendered by App itself, which keeps the About section
-    { id: "about", label: "About", visible: () => true, render: () => null },
+    { id: "about", label: "About", group: "utility", visible: () => true, render: () => null },
 ];
 
-function Resource(props: { icon: string; name: string; amount: Decimal; rate: Decimal; tip?: ComponentChildren; cls: string }) {
-    const body = (
-        <div class={"resource " + props.cls}>
-            <span class="resource-name">
-                {props.icon} {props.name}
-            </span>
-            <span class="resource-amount">{fmt(props.amount)}</span>
-            <span class="resource-rate">{fmtSigned(props.rate)}/s</span>
-        </div>
-    );
-    return props.tip ? <Tip tip={props.tip}>{body}</Tip> : body;
+/** One box of the resource bar; `short` is its rate in the one-line strip (omitted: the strip shows just the amount) */
+interface ResourceItem {
+    cls: string;
+    icon: string;
+    name: string;
+    amount: string;
+    rate: string;
+    short?: string;
+    tip?: ComponentChildren;
 }
 
-function ResourceBar() {
+function resourceItems(): ResourceItem[] {
     const state = game();
     const stats = getStats(state);
     const econ = realmEconomy(state, stats);
     const run = state.run;
     const target = currentTarget(state);
     const siege = siegePower(state, stats, target?.traits ?? []);
-    return (
-        <div class="resources">
-            <Resource
-                cls="production"
-                icon={CURRENCY_ICON.production}
-                name="Production"
-                amount={run.production}
-                rate={econ.production}
-                tip={<BreakdownView stats={stats} stat="prod.mult" title="Production multiplier" />}
-            />
-            <Resource
-                cls="gold"
-                icon={CURRENCY_ICON.gold}
-                name="Gold"
-                amount={run.gold}
-                rate={econ.gold.plus(manaRate(state, stats).times(stats.get("gold.fromMana")))}
-                tip={<BreakdownView stats={stats} stat="gold.mult" title="Gold multiplier" />}
-            />
-            <Resource
-                cls="food"
-                icon={CURRENCY_ICON.food}
-                name="Food"
-                amount={run.food}
-                rate={econ.food}
-                tip={<BreakdownView stats={stats} stat="food.flat" title="Surplus food per city" />}
-            />
-            {isLoreUnlocked(state) && (
-                <Resource
-                    cls="knowledge"
-                    icon={CURRENCY_ICON.knowledge}
-                    name="Knowledge"
-                    amount={run.knowledge}
-                    rate={econ.knowledge}
-                    tip={<BreakdownView stats={stats} stat="knowledge.perPop" title="Knowledge per citizen" />}
-                />
-            )}
-            <div class="resource pop">
-                <span class="resource-name">☗ Population</span>
-                <span class="resource-amount">{fmt(econ.population * 1000)}</span>
-                <span class="resource-rate">{run.cities.length} cities</span>
-            </div>
-            {isWizard(state) && (
-                <Resource
-                    cls="mana"
-                    icon={CURRENCY_ICON.mana}
-                    name="Mana"
-                    amount={run.mana}
-                    rate={manaRate(state, stats)}
-                    tip={<BreakdownView stats={stats} stat="mana.mult" title="Mana multiplier" />}
-                />
-            )}
-            {/* once Fame has been seen: it stays through Ascensions (unspent, or from Echo of Glory) */}
-            {(state.prestige.fameTotal.gt(0) || state.prestige.fame.gt(0) || canRefound(state) || state.ascension.ascensions > 0 || state.planes.planeshifts > 0) && (
-                <div class="resource fame">
-                    <span class="resource-name">✦ Fame</span>
-                    <span class="resource-amount">{fmtInt(state.prestige.fame)}</span>
-                    <span class="resource-rate">+{fmtInt(fameOnRefound(state))} on Refound</span>
-                </div>
-            )}
-            {(state.ascension.insightTotal.gt(0) || state.planes.planeshifts > 0) && (
-                <div class="resource insight">
-                    <span class="resource-name">◈ Insight</span>
-                    <span class="resource-amount">{fmtInt(state.ascension.insight)}</span>
-                    <span class="resource-rate">+{fmtInt(insightOnAscend(state))} on Ascension</span>
-                </div>
-            )}
-            {state.planes.planeshifts > 0 && (
-                <div class="resource essence">
-                    <span class="resource-name">❖ Essence</span>
-                    <span class="resource-amount">{fmtInt(state.planes.essence)}</span>
-                    <span class="resource-rate">
-                        {isMyrrorOpen(state) ? `+${fmtInt(essenceOnPlaneshift(state))} on Planeshift` : ""}
-                    </span>
-                </div>
-            )}
-            {state.mastery.masteries > 0 && (
-                <div class="resource mastery">
-                    <span class="resource-name">★ Mastery</span>
-                    <span class="resource-amount">{fmtInt(state.mastery.masteries)}</span>
-                    <span class="resource-rate">×{fmtInt(masteryBonus(state))} income</span>
-                </div>
-            )}
-            <div class="resource siege">
-                <span class="resource-name">⚔ Army</span>
-                <span class="resource-amount">{fmt(siege)}/s</span>
-                <span class="resource-rate">{armyActivity(state)}</span>
-            </div>
+    const flow = (cls: string, icon: string, name: string, amount: Decimal, rate: Decimal, tip: ComponentChildren): ResourceItem => {
+        const r = `${fmtSigned(rate)}/s`;
+        return { cls, icon, name, amount: fmt(amount), rate: r, short: r, tip };
+    };
+    const items: ResourceItem[] = [
+        flow("production", CURRENCY_ICON.production, "Production", run.production, econ.production, <BreakdownView stats={stats} stat="prod.mult" title="Production multiplier" />),
+        flow(
+            "gold",
+            CURRENCY_ICON.gold,
+            "Gold",
+            run.gold,
+            econ.gold.plus(manaRate(state, stats).times(stats.get("gold.fromMana"))),
+            <BreakdownView stats={stats} stat="gold.mult" title="Gold multiplier" />,
+        ),
+        flow("food", CURRENCY_ICON.food, "Food", run.food, econ.food, <BreakdownView stats={stats} stat="food.flat" title="Surplus food per city" />),
+    ];
+    if (isLoreUnlocked(state)) {
+        items.push(
+            flow("knowledge", CURRENCY_ICON.knowledge, "Knowledge", run.knowledge, econ.knowledge, <BreakdownView stats={stats} stat="knowledge.perPop" title="Knowledge per citizen" />),
+        );
+    }
+    items.push({ cls: "pop", icon: "☗", name: "Population", amount: fmt(econ.population * 1000), rate: `${run.cities.length} cities` });
+    if (isWizard(state)) {
+        items.push(flow("mana", CURRENCY_ICON.mana, "Mana", run.mana, manaRate(state, stats), <BreakdownView stats={stats} stat="mana.mult" title="Mana multiplier" />));
+    }
+    // once Fame has been seen: it stays through Ascensions (unspent, or from Echo of Glory)
+    if (state.prestige.fameTotal.gt(0) || state.prestige.fame.gt(0) || canRefound(state) || state.ascension.ascensions > 0 || state.planes.planeshifts > 0) {
+        items.push({ cls: "fame", icon: "✦", name: "Fame", amount: fmtInt(state.prestige.fame), rate: `+${fmtInt(fameOnRefound(state))} on Refound` });
+    }
+    if (state.ascension.insightTotal.gt(0) || state.planes.planeshifts > 0) {
+        items.push({ cls: "insight", icon: "◈", name: "Insight", amount: fmtInt(state.ascension.insight), rate: `+${fmtInt(insightOnAscend(state))} on Ascension` });
+    }
+    if (state.planes.planeshifts > 0) {
+        const rate = isMyrrorOpen(state) ? `+${fmtInt(essenceOnPlaneshift(state))} on Planeshift` : "";
+        items.push({ cls: "essence", icon: "❖", name: "Essence", amount: fmtInt(state.planes.essence), rate });
+    }
+    if (state.mastery.masteries > 0) {
+        items.push({ cls: "mastery", icon: "★", name: "Mastery", amount: fmtInt(state.mastery.masteries), rate: `×${fmtInt(masteryBonus(state))} income` });
+    }
+    items.push({ cls: "siege", icon: "⚔", name: "Army", amount: `${fmt(siege)}/s`, rate: armyActivity(state) });
+    return items;
+}
+
+function Resource(props: { item: ResourceItem }) {
+    const it = props.item;
+    const body = (
+        <div class={"resource " + it.cls}>
+            <span class="resource-name">
+                {it.icon} {it.name}
+            </span>
+            <span class="resource-amount">{it.amount}</span>
+            <span class="resource-rate" title={it.cls === "siege" ? it.rate : undefined}>
+                {it.rate}
+            </span>
         </div>
+    );
+    return it.tip ? <Tip tip={it.tip}>{body}</Tip> : body;
+}
+
+/** The strip's sizes in px, as in styles.css: an item, the extra for a rate, the gap, and the padding at both ends */
+const STRIP_ITEM = 100;
+const STRIP_RATE = 65;
+const STRIP_GAP = 8;
+const STRIP_PAD = 32;
+
+/**
+ * The resource boxes; once they scroll out of view, a one-line strip of icons
+ * and numbers takes their place at the top of the window (TODO #32)
+ */
+function ResourceBar(props: { onCompact: (compact: boolean) => void }) {
+    const items = resourceItems();
+    const ref = useRef<HTMLDivElement>(null);
+    const [compact, setCompact] = useState(false);
+    // the strip shows rates only if every item fits with them at its full width (see .strip-item)
+    const rated = items.filter((it) => it.short).length;
+    const withRates = items.length * (STRIP_ITEM + STRIP_GAP) + rated * STRIP_RATE + STRIP_PAD <= window.innerWidth;
+    useEffect(() => {
+        const el = ref.current;
+        if (!el || typeof IntersectionObserver === "undefined") return;
+        const observer = new IntersectionObserver(([entry]) => {
+            const out = !entry.isIntersecting && entry.boundingClientRect.top < 0;
+            setCompact(out);
+            props.onCompact(out);
+        });
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, []);
+    return (
+        <>
+            <div class="resources" ref={ref}>
+                {items.map((it) => (
+                    <Resource key={it.cls} item={it} />
+                ))}
+            </div>
+            {compact && (
+                <div class="resource-strip" aria-hidden="true">
+                    {items.map((it) => (
+                        <span
+                            key={it.cls}
+                            class={"strip-item " + it.cls + (it.short && withRates ? " has-rate" : "")}
+                            title={`${it.name}: ${it.amount}${it.rate ? " · " + it.rate : ""}`}
+                        >
+                            {it.icon} <span class="resource-amount">{it.amount}</span>
+                            {it.short && withRates && <span class="strip-rate"> {it.short}</span>}
+                        </span>
+                    ))}
+                </div>
+            )}
+        </>
     );
 }
 
@@ -236,6 +269,8 @@ export function App(props: { offline: OfflineSummary | null; initialTab?: string
     const [tab, setTab] = useState<TabId>(props.initialTab === "realm" || !props.initialTab ? "prestige" : (props.initialTab as TabId));
     const [offline, setOffline] = useState(props.offline);
     const [aboutSection, setAboutSection] = useState<AboutSection>("howto");
+    // the resource strip is showing: the jump bar sits under it
+    const [compact, setCompact] = useState(false);
     const state = game();
     const visible = TABS.filter((t) => t.visible());
     const active = visible.find((t) => t.id === tab) ?? visible[0];
@@ -245,7 +280,7 @@ export function App(props: { offline: OfflineSummary | null; initialTab?: string
     };
 
     return (
-        <div class="app">
+        <div class={"app" + (compact ? " compact-resources" : "")}>
             <header>
                 <h1>Idle Conquest</h1>
                 <span class="hint">
@@ -255,15 +290,16 @@ export function App(props: { offline: OfflineSummary | null; initialTab?: string
                     A tribute to Master of Magic (1994)
                 </button>
             </header>
-            <ResourceBar />
+            <ResourceBar onCompact={setCompact} />
             <Overview onOpen={(t) => setTab(t as TabId)} />
             <nav class="tabs">
-                {visible.map((t) => {
+                {visible.map((t, i) => {
                     const attention = tabAttention(state, t.id);
+                    const groupStart = i > 0 && visible[i - 1].group !== t.group;
                     return (
                         <button
                             key={t.id}
-                            class={"tab" + (t.id === active.id ? " active" : "")}
+                            class={"tab group-" + t.group + (groupStart ? " group-start" : "") + (t.id === active.id ? " active" : "")}
                             title={attention ?? undefined}
                             onClick={() => setTab(t.id)}
                         >
@@ -282,6 +318,7 @@ export function App(props: { offline: OfflineSummary | null; initialTab?: string
             <div class="main">
                 <main>
                     <TabIntro tab={active.id} />
+                    <JumpBar key={active.id} />
                     {active.id === "about" ? <AboutPanel section={aboutSection} onSection={setAboutSection} /> : active.render()}
                 </main>
                 <Log />

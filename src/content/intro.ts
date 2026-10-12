@@ -36,7 +36,11 @@ export const TAB_INTROS: Record<string, { title: string; text: string }> = {
     },
     prestige: {
         title: "Your kingdom",
-        text: "Your cities and citizens. Citizens who aren't farming either work (Production) or pay taxes (Gold); set the split here. Every city you conquer adds more. Later, when conquest slows, you Refound here: start a new kingdom, and your conquests become Fame.",
+        text: "Your cities and citizens. Citizens who aren't farming either work (Production) or pay taxes (Gold); set the split here. Every city you conquer adds more.",
+    },
+    fame: {
+        title: "Fame",
+        text: "When conquest slows, Refound: start a new kingdom, and your conquests become Fame. Spend Fame on upgrades that make every later kingdom faster. Milestones come with the number of Refounds, and the Annals record each race you've ruled, with its Mastery.",
     },
     ascension: {
         title: "Ascension",

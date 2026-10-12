@@ -8,6 +8,7 @@ import { isWizard } from "../engine/magic";
 import { AutoToggle } from "./AutoToggle";
 import { Price } from "./components";
 import { game } from "./game";
+import { SectionHead } from "./kit";
 
 const LORE_SPEND_CAPS = [0.01, 0.02, 0.05, 0.1, 0.25, 0.5, 1];
 
@@ -17,9 +18,13 @@ export function LorePanel() {
     return (
         <div class="panel">
             <section>
-                <h2>
-                    Lore <AutoToggle kind="lore" label="Auto-study" />
-                </h2>
+                <SectionHead
+                    title="Lore"
+                    value={<span class="knowledge">{fmt(state.run.knowledge)} ✎</span>}
+                    note="Knowledge"
+                >
+                    <AutoToggle kind="lore" label="Auto-study" />
+                </SectionHead>
                 <p class="hint">Your scholars turn Knowledge into lasting improvements. Each level costs more.</p>
                 {isAutomationUnlocked(state, "lore") && isWizard(state) && (
                     <div class="row auto-prestige">

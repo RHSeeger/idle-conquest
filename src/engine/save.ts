@@ -116,6 +116,20 @@ const migrations: Record<number, Migration> = {
         }
         return raw;
     },
+    // v3: challenges no longer end the Mastery stretch (Statistics: Time taken). The Mastery
+    // times recorded so far can't be told apart from challenge times, so they're dropped, and
+    // the current stretch starts at the last Mastery claim (from the history, else the last cast).
+    2: (raw) => {
+        const l = raw.records?.layers?.mastery;
+        const challenged = (raw.mastery?.completed?.length ?? 0) > 0 || !!raw.mastery?.challenge;
+        if (l && challenged) {
+            l.past = [];
+            const claims = (raw.records.history ?? []).filter((h: any) => h.ended === "mastery");
+            const claim = claims.length > 0 ? claims[claims.length - 1].endedAt : raw.mastery?.victory?.playtime;
+            if (typeof claim === "number") l.start = claim;
+        }
+        return raw;
+    },
 };
 
 function migrate(raw: any): any {
@@ -149,9 +163,6 @@ export function deserialize(json: string): GameState {
     if (raw.ascension?.rivals === undefined) state.ascension.rivals = rivalWizards(state.run.startingRace, ARCANUS_WIZARDS);
     // auto-recruit's Chronicle mode became the doctrine, which starts as the last kingdom's army
     if ((state.automation.unitMode as string) === "chronicle") state.automation.unitMode = "doctrine";
-    // a challenge's stretch began when it did (older history recorded entering one as a plain Ascension)
-    const l = state.records.layers.mastery;
-    if (state.mastery.challenge && l.start < state.mastery.challengeStartedAt) l.start = state.mastery.challengeStartedAt;
     // the Myrror campaign defaults to null, so its own new fields are filled here
     const m = state.planes.myrror;
     if (m) {

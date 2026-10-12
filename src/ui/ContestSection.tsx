@@ -5,7 +5,7 @@
  */
 import { ARCANUS_WIZARDS } from "../content/frontier";
 import { REALM_DEFS, REALMS, Realm } from "../content/magic";
-import { realmMatchup, RIVAL_WIZARD_DEFS } from "../content/wizards";
+import { MATCHUP_OPPOSED, MATCHUP_SAME, MATCHUP_SORCERY, realmMatchup, RIVAL_WIZARD_DEFS } from "../content/wizards";
 import { getStats } from "../engine/collect";
 import { fmt, fmtTime } from "../engine/format";
 import {
@@ -25,6 +25,7 @@ import {
 } from "../engine/wards";
 import { BreakdownView, ProgressBar, Tip } from "./components";
 import { game } from "./game";
+import { HowItWorks, Part, SectionHead } from "./kit";
 
 function realmsOf(wizard: string): string {
     return (RIVAL_WIZARD_DEFS[wizard]?.realms ?? []).map((r) => REALM_DEFS[r].name).join(" & ");
@@ -73,11 +74,24 @@ export function RivalMatchups(props: { books: Partial<Record<Realm, number>>; ri
                     })}
                 </tbody>
             </table>
-            <p class="hint">
-                Your magic wears down wards according to your spellbooks: opposed realms (Life and Death, Chaos and Nature)
-                hit each other ×2, Sorcery dispels ×1.5 against any wards but Sorcery's, and a wizard's own realm only ×0.5.
-                Each realm counts by its share of your books.
-            </p>
+            <HowItWorks id="contest.matchups">
+                How well each of your realms wears down a rival's wards, counted by its share of your books:
+                <ul>
+                    <li>
+                        <b>×{MATCHUP_OPPOSED}</b> against the opposed realm: Life against Death wards and Death against
+                        Life, Chaos against Nature and Nature against Chaos
+                    </li>
+                    <li>
+                        <b>×{MATCHUP_SORCERY}</b> Sorcery against any wards that aren't Sorcery's (it's the art of
+                        dispelling)
+                    </li>
+                    <li>
+                        <b>×{MATCHUP_SAME}</b> against the rival's own realm: your Life books against a Life wizard's wards
+                        (they know its tricks)
+                    </li>
+                    <li>×1 otherwise. Hover a rival's number for how your books fare against them.</li>
+                </ul>
+            </HowItWorks>
         </>
     );
 }
@@ -94,17 +108,16 @@ export function ContestSection() {
     const power = spellPower(state, stats);
     return (
         <section>
-            <h2>
-                The wizards' contest{" "}
-                <span class="count">
-                    · {banishedCount(state)} of {ARCANUS_WIZARDS} rivals banished this Ascension
-                </span>
-            </h2>
-            <p class="hint">
+            <SectionHead
+                title="The wizards' contest"
+                value={`${banishedCount(state)} of ${ARCANUS_WIZARDS}`}
+                note="rivals banished this Ascension"
+            />
+            <HowItWorks id="magic.contest">
                 Four rival wizards hold Arcanus this Ascension, each behind wards your army cannot cross. Your spell power
                 wears them down one at a time, and the progress lasts through Refounds. A banished wizard's domain opens to
                 your army, and their Tower of Wizardry is unsealed: the way to Myrror.
-            </p>
+            </HowItWorks>
             {rival ? (
                 <>
                     <p>
@@ -135,9 +148,7 @@ export function ContestSection() {
                 <p class="good">Every rival of this Ascension is banished. Instants now strike your army's target.</p>
             )}
             <RivalMatchups books={a.books} rivals={rivals} status />
-            <h3>
-                Casting skill <span class="count">{fmt(skill)}</span>
-            </h3>
+            <Part title={<>Casting skill <span class="section-value">{fmt(skill)}</span></>}>
             <p>
                 Running enchantments take up <b>{fmt(upkeep)}</b>, leaving <b>{fmt(free)}</b> for the contest. Each point of
                 casting skill costs more mana than the last; it lasts the whole Ascension.{" "}
@@ -158,6 +169,7 @@ export function ContestSection() {
             <p class="hint">
                 The share of your mana income that trains casting skill; the rest is yours to spend on spells and summons.
             </p>
+            </Part>
         </section>
     );
 }

@@ -1,12 +1,14 @@
 import { NODES } from "../content/exploration";
 import { REALM_DEFS, REALMS } from "../content/magic";
-import { ascensionProgress, ASCENSION_BOOKS, ASCENSION_REALMS } from "../engine/ascension";
+import { ascensionProgress, ASCENSION_BOOKS, ASCENSION_REALMS, INSIGHT_PER_BOOK } from "../engine/ascension";
 import { getStats } from "../engine/collect";
 import { exploreSpeed, nextSiteCost } from "../engine/exploration";
 import { fmt, fmtTime } from "../engine/format";
+import { isWizard } from "../engine/magic";
 import { Lairs } from "./ArmyPanel";
 import { ProgressBar } from "./components";
 import { game } from "./game";
+import { SectionHead } from "./kit";
 
 export function ExplorationPanel() {
     const state = game();
@@ -23,19 +25,18 @@ export function ExplorationPanel() {
     return (
         <div class="panel">
             <section>
-                <h2>Expeditions</h2>
+                <SectionHead title="Expeditions" value={run.sites.length} note="sites discovered in this kingdom" />
                 <ProgressBar
                     class="explore"
                     fraction={run.exploreProgress / cost}
                     label={`Next discovery: ${fmtTime((cost - run.exploreProgress) / speed)} · speed ×${fmt(speed)} (more cities, more lands to explore)`}
                 />
-                <p class="hint">{run.sites.length} sites discovered in this kingdom.</p>
             </section>
 
             <Lairs />
 
             <section>
-                <h2>Resource sites</h2>
+                <SectionHead title="Resource sites" value={Object.values(nodeCounts).reduce((a, b) => a + b, 0)} />
                 {Object.keys(nodeCounts).length === 0 && <p class="hint">None yet.</p>}
                 <ul class="built">
                     {Object.entries(nodeCounts).map(([id, n]) => (
@@ -50,7 +51,7 @@ export function ExplorationPanel() {
             </section>
 
             <section>
-                <h2>Spellbooks</h2>
+                <SectionHead title="Spellbooks" value={asc.books} note={`from ${asc.realms} realm${asc.realms === 1 ? "" : "s"}`} />
                 <div class="books">
                     {REALMS.map((r) => (
                         <div key={r} class={"book realm-" + r + ((run.spellbooks[r] ?? 0) > 0 ? "" : " none")}>
@@ -59,11 +60,20 @@ export function ExplorationPanel() {
                         </div>
                     ))}
                 </div>
-                <p class="hint">
-                    You are no wizard, but your scholars puzzle over these books. With a <b>Wizards' Guild</b>{" "}
-                    {asc.wizardsGuild ? "✓" : "✗"} and {ASCENSION_BOOKS} books (you have {asc.books}) from {ASCENSION_REALMS}{" "}
-                    realms (you have {asc.realms}), you could learn to wield magic yourself.
-                </p>
+                {isWizard(state) ? (
+                    <p class="hint">
+                        Each book found in this kingdom adds +{INSIGHT_PER_BOOK * 100}% to the Insight you'd get by
+                        Ascending (×{fmt(1 + INSIGHT_PER_BOOK * asc.books)} now). To Ascend again you need a <b>Wizards' Guild</b>{" "}
+                        {asc.wizardsGuild ? "✓" : "✗"} and {ASCENSION_BOOKS} books (you have {asc.books}) from{" "}
+                        {ASCENSION_REALMS} realms (you have {asc.realms}).
+                    </p>
+                ) : (
+                    <p class="hint">
+                        You are no wizard, but your scholars puzzle over these books. With a <b>Wizards' Guild</b>{" "}
+                        {asc.wizardsGuild ? "✓" : "✗"} and {ASCENSION_BOOKS} books (you have {asc.books}) from{" "}
+                        {ASCENSION_REALMS} realms (you have {asc.realms}), you could learn to wield magic yourself.
+                    </p>
+                )}
             </section>
         </div>
     );

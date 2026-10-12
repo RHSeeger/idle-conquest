@@ -25,7 +25,7 @@ function nextGoal(state: GameState): string | null {
         if (run.frontier.index === 0) return "Wait for your army to take its first city. Conquered cities add citizens to your kingdom.";
         if (!has("buildersHall")) return "Keep building: the Builders' Hall makes every other building cheaper.";
         if (!canRefound(state)) return "Push on through the Borderlands: conquer a city of another race to unlock Refound.";
-        return "You can Refound (Kingdom tab) whenever conquests slow down. Fame makes every later kingdom faster.";
+        return "You can Refound (Fame tab) whenever conquests slow down. Fame makes every later kingdom faster.";
     }
     if (!has("explorersGuild") && p.refounds <= 2 && state.ascension.ascensions === 0 && !veteran) {
         return "Build an Explorers' Guild: expeditions find resource sites, monster lairs and spellbooks.";

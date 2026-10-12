@@ -5,7 +5,6 @@
  */
 import { ARCANUS_WIZARDS } from "../content/frontier";
 import { CHALLENGE_GOAL_RIVALS, CHALLENGE_ORDER, CHALLENGES, challengeGoalRivals, challengeGoalText, MASTERY_BONUS } from "../content/challenges";
-import { REALM_DEFS } from "../content/magic";
 import { MYRROR_WIZARDS } from "../content/myrror";
 import { RETORTS } from "../content/retorts";
 import { SPELLS } from "../content/spells";
@@ -38,8 +37,7 @@ import { banishedCount } from "../engine/wards";
 import { BreakdownView, Price, ProgressBar, Tip } from "./components";
 import { askConfirm } from "./Confirm";
 import { game } from "./game";
-
-const check = (ok: boolean) => <span class={ok ? "good" : "bad"}>{ok ? "✓" : "✗"}</span>;
+import { BookChips, Checklist, Chip, ChoiceBox, HowItWorks, Notice, SectionHead } from "./kit";
 
 const CLAIM_TEXT =
     "Claiming starts the worlds anew: your kingdom, Fame, Insight, Planar Essence, their upgrades and the Myrror campaign all reset. " +
@@ -65,17 +63,21 @@ function SpellSection() {
     const left = masterySecondsLeft(state, stats);
     return (
         <section>
-            <h2>The Spell of Mastery</h2>
-            <p class="hint">
+            <SectionHead
+                title="The Spell of Mastery"
+                value={m.cast ? "cast" : known || m.progress.gt(0) ? `${Math.floor(m.progress.div(cost).toNumber() * 100)}%` : undefined}
+                note={m.cast ? undefined : m.channelling ? "channelling" : known || m.progress.gt(0) ? "channelled" : undefined}
+            />
+            <HowItWorks id="mastery.spell">
                 Master of Magic's last spell. Once every rival wizard on both planes has fallen, research it and channel
                 it: while it channels, all your mana income flows into it, so other spells wait. When it completes, you
                 have won, and the worlds can begin anew with you as their Master.
-            </p>
+            </HowItWorks>
             {m.challenge ? (
-                <p class="hint">Not during a challenge.</p>
+                <Notice kind="challenge">Not during a challenge.</Notice>
             ) : m.cast ? (
                 <>
-                    <p class="good">The Spell of Mastery is cast. You are the Master of Magic!</p>
+                    <Notice kind="good">The Spell of Mastery is cast. You are the Master of Magic!</Notice>
                     <p class="hint">{CLAIM_TEXT} You can keep playing for as long as you like and claim it later.</p>
                     <button class="prestige-button mastery" disabled={!canClaimMastery(state)} onClick={() => doClaim(state)}>
                         Claim Mastery {m.masteries + 1} (×{fmtInt(Math.pow(MASTERY_BONUS, m.masteries + 1))} production, gold,
@@ -86,16 +88,19 @@ function SpellSection() {
                 <>
                     {!known && m.progress.lte(0) && (
                         <>
-                            <ul class="gate">
-                                <li>
-                                    {check(gate.myrran >= MYRROR_WIZARDS)} Banish every Myrran wizard this Planeshift ({gate.myrran} of{" "}
-                                    {MYRROR_WIZARDS})
-                                </li>
-                                <li>
-                                    {check(gate.arcanus >= ARCANUS_WIZARDS)} Banish all four rival wizards of Arcanus in one
-                                    Ascension, by breaking their wards ({gate.arcanus} of {ARCANUS_WIZARDS} in this one; Magic tab)
-                                </li>
-                            </ul>
+                            <Checklist
+                                title="To research the Spell of Mastery"
+                                items={[
+                                    {
+                                        ok: gate.myrran >= MYRROR_WIZARDS,
+                                        text: `Banish every Myrran wizard this Planeshift (${gate.myrran} of ${MYRROR_WIZARDS})`,
+                                    },
+                                    {
+                                        ok: gate.arcanus >= ARCANUS_WIZARDS,
+                                        text: `Banish all four rival wizards of Arcanus in one Ascension, by breaking their wards (${gate.arcanus} of ${ARCANUS_WIZARDS} in this one; Magic tab)`,
+                                    },
+                                ]}
+                            />
                             <p>
                                 <button disabled={!canResearch(state, SPELL_OF_MASTERY)} onClick={() => research(state, SPELL_OF_MASTERY)}>
                                     Research the Spell of Mastery
@@ -149,12 +154,12 @@ function ChannelSpeed() {
                 </Tip>{" "}
                 = <b>{fmt(channelRate(state, stats))}</b>/s
             </p>
-            <p class="hint">
+            <HowItWorks id="mastery.channel">
                 Faster with more mana: Arcane Power (Insight; Ascending keeps the channel's progress), the Channeler, Mana
                 Focusing and Alchemy retorts, Dark Rituals, melded nodes, and on Myrror Quork Foci and Dark Elf cities. And
                 with Planar Channel (Essence). A Planeshift keeps the progress too, but resets your Insight upgrades and
                 Myrror's works and holdings, so it pays only if its Essence buys enough Planar Channel.
-            </p>
+            </HowItWorks>
         </>
     );
 }
@@ -165,9 +170,7 @@ function MasteriesSection() {
     if (m.masteries === 0) return null;
     return (
         <section>
-            <h2>
-                Masteries <span class="count">· {m.masteries} claimed</span>
-            </h2>
+            <SectionHead title="Masteries" value={<span class="mastery">{m.masteries} ★</span>} note="claimed" />
             <p>
                 ×{fmtInt(masteryBonus(state))} production, gold, knowledge, mana, spell power and planar power. Every milestone counts as earned. Each
                 Spell of Mastery you cast again (same gate) gives another Mastery.
@@ -182,7 +185,7 @@ function ChallengesSection() {
     if (m.masteries === 0) {
         return (
             <section>
-                <h2>Challenge Wizards</h2>
+                <SectionHead title="Challenge Wizards" />
                 <p class="hint">
                     After your first Mastery, each of the 14 rival wizards offers a challenge: one Ascension as that wizard,
                     under their rule, for a reward that lasts forever. Each is played from a fixed start, without your
@@ -220,21 +223,22 @@ function ChallengesSection() {
     };
     return (
         <section>
-            <h2>
-                Challenge Wizards <span class="count">· {m.completed.length} of {CHALLENGE_ORDER.length} beaten</span>
-            </h2>
-            <p class="hint">
-                One Ascension as a rival wizard, with their books, retort and rule. Goal: banish {CHALLENGE_GOAL_RIVALS} of
-                the {ARCANUS_WIZARDS} rival wizards of Arcanus by breaking their wards. Refounds are allowed and keep the
-                progress; Ascending and Planeshifting aren't, and Myrror pauses. Rewards last forever.
-            </p>
-            <p class="hint">
-                <b>A fixed start.</b> Your Insight and Essence upgrades and Myrror's works, boons and holdings are off in a
-                challenge, so growing stronger elsewhere doesn't make it easier. What does: more Masteries, and the rewards
-                of the challenges you've won, which count in the later ones. So the order you take them in is up to you:
-                Kali's weaker rivals or Tlaloc's mana help with every challenge after them.
-            </p>
+            <SectionHead title="Challenge Wizards" value={`${m.completed.length} of ${CHALLENGE_ORDER.length}`} note="beaten" />
+            <HowItWorks id="mastery.challenges">
+                <p>
+                    One Ascension as a rival wizard, with their books, retort and rule. Goal: banish {CHALLENGE_GOAL_RIVALS} of
+                    the {ARCANUS_WIZARDS} rival wizards of Arcanus by breaking their wards. Refounds are allowed and keep the
+                    progress; Ascending and Planeshifting aren't, and Myrror pauses. Rewards last forever.
+                </p>
+                <p>
+                    <b>A fixed start.</b> Your Insight and Essence upgrades and Myrror's works, boons and holdings are off in a
+                    challenge, so growing stronger elsewhere doesn't make it easier. What does: more Masteries, and the rewards
+                    of the challenges you've won, which count in the later ones. So the order you take them in is up to you:
+                    Kali's weaker rivals or Tlaloc's mana help with every challenge after them.
+                </p>
+            </HowItWorks>
             {m.challenge && <CurrentChallenge />}
+            {blocked && <Notice kind="info">{blocked}</Notice>}
             <div class="cards challenges">
                 {CHALLENGE_ORDER.map((w) => {
                     const c = CHALLENGES[w];
@@ -248,11 +252,13 @@ function ChallengesSection() {
                                 {active && <span class="count">· in progress</span>}
                             </div>
                             <div class="card-text challenge-lore">{c.lore}</div>
-                            <div class="card-text hint">
-                                {Object.entries(books)
-                                    .map(([r, n]) => `${n} ${REALM_DEFS[r as keyof typeof REALM_DEFS].name}`)
-                                    .join(", ")}
-                                {retorts.length > 0 && ` · ${retorts.map((id) => RETORTS[id].name).join(", ")}`}
+                            <div class="card-text chips">
+                                <BookChips books={books} />
+                                {retorts.map((id) => (
+                                    <Chip key={id} tone="insight" title={RETORTS[id].text}>
+                                        {RETORTS[id].name}
+                                    </Chip>
+                                ))}
                             </div>
                             <div class="card-text">
                                 <b>Rule:</b> {c.rule}.
@@ -272,7 +278,6 @@ function ChallengesSection() {
                     );
                 })}
             </div>
-            {blocked && <p class="hint">{blocked}</p>}
         </section>
     );
 }
@@ -294,9 +299,8 @@ function CurrentChallenge() {
     const insight = insightOnAscend(state);
     const doComplete = () => completeChallenge(state);
     return (
-        <div class="challenge-current">
+        <ChoiceBox tone="mastery" label={`Now playing: ${c.wizard}'s challenge`}>
             <p>
-                <b>{c.wizard}'s challenge</b> ·{" "}
                 {m.challengeWonIn !== null ? `won in ${fmtTime(m.challengeWonIn)}` : `${fmtTime(state.meta.playtime - m.challengeStartedAt)} so far`}
                 {m.challengeBest[c.wizard] !== undefined && ` (best ${fmtTime(m.challengeBest[c.wizard])})`} · Rivals banished:{" "}
                 <b>
@@ -319,7 +323,7 @@ function CurrentChallenge() {
             <button class="toggle" onClick={doAbandon}>
                 Abandon the challenge
             </button>
-        </div>
+        </ChoiceBox>
     );
 }
 

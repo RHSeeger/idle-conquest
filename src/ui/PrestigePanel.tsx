@@ -36,6 +36,7 @@ import { game } from "./game";
 import { AutoMode, AutoPrestige, AutoToggle, ModeOption } from "./AutoToggle";
 import { isAutomationUnlocked, nextFameChronicleStep } from "../engine/automation";
 import { heroRefoundText } from "./HeroesSection";
+import { Checklist, Chip, ChoiceBox, HowItWorks, Notice, Part, SectionHead } from "./kit";
 import { KingdomSections } from "./KingdomSections";
 import { GameState } from "../engine/state";
 import { ascensionRivals } from "../engine/wards";
@@ -55,8 +56,7 @@ function FameRate() {
     return (
         <Tip tip="Fame on Refound ÷ how long this kingdom has lasted. It usually climbs, peaks, then falls as cities get harder: Refounding around the peak gets the most Fame per minute (auto-Refound uses its own threshold).">
             <span class="hint">
-                {" "}
-                · <b>{fmt(now)}</b> Fame/min now, best <b>{fmt(best)}</b> at {fmtTime(run.bestFameRateAt)}
+                <b>{fmt(now)}</b> Fame/min now, best <b>{fmt(best)}</b> at {fmtTime(run.bestFameRateAt)}
                 {past ? <span class="insight"> (past its peak: a good time to Refound)</span> : ""}
             </span>
         </Tip>
@@ -94,72 +94,95 @@ function RefoundSection() {
 
     return (
         <section>
-            <h2>Refound</h2>
-            <p class="hint">
+            <SectionHead title="Refound" value={<span class="fame">+{fmtInt(fame)} ✦</span>} note="Fame on Refounding now">
+                <AutoToggle kind="refound" label="Auto-Refound" />
+            </SectionHead>
+            {ok && run.bestFameRate > 0 && (
+                <p class="row">
+                    <FameRate />
+                </p>
+            )}
+            <HowItWorks id="kingdom.refound">
                 Abandon this kingdom and found a new one. Your conquests become <b>Fame</b>, every race you conquered joins
-                the <b>Annals</b>, and you may start as any race in them. Each starting race meets different
-                neighbours.
-            </p>
-            {!ok && <p class="bad">Requirement: {refoundRequirementText()}</p>}
-            <div class="row">
-                <span>
-                    Fame on Refound: <b class="fame">{fmtInt(fame)}</b>
-                </span>
-                {ok && run.bestFameRate > 0 && <FameRate />}
-            </div>
-            <ul class="fame-sources hint">
-                <li>
-                    Population taken by force: <b>{fmtInt(run.conqueredPop * 1000)}</b>
-                </li>
-                {run.surrenderedPop > 0 && (
+                the <b>Annals</b>, and you may start as any race in them. Each starting race meets different neighbours.
+            </HowItWorks>
+            {!ok && <Checklist title="To Refound" items={[{ ok: false, text: refoundRequirementText() }]} />}
+
+            <Part title="Where this kingdom's Fame comes from">
+                <ul class="fame-sources">
                     <li>
-                        Population that surrendered to your Renown: {fmtInt(run.surrenderedPop * 1000)}, paying{" "}
-                        <b>{Math.round(tribute * 100)}%</b> as tribute
-                        {tribute < TRIBUTE_SHARE && ` (rising to ${TRIBUTE_SHARE * 100}% after ${TRIBUTE_SECONDS / 60} minutes of the kingdom)`}
+                        Population taken by force: <b>{fmtInt(run.conqueredPop * 1000)}</b>
                     </li>
+                    {run.surrenderedPop > 0 && (
+                        <li>
+                            Population that surrendered to your Renown: <b>{fmtInt(run.surrenderedPop * 1000)}</b>, paying{" "}
+                            <b>{Math.round(tribute * 100)}%</b> as tribute
+                            {tribute < TRIBUTE_SHARE && (
+                                <span class="hint">
+                                    {" "}
+                                    (rising to {TRIBUTE_SHARE * 100}% after {TRIBUTE_SECONDS / 60} minutes of the kingdom)
+                                </span>
+                            )}
+                        </li>
+                    )}
+                    <li>
+                        Races conquered in this kingdom: <b>{run.racesConquered.length}</b>{" "}
+                        <span class="hint">(+{run.racesConquered.length * 25}% Fame)</span>
+                    </li>
+                </ul>
+                <p class="hint">Fame = (counted population ÷ 8,000)^0.9 × the race bonus × Fame multipliers.</p>
+                {ok && fullTribute.gt(fame) && (
+                    <Notice kind="info">
+                        Tribute is still building up: Refounding in {fmtTime(tributeSecondsLeft(state))} would give{" "}
+                        <b class="fame">{fmtInt(fullTribute)}</b> Fame from what you hold now (more if you take more cities).
+                    </Notice>
                 )}
-                <li>
-                    Races conquered in this kingdom: <b>{run.racesConquered.length}</b> (+{run.racesConquered.length * 25}% Fame)
-                </li>
-                <li>Fame = (counted population ÷ 8,000)^0.9 × the race bonus × Fame multipliers.</li>
-            </ul>
-            {ok && fullTribute.gt(fame) && (
-                <p class="hint">
-                    Tribute is still building up: Refounding in {fmtTime(tributeSecondsLeft(state))} would give{" "}
-                    <b class="fame">{fmtInt(fullTribute)}</b> Fame from what you hold now (more if you take more cities).
-                </p>
-            )}
-            {ok && !earnsMastery(state) && (
-                <p class="hint">
-                    No city taken by force yet in this kingdom: Refounding now won't add Mastery for the{" "}
-                    {RACES[run.startingRace].plural} or replace your Chronicle (the build order and army that automation
-                    follows).
-                </p>
-            )}
-            {run.heroes.length > 0 && <p class="hint">{heroRefoundText(state)}</p>}
-            {ok && fullTribute.lte(0) && (
-                <p class="bad">
-                    This kingdom would give no Fame: take cities by force first. You can still Refound, for example to
-                    start over as a different race.
-                </p>
-            )}
-            <div class="race-choice">
-                {options.map((r) => (
-                    <button key={r} class={"toggle" + (raceForPlan === r ? " on" : "")} onClick={() => setChoice(r)}>
-                        {RACES[r].plural}
-                        {(p.raceMastery[r] ?? 0) > 0 && <span class="hint"> ★{p.raceMastery[r]}</span>}
-                        {!p.annals.includes(r) && <span class="tag">new</span>}
-                    </button>
-                ))}
+                {ok && !earnsMastery(state) && (
+                    <Notice kind="info">
+                        No city taken by force yet in this kingdom: Refounding now won't add Mastery for the{" "}
+                        {RACES[run.startingRace].plural} or replace your Chronicle (the build order and army that automation
+                        follows).
+                    </Notice>
+                )}
+                {ok && fullTribute.lte(0) && (
+                    <Notice kind="warn">
+                        This kingdom would give no Fame: take cities by force first. You can still Refound, for example to
+                        start over as a different race.
+                    </Notice>
+                )}
+            </Part>
+
+            <Part title="Next kingdom">
+                <h4>Starting race</h4>
+                <div class="race-choice">
+                    {options.map((r) => (
+                        <button key={r} class={"toggle" + (raceForPlan === r ? " on" : "")} onClick={() => setChoice(r)}>
+                            {RACES[r].plural}
+                            {(p.raceMastery[r] ?? 0) > 0 && <span class="hint"> ★{p.raceMastery[r]}</span>}
+                            {!p.annals.includes(r) && <span class="tag">new</span>}
+                        </button>
+                    ))}
+                </div>
+                <ChoiceBox tone="fame" label={`Starting as ${RACES[raceForPlan].plural}`}>
+                    <div class="chips">
+                        <Chip tone="fame" title="In cities of this race">
+                            Cities: {RACES[raceForPlan].cityEffectText}
+                        </Chip>
+                        <Chip tone="fame" title="For the whole kingdom while you hold cities of this race">
+                            Kingdom: {RACES[raceForPlan].realmEffectText}
+                        </Chip>
+                    </div>
+                    <p class="hint">Frontier: {plan.map((r) => r.name).join(" → ")}</p>
+                </ChoiceBox>
+                {run.heroes.length > 0 && <p class="hint">{heroRefoundText(state)}</p>}
+            </Part>
+
+            <div class="action">
+                <button class="prestige-button" disabled={!ok} onClick={doRefound}>
+                    Refound as {RACES[raceForPlan].plural} (+{fmtInt(fame)} Fame)
+                </button>
+                <AutoPrestige kind="refound" toggle={false} />
             </div>
-            <p class="hint">
-                Starting as {RACES[raceForPlan].plural}: {RACES[raceForPlan].cityEffectText.toLowerCase()}; kingdom bonus{" "}
-                {RACES[raceForPlan].realmEffectText.toLowerCase()}. Frontier: {plan.map((r) => r.name).join(" → ")}
-            </p>
-            <button class="prestige-button" disabled={!ok} onClick={doRefound}>
-                Refound as {RACES[raceForPlan].plural} (+{fmtInt(fame)} Fame)
-            </button>
-            <AutoPrestige kind="refound" />
         </section>
     );
 }
@@ -204,31 +227,29 @@ function FameTree() {
     const echo = p.refounds === 0 && state.ascension.ascensions > 0 ? fameEchoAmount(state) : null;
     return (
         <section>
-            <h2>
-                Fame <span class="fame">{fmtInt(p.fame)}</span>{" "}
-                <span class="count">
-                    · {fmtInt(p.fameTotal)} earned in total: ×{fmt(p.fameTotal.times(RENOWN_PER_FAME).plus(1))} production,
-                    gold, knowledge and army power
-                </span>
-            </h2>
+            <SectionHead
+                title="Fame"
+                value={<span class="fame">{fmtInt(p.fame)} ✦</span>}
+                note={`${fmtInt(p.fameTotal)} earned in total: ×${fmt(p.fameTotal.times(RENOWN_PER_FAME).plus(1))} production, gold, knowledge and army power`}
+            />
             {echo?.gt(0) && (
-                <p class="hint">
+                <Notice kind="info">
                     Echo of Glory (Ascension milestone): this Ascension began with <b class="fame">{fmtInt(echo)}</b> Fame, a
                     quarter of the {fmtInt(state.ascension.lastFameEarned)} you earned in the last one. It's yours to spend,
                     but it wasn't earned in this Ascension, so it doesn't count toward the total or its bonus.
-                </p>
+                </Notice>
             )}
             {p.fameDebt.gt(0) && (
-                <p class="hint">
+                <Notice kind="info">
                     Enduring Legacy: your Fame upgrades were kept through the Ascension. Earned Fame repays them first:{" "}
                     <b class="fame">{fmtInt(p.fameDebt)}</b> still to go before you can buy more.
-                </p>
+                </Notice>
             )}
             {!working && (
-                <p class="challenge-off">
+                <Notice kind="challenge">
                     <b>Off during {state.mastery.challenge}'s challenge:</b> Fame upgrades do nothing until it ends. You can
                     still buy them. Fame itself still counts (Renown, above).
-                </p>
+                </Notice>
             )}
             <FameAutoBuy />
             <div class={"fame-branches" + (working ? "" : " off")}>
@@ -324,13 +345,13 @@ function Milestones() {
     const p = state.prestige;
     return (
         <section>
-            <h2>
-                Milestones{" "}
-                <span class="count">
-                    · {p.refounds} refounds
-                    {effectiveRefounds(state) > p.refounds && ` (counted as ${effectiveRefounds(state)} thanks to Ascension milestones)`}
-                </span>
-            </h2>
+            <SectionHead
+                title="Milestones"
+                note={
+                    `${p.refounds} refounds` +
+                    (effectiveRefounds(state) > p.refounds ? ` (counted as ${effectiveRefounds(state)} thanks to Ascension milestones)` : "")
+                }
+            />
             <ul class="milestones">
                 {MILESTONES.map((m) => (
                     <li key={m.id} class={effectiveRefounds(state) >= m.refounds ? "done" : ""}>
@@ -358,12 +379,7 @@ function Annals() {
     const p = state.prestige;
     return (
         <section>
-            <h2>
-                Annals{" "}
-                <span class="count">
-                    · {p.annals.length} of {ARCANUS_RING.length} races of Arcanus
-                </span>
-            </h2>
+            <SectionHead title="Annals" note={`${p.annals.length} of ${ARCANUS_RING.length} races of Arcanus`} />
             <table>
                 <thead>
                     <tr>
@@ -398,20 +414,23 @@ export function isRefoundShown(state: GameState): boolean {
     return canRefound(state) || state.prestige.refounds > 0 || state.ascension.ascensions > 0;
 }
 
-/** The Kingdom tab: the kingdom itself, then the Refound that ends it (as Ascension and Planes do for their layers) */
+/** The Kingdom tab: the kingdom itself (its layer, Refound and Fame, has its own tab: FamePanel) */
 export function PrestigePanel() {
-    const state = game();
     return (
         <div class="panel">
             <KingdomSections />
-            {isRefoundShown(state) && (
-                <>
-                    <RefoundSection />
-                    <FameTree />
-                    <Milestones />
-                    <Annals />
-                </>
-            )}
+        </div>
+    );
+}
+
+/** The Fame tab (TODO #44): the Refound and what it earns, as Ascension and Planes are for their layers */
+export function FamePanel() {
+    return (
+        <div class="panel">
+            <RefoundSection />
+            <FameTree />
+            <Milestones />
+            <Annals />
         </div>
     );
 }

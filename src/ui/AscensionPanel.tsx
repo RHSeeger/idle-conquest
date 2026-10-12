@@ -55,6 +55,7 @@ import { CHALLENGES, challengeGoalText } from "../content/challenges";
 import { ARCANUS_WIZARDS } from "../content/frontier";
 import { banishedCount, nextRivals } from "../engine/wards";
 import { RivalMatchups } from "./ContestSection";
+import { BookChips, Checklist, Chip, ChoiceBox, HowItWorks, Notice, Part, SectionHead } from "./kit";
 
 const INSIGHT_MODES: ModeOption<"chronicle" | "cheapest">[] = [
     { value: "chronicle", label: "Chronicle", tip: "Replay the order you bought Insight upgrades in during your last Planeshift, then cheapest first" },
@@ -110,19 +111,34 @@ function KeepFameToggle() {
 function Gate() {
     const state = game();
     const p = ascensionProgress(state);
-    const check = (ok: boolean) => <span class={ok ? "good" : "bad"}>{ok ? "✓" : "✗"}</span>;
     return (
-        <ul class="gate">
-            <li>
-                {check(p.wizardsGuild)} A Wizards' Guild in your kingdom
-            </li>
-            <li>
-                {check(p.books >= ASCENSION_BOOKS)} Spellbooks found in this kingdom: {p.books} of {ASCENSION_BOOKS}
-            </li>
-            <li>
-                {check(p.realms >= ASCENSION_REALMS)} Realms among them: {p.realms} of at least {ASCENSION_REALMS}
-            </li>
-        </ul>
+        <Checklist
+            title={isWizard(state) ? "To Ascend" : "To Ascend and become a Wizard"}
+            items={[
+                { ok: p.wizardsGuild, text: "A Wizards' Guild in your kingdom" },
+                { ok: p.books >= ASCENSION_BOOKS, text: `Spellbooks found in this kingdom: ${p.books} of ${ASCENSION_BOOKS}` },
+                { ok: p.realms >= ASCENSION_REALMS, text: `Realms among them: ${p.realms} of at least ${ASCENSION_REALMS}` },
+            ]}
+        />
+    );
+}
+
+/** A profile as chips: realm books, retorts, and the familiar if any */
+export function ProfileChips(props: { books: Partial<Record<Realm, number>>; retorts: readonly string[]; familiar: Realm | null; familiarText?: string }) {
+    return (
+        <>
+            <BookChips books={props.books} />
+            {props.retorts.map((id) => (
+                <Chip key={id} tone="insight" title={RETORTS[id]?.text}>
+                    {RETORTS[id]?.name ?? id}
+                </Chip>
+            ))}
+            {props.familiar && (
+                <Chip realm={props.familiar} title={props.familiarText}>
+                    Familiar: {REALM_DEFS[props.familiar].name}
+                </Chip>
+            )}
+        </>
     );
 }
 
@@ -138,24 +154,23 @@ function familiarName(realm: Realm | null): string {
     return realm ? REALM_DEFS[realm].name : "none (no spellbooks)";
 }
 
-/** The wizard profile of the current Ascension */
+/** The wizard profile of the current Ascension, as chips (Ascension and Magic tabs) */
 export function CurrentProfile() {
     const state = game();
     const a = state.ascension;
     if (!isWizard(state)) return null;
     const familiar = currentFamiliar(state);
     return (
-        <p>
-            Your wizard this Ascension: <b>{profileText(a.books, a.retorts)}</b>{" "}
-            <span class="hint">({picksUsed(a.books, a.retorts, freeRetortSlots(state))} picks)</span>
-            {familiar && (
-                <>
-                    <br />
-                    Familiar: <b>{REALM_DEFS[familiar].name}</b>{" "}
-                    <span class="hint">({FAMILIARS[familiar].text(familiarLevel(state))})</span>
-                </>
-            )}
-        </p>
+        <div class="chips">
+            <span class="chips-label">Your wizard this Ascension</span>
+            <ProfileChips
+                books={a.books}
+                retorts={a.retorts}
+                familiar={familiar}
+                familiarText={familiar ? FAMILIARS[familiar].text(familiarLevel(state)) : undefined}
+            />
+            <span class="hint">· {picksUsed(a.books, a.retorts, freeRetortSlots(state))} picks</span>
+        </div>
     );
 }
 
@@ -236,8 +251,6 @@ function ProfilePicker() {
     const retortCost = retortPicks(retorts, free);
     const used = bookPicks + retortCost;
     const wizard = isWizard(state);
-    // picks the current wizard didn't have when Ascending (bought with Insight since)
-    const gained = wizard ? Math.max(0, Math.min(picks - used, picks - picksUsed(a.books, a.retorts, free))) : 0;
     const pickable = pickableRealms(state);
     const change = (r: Realm, delta: number) => {
         if (delta > 0 && (used >= picks || blockedByOpposed(books, r))) return;
@@ -249,24 +262,17 @@ function ProfilePicker() {
     const error = validateBooks(state, books, retorts);
     return (
         <div>
-            <p>
-                Picks for the next Ascension: <b>{used}</b> of {picks} used ({bookPicks} on spellbooks, {retortCost} on
-                retorts{free > 0 && `; Retort Mastery makes your ${free === 1 ? "most expensive retort" : `${free} most expensive retorts`} free`})
-                {used < picks && (
-                    <span class="insight">
-                        {" "}
-                        · {picks - used} left to spend
-                        {gained > 0 && ` (${gained} new since you Ascended)`}
-                    </span>
-                )}
-            </p>
-            <p class="hint">
+            <PlanSummary />
+            <h4>Spellbooks</h4>
+            <HowItWorks id="ascension.picks">
                 Every wizard has {BASE_PICKS} picks{deeper > 0 && `, +${deeper} from Deeper Study (an Insight upgrade)`}.
-                Spellbooks and retorts share them. Books in a realm unlock its spells (Common at {RARITY_BOOKS.common},
-                Uncommon at {RARITY_BOOKS.uncommon}, Rare at {RARITY_BOOKS.rare}, Very Rare at {RARITY_BOOKS.veryRare}) and
-                make its research cheaper. You can only pick realms whose books you have found (or whose wizard you have
-                defeated). Life and Death cannot be combined.
-            </p>
+                Spellbooks and retorts share them ({bookPicks} on spellbooks and {retortCost} on retorts now
+                {free > 0 && `; Retort Mastery makes your ${free === 1 ? "most expensive retort" : `${free} most expensive retorts`} free`}
+                ). Books in a realm unlock its spells (Common at {RARITY_BOOKS.common}, Uncommon at {RARITY_BOOKS.uncommon},
+                Rare at {RARITY_BOOKS.rare}, Very Rare at {RARITY_BOOKS.veryRare}) and make its research cheaper. You can only
+                pick realms whose books you have found (or whose wizard you have defeated). Life and Death cannot be
+                combined.
+            </HowItWorks>
             <div class="books">
                 {REALMS.map((r) => {
                     const ok = pickable.includes(r);
@@ -302,12 +308,12 @@ function ProfilePicker() {
                     );
                 })}
             </div>
-            <h3>Retorts</h3>
-            <p class="hint">
+            <h4>Retorts</h4>
+            <HowItWorks id="ascension.retorts">
                 Special abilities that cost picks from the same pool as spellbooks. Most start locked: each locked card
                 says what unlocks it (an achievement during play). Once unlocked, a retort stays unlocked and can be
                 picked at any later Ascension.
-            </p>
+            </HowItWorks>
             <div class="cards retorts">
                 {RETORT_ORDER.map((id) => {
                     const r = RETORTS[id];
@@ -347,33 +353,79 @@ function ProfilePicker() {
             <FamiliarPicker />
             <h4>The next Ascension's rivals</h4>
             <RivalMatchups books={books} rivals={nextRivals(state)} />
-            {error && <p class="bad">{error}</p>}
+            {error && <Notice kind="warn">{error}</Notice>}
         </div>
+    );
+}
+
+/**
+ * The next Ascension's plan in one box: the profile as chips, picks used and
+ * left, how it differs from this Ascension, and the starting race
+ */
+function PlanSummary() {
+    const state = game();
+    const a = state.ascension;
+    const picks = totalPicks(state);
+    const free = freeRetortSlots(state);
+    const used = picksUsed(a.planBooks, a.planRetorts, free);
+    const wizard = isWizard(state);
+    // picks the current wizard didn't have when Ascending (bought with Insight since)
+    const gained = wizard ? Math.max(0, Math.min(picks - used, picks - picksUsed(a.books, a.retorts, free))) : 0;
+    const familiar = familiarLevel(state) > 0 ? resolveFamiliar(a.planFamiliar, a.planBooks) : null;
+    const changes = wizard ? profileChanges(state) : [];
+    return (
+        <ChoiceBox tone="insight" label={wizard ? "Your plan for the next Ascension (auto-Ascend uses it)" : "Your first wizard (auto-Ascend uses it)"}>
+            <div class="chips">
+                <ProfileChips
+                    books={a.planBooks}
+                    retorts={a.planRetorts}
+                    familiar={familiar}
+                    familiarText={familiar ? FAMILIARS[familiar].text(familiarLevel(state)) : undefined}
+                />
+            </div>
+            <p>
+                Picks: <b>{used}</b> of {picks} used
+                {used < picks && (
+                    <span class="insight">
+                        {" "}
+                        · <b>{picks - used} left to spend</b>
+                        {gained > 0 && ` (${gained} new since you Ascended)`}
+                    </span>
+                )}
+            </p>
+            {wizard && (
+                <p class={changes.length > 0 ? "insight" : "hint"}>
+                    {changes.length === 0 ? "The same profile as this Ascension." : `Changes from this Ascension: ${changes.join(", ")}.`}
+                </p>
+            )}
+        </ChoiceBox>
     );
 }
 
 function BeyondArcanus() {
     const state = game();
     const p = planeshiftProgress(state);
-    const check = (ok: boolean) => <span class={ok ? "good" : "bad"}>{ok ? "✓" : "✗"}</span>;
     return (
         <section>
-            <h2>Beyond Arcanus</h2>
-            <p class="hint">
+            <SectionHead title="Beyond Arcanus" />
+            <HowItWorks id="ascension.beyond">
                 Towers of Wizardry stand where the walls between the worlds are thin, each sealed by a rival wizard. Through
                 them lies Myrror, home of the Beastmen, Dark Elves, Draconians, Dwarves, Klackons and Trolls.
-            </p>
-            <ul class="gate">
-                <li>
-                    {check(p.towerUnsealed)} Banish a rival wizard, which unseals their Tower of Wizardry ({banishedCount(state)} of{" "}
-                    {ARCANUS_WIZARDS} banished this Ascension; Magic tab)
-                </li>
-                <li>{check(p.riteKnown)} Research the Rite of the Tower (Arcane; Plane Shift halves its cost)</li>
-            </ul>
+            </HowItWorks>
+            <Checklist
+                title="To Planeshift"
+                items={[
+                    {
+                        ok: p.towerUnsealed,
+                        text: `Banish a rival wizard, which unseals their Tower of Wizardry (${banishedCount(state)} of ${ARCANUS_WIZARDS} banished this Ascension; Magic tab)`,
+                    },
+                    { ok: p.riteKnown, text: "Research the Rite of the Tower (Arcane; Plane Shift halves its cost)" },
+                ]}
+            />
             {p.ready && (
-                <p class="wall">
+                <Notice kind="good">
                     The Tower is open: you can <b>Planeshift</b> (Planes tab).
-                </p>
+                </Notice>
             )}
         </section>
     );
@@ -442,8 +494,6 @@ export function AscensionPanel() {
     const planError = validateBooks(state, books, retorts);
     const ok = canAscend(state) && planError === null;
     const unspent = totalPicks(state) - picksUsed(books, retorts, freeRetortSlots(state));
-    const changes = isWizard(state) ? profileChanges(state) : [];
-
     const doAscend = () => {
         askConfirm({
             title: "Ascend?",
@@ -465,81 +515,85 @@ export function AscensionPanel() {
     return (
         <div class="panel">
             <section>
-                <h2>Ascend</h2>
-                <p class="hint">
-                    {!isWizard(state) ? (
-                        <>
-                            Leave the throne and become a <b>Wizard</b>. Every kingdom after this has mana, spells, magic nodes
-                            and summoned creatures, and with spell power you can break the wards of rival wizards, so your
-                            army can fight through their domains.{" "}
-                        </>
-                    ) : (
-                        <>Ascend again to choose a new wizard profile and face new rivals. </>
-                    )}
-                    Insight comes mostly from the rival wizards you banish this Ascension; the Fame you earn and the
-                    spellbooks you hold add to it. The sum is beside the Ascend button, below.
-                </p>
-                {isWizard(state) && <h3>This Ascension</h3>}
-                <CurrentProfile />
-                <Gate />
-                <h3>
-                    {isWizard(state) ? "Next Ascension" : "Your first wizard profile"}{" "}
-                    <span class="count">· auto-Ascend uses this</span>
-                </h3>
-                <ProfilePicker />
-                <h3>Starting race</h3>
-                <div class="race-choice">
-                    {races.map((r) => (
-                        <button key={r} class={"toggle" + (chosenRace === r ? " on" : "")} onClick={() => setRace(r)}>
-                            {RACES[r].plural}
-                        </button>
-                    ))}
-                </div>
-                {state.run.heroes.length > 0 && <p class="hint">{heroAscendText(state)}</p>}
-                <KeepFameToggle />
-                {isWizard(state) && (
-                    <p class={changes.length > 0 ? "insight" : "hint"}>
-                        {changes.length === 0
-                            ? "Next Ascension: the same profile as this one."
-                            : `Next Ascension changes: ${changes.join(", ")}.`}
+                <SectionHead
+                    title="Ascend"
+                    value={<span class="insight">+{fmtInt(insight)} ◈</span>}
+                    note={breakdown.ready ? "Insight on Ascending now" : "Insight, once you can Ascend"}
+                >
+                    <AutoToggle kind="ascend" label="Auto-Ascend" />
+                </SectionHead>
+                <HowItWorks id="ascension.ascend">
+                    <p>
+                        {!isWizard(state) ? (
+                            <>
+                                Leave the throne and become a <b>Wizard</b>. Every kingdom after this has mana, spells, magic
+                                nodes and summoned creatures, and with spell power you can break the wards of rival wizards,
+                                so your army can fight through their domains.{" "}
+                            </>
+                        ) : (
+                            <>Ascend again to choose a new wizard profile and face new rivals. </>
+                        )}
+                        Insight comes mostly from the rival wizards you banish this Ascension; the Fame you earn and the
+                        spellbooks you hold add to it. The sum is beside the Ascend button, below.
                     </p>
+                </HowItWorks>
+                <Gate />
+
+                {isWizard(state) && (
+                    <Part title="This Ascension">
+                        <CurrentProfile />
+                    </Part>
                 )}
-                <InsightSum b={breakdown} />
-                <button class="prestige-button ascend" disabled={!ok} onClick={doAscend}>
-                    Ascend (+{fmtInt(insight)} Insight)
-                </button>
-                {state.mastery.challenge && (
-                    <span class="hint">
-                        {" "}
-                        Not during {state.mastery.challenge}'s challenge.{" "}
-                        {state.mastery.challengeDone
-                            ? "It's won: complete it on the Mastery tab, which Ascends you back to your own profile."
-                            : `Completing it (Mastery tab, once you ${challengeGoalText(CHALLENGES[state.mastery.challenge])}) Ascends you instead, or you can abandon it there.`}
-                    </span>
-                )}
-                {planError && <span class="bad"> Can't Ascend with this profile: {planError}.</span>}
-                {unspent > 0 && (
-                    <span class="bad">
-                        {" "}
-                        The next profile still has {unspent} unspent pick{unspent === 1 ? "" : "s"}
-                    </span>
-                )}
-                <AutoPrestige kind="ascend" />
+
+                <Part title={isWizard(state) ? "Next Ascension" : "Your first wizard"}>
+                    <ProfilePicker />
+                    <h4>Starting race</h4>
+                    <div class="race-choice">
+                        {races.map((r) => (
+                            <button key={r} class={"toggle" + (chosenRace === r ? " on" : "")} onClick={() => setRace(r)}>
+                                {RACES[r].plural}
+                            </button>
+                        ))}
+                    </div>
+                    {state.run.heroes.length > 0 && <p class="hint">{heroAscendText(state)}</p>}
+                    <KeepFameToggle />
+                </Part>
+
+                <div class="action">
+                    <InsightSum b={breakdown} />
+                    <button class="prestige-button ascend" disabled={!ok} onClick={doAscend}>
+                        Ascend (+{fmtInt(insight)} Insight)
+                    </button>
+                    {state.mastery.challenge && (
+                        <Notice kind="challenge">
+                            Not during {state.mastery.challenge}'s challenge.{" "}
+                            {state.mastery.challengeDone
+                                ? "It's won: complete it on the Mastery tab, which Ascends you back to your own profile."
+                                : `Completing it (Mastery tab, once you ${challengeGoalText(CHALLENGES[state.mastery.challenge])}) Ascends you instead, or you can abandon it there.`}
+                        </Notice>
+                    )}
+                    {planError && <Notice kind="warn">Can't Ascend with this profile: {planError}.</Notice>}
+                    {unspent > 0 && (
+                        <Notice kind="warn">
+                            The next profile still has {unspent} unspent pick{unspent === 1 ? "" : "s"}.
+                        </Notice>
+                    )}
+                    <AutoPrestige kind="ascend" toggle={false} />
+                </div>
             </section>
 
             {isWizard(state) && (
                 <section>
-                    <h2>
-                        Insight <span class="insight">{fmtInt(a.insight)}</span>{" "}
-                        <span class="count">
-                            · {a.ascensions} Ascension{a.ascensions === 1 ? "" : "s"} · {fmtInt(a.insightTotal)} earned in total
-                        </span>
-                    </h2>
+                    <SectionHead
+                        title="Insight"
+                        value={<span class="insight">{fmtInt(a.insight)} ◈</span>}
+                        note={`${a.ascensions} Ascension${a.ascensions === 1 ? "" : "s"} · ${fmtInt(a.insightTotal)} earned in total`}
+                    />
                     {off && (
-                        <p class="challenge-off">
+                        <Notice kind="challenge">
                             <b>Off during {state.mastery.challenge}'s challenge:</b> Insight upgrades do nothing until it
                             ends (Royal Stewards' auto-buy still works). You can still buy them.
-                        </p>
+                        </Notice>
                     )}
                     <InsightAutoBuy />
                     <div class={"cards" + (off ? " off" : "")}>
@@ -571,7 +625,7 @@ export function AscensionPanel() {
             )}
 
             <section>
-                <h2>Ascension milestones</h2>
+                <SectionHead title="Ascension milestones" note={`${a.ascensions} Ascension${a.ascensions === 1 ? "" : "s"}`} />
                 <ul class="milestones">
                     {ASCENSION_MILESTONES.map((m) => (
                         <li key={m.id} class={a.ascensions >= m.ascensions ? "done" : ""}>
@@ -588,7 +642,7 @@ export function AscensionPanel() {
 
             {a.wizardsDefeated.length > 0 && (
                 <section>
-                    <h2>Rival wizards banished</h2>
+                    <SectionHead title="Rival wizards banished" note={`${a.wizardsDefeated.length} of 14`} />
                     <ul class="built">
                         {a.wizardsDefeated.map((w) => (
                             <li key={w}>

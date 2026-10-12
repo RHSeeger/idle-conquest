@@ -18,21 +18,37 @@ describe("Time taken per layer", () => {
         expect(l.run.past).toEqual([100, 150, 50, 700]);
         expect(l.ascension.past).toEqual([250, 50, 700]);
         expect(l.planeshift.past).toEqual([1000]);
-        expect(l.mastery.past).toEqual([300]); // leaving the challenge
-        expect(l.mastery.start).toBe(300);
+        expect(l.mastery.past).toEqual([]);
+        expect(l.mastery.start).toBe(0);
         expect(l.run.start).toBe(1000);
     });
 
-    it("a challenge, begun or left, starts a new Mastery / challenge stretch but not a new Planeshift", () => {
+    it("a challenge, begun or left, is an Ascension: it ends neither a Planeshift nor a Mastery", () => {
         const state = newGame(0);
         state.meta.playtime = 100;
         recordRun(state, "enterChallenge", D(1));
         state.meta.playtime = 400;
         recordRun(state, "challenge", D(1));
+        state.meta.playtime = 900;
+        recordRun(state, "mastery", D(1));
         const l = state.records.layers;
-        expect(l.mastery.past).toEqual([100, 300]);
-        expect(l.ascension.past).toEqual([100, 300]);
-        expect(l.planeshift.past).toEqual([]);
+        expect(l.ascension.past).toEqual([100, 300, 500]);
+        expect(l.planeshift.past).toEqual([900]);
+        expect(l.mastery.past).toEqual([900]);
+    });
+
+    it("older saves drop Mastery times that challenges cut short", () => {
+        const state = newGame(0);
+        state.meta.playtime = 100;
+        recordRun(state, "mastery", D(1));
+        state.meta.playtime = 400;
+        state.mastery.completed = ["Merlin"];
+        const old = JSON.parse(serialize(state));
+        old.version = 2;
+        old.records.layers.mastery = { start: 350, past: [100, 200, 50] };
+        const loaded = deserialize(JSON.stringify(old));
+        expect(loaded.records.layers.mastery.past).toEqual([]);
+        expect(loaded.records.layers.mastery.start).toBe(100); // the claim, from the history
     });
 
     it("keeps only the last few", () => {

@@ -306,46 +306,12 @@ h3 {
     }
 }
 
-.panel section,
-.panel details.section {
+.panel section {
     background: var(--panel);
     border: 1px solid var(--border);
     border-radius: 6px;
     padding: 10px 12px;
     margin-bottom: 10px;
-}
-
-/* a collapsible section: its heading is the toggle */
-details.section > summary {
-    cursor: pointer;
-    list-style: none;
-}
-details.section > summary::-webkit-details-marker {
-    display: none;
-}
-details.section > summary h2 {
-    display: inline;
-    margin: 0;
-}
-/* a header line as the toggle: its rule only while open */
-details.section > summary h2.section-head {
-    display: flex;
-    padding-bottom: 0;
-    border-bottom: none;
-}
-details.section[open] > summary h2.section-head {
-    padding-bottom: 6px;
-    border-bottom: 1px solid var(--border);
-}
-details.section > summary h2::before {
-    content: "▸ ";
-    color: var(--muted);
-}
-details.section[open] > summary h2::before {
-    content: "▾ ";
-}
-details.section[open] > summary {
-    margin-bottom: 8px;
 }
 
 .row {
@@ -1544,6 +1510,62 @@ h2.section-head {
     padding-bottom: 6px;
     margin-bottom: 8px;
     border-bottom: 1px solid var(--border);
+    /* clear of the jump bar when jumped to */
+    scroll-margin-top: 48px;
+}
+/* the title folds the section: a plain-looking button */
+h2.section-head > .section-title {
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    text-align: left;
+}
+h2.section-head > .section-title:hover {
+    color: var(--accent);
+    background: none;
+}
+.fold-mark {
+    display: inline-block;
+    width: 1.1em;
+    color: var(--muted);
+    font-size: 0.8em;
+}
+/* folded: just the header line */
+h2.section-head.folded {
+    padding-bottom: 0;
+    margin-bottom: 0;
+    border-bottom: none;
+}
+section:has(> h2.section-head.folded) > :not(h2.section-head) {
+    display: none;
+}
+
+/* links to each section of a busy tab, staying at the top while you scroll */
+.jump-bar {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 6px 0;
+    margin-bottom: 4px;
+    background: var(--bg);
+}
+.jump-bar.empty {
+    display: none;
+}
+.jump-bar .jump {
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+.jump-bar .jump.folded {
+    color: var(--muted);
+    border-style: dashed;
 }
 .section-value {
     font-family: var(--mono);

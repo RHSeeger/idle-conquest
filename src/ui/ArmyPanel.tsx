@@ -38,7 +38,7 @@ import { isWizard } from "../engine/magic";
 import { AutoMode, AutoToggle } from "./AutoToggle";
 import { HeroesSection } from "./HeroesSection";
 import { HowItWorks, Part, SectionHead } from "./kit";
-import { BreakdownView, Price, ProgressBar, RegionList, Tip, useStoredOpen } from "./components";
+import { BreakdownView, Price, ProgressBar, RegionList, Tip } from "./components";
 import { game } from "./game";
 
 const BUY_AMOUNTS: Settings["buyAmount"][] = [1, 10, 100, "next", "max"];
@@ -529,20 +529,18 @@ function Doctrine() {
     const best = ROLES.filter((r) => trainable.has(r)).sort((a, b) => avg[b] - avg[a])[0];
     const efficient = state.automation.unitMode === "efficient" && isEfficientRecruitUnlocked(state);
     const following = isAutomationUnlocked(state, "units") && !efficient;
-    // closed by default while auto-recruit is on Most efficient; the player's own choice is remembered
-    const [open, setOpen] = useStoredOpen("doctrine", !efficient);
     if (units.length === 0) return null;
     return (
-        <details class="section" open={open} onToggle={(e) => setOpen((e.currentTarget as HTMLDetailsElement).open)}>
-            <summary>
-                <SectionHead
-                    title="Doctrine"
-                    note={
-                        (state.automation.doctrine ? "your mix" : "following your last kingdom's army until you change it") +
-                        (efficient ? " · auto-recruit is on Most efficient" : "")
-                    }
-                />
-            </summary>
+        <section>
+            {/* folded by default while auto-recruit is on Most efficient; the player's own choice is remembered */}
+            <SectionHead
+                title="Doctrine"
+                foldedByDefault={efficient}
+                note={
+                    (state.automation.doctrine ? "your mix" : "following your last kingdom's army until you change it") +
+                    (efficient ? " · auto-recruit is on Most efficient" : "")
+                }
+            />
             <HowItWorks id="army.doctrine">
                 City defenses favour some troops and punish others (hover a trait). Set how much of your army's power each
                 role should have
@@ -588,7 +586,7 @@ function Doctrine() {
                     {best && <span class="hint">Best here: {ROLE_NAMES[best]} (×{fmt(avg[best])} on average).</span>}
                 </p>
             )}
-        </details>
+        </section>
     );
 }
 

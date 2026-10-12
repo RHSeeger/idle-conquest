@@ -449,6 +449,8 @@ export interface GameState {
         introsSeen: string[];
         /** "How this works" explanations the player has folded away (ui/kit.tsx), by id */
         helpClosed: string[];
+        /** Sections the player has folded (true) or opened (false), by title (ui/kit.tsx); absent: the section's default */
+        folds: Record<string, boolean>;
     };
     log: LogEntry[];
 }
@@ -610,7 +612,7 @@ export function newGame(now = Date.now()): GameState {
             taxFloor: 0.1,
         },
         settings: { buyAmount: 1, autosaveSeconds: 15, devSpeed: 1, showDevTools: false },
-        meta: { created: now, lastTick: now, playtime: 0, introsSeen: [], helpClosed: [] },
+        meta: { created: now, lastTick: now, playtime: 0, introsSeen: [], helpClosed: [], folds: {} },
         log: [],
     };
 }

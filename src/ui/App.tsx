@@ -30,6 +30,7 @@ import { tabAttention } from "./attention";
 import { isWizard, manaRate } from "../engine/magic";
 import { Overview } from "./Overview";
 import { PlanesPanel } from "./PlanesPanel";
+import { JumpBar } from "./kit";
 import { insightOnAscend, planeshiftProgress } from "../engine/ascension";
 import { essenceOnPlaneshift, isMyrrorOpen } from "../engine/planes";
 
@@ -284,6 +285,7 @@ export function App(props: { offline: OfflineSummary | null; initialTab?: string
             <div class="main">
                 <main>
                     <TabIntro tab={active.id} />
+                    <JumpBar key={active.id} />
                     {active.id === "about" ? <AboutPanel section={aboutSection} onSection={setAboutSection} /> : active.render()}
                 </main>
                 <Log />

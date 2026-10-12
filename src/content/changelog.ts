@@ -12,6 +12,7 @@ export const CHANGES: ChangeEntry[] = [
     {
         date: "2026-10-11",
         items: [
+            "Busy tabs are quicker to get around: click a section's title to fold it down to its header line (the game remembers it), and tabs with four or more sections get a bar of links to each one that stays at the top while you scroll. A link opens the section if it's folded.",
             "New Essence upgrade, Astral Archivists: auto-buy for Insight upgrades, as Royal Stewards is for Fame. It can replay the order you bought them in during your last Planeshift, or buy the cheapest first (Ascension tab).",
             "The boxes at the top of the page keep their size, so the page no longer jumps up and down as their text changes. Text too long for a box ends in \"…\"; hover the Army box for its full line.",
             "Ascension tab redesigned to be easier to scan: a header line with the Insight you'd get and the Auto-Ascend switch, a labelled \"To Ascend\" checklist, This Ascension and Next Ascension set apart, your wizard and your plan shown as coloured chips (books, retorts, familiar) with picks left and changes in one box, and what blocks Ascending as clear notices. Long explanations fold behind \"How this works\" once you've read them (About → How to play can show them all again). Your wizard shows the same way on the Magic tab. The other tabs will follow.",

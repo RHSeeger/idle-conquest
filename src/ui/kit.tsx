@@ -4,7 +4,9 @@
  * everywhere. Piloted on the Ascension tab; styles under "kit" in styles.css.
  */
 import { ComponentChildren } from "preact";
+import { useLayoutEffect, useRef, useState } from "preact/hooks";
 import { Realm, REALM_DEFS, REALMS } from "../content/magic";
+import { GameState } from "../engine/state";
 import { game } from "./game";
 
 /** A layer's colour, for choice boxes and notices */
@@ -13,21 +15,82 @@ export type Tone = "fame" | "insight" | "essence" | "mastery" | "accent";
 /**
  * A section's header line: the title, its key number (and a muted note), then
  * the section's switches on the right. The same on every tab.
+ *
+ * Clicking the title folds the section away, leaving just this line (TODO #34);
+ * the save remembers it, by title. The CSS hides the rest of the enclosing
+ * <section>, so the header must be its direct child.
  */
 export function SectionHead(props: {
-    title: ComponentChildren;
+    title: string;
     value?: ComponentChildren;
     note?: ComponentChildren;
     class?: string;
+    /** Folded until the player opens it (e.g. Doctrine while auto-recruit picks the troops) */
+    foldedByDefault?: boolean;
     children?: ComponentChildren;
 }) {
+    const state = game();
+    const folded = isFolded(state, props.title, props.foldedByDefault);
+    const toggle = () => setFolded(state, props.title, !folded);
     return (
-        <h2 class={"section-head" + (props.class ? " " + props.class : "")}>
-            <span class="section-title">{props.title}</span>
+        <h2 class={"section-head" + (folded ? " folded" : "") + (props.class ? " " + props.class : "")} data-fold={props.title}>
+            <button class="section-title" onClick={toggle} aria-expanded={!folded} title={folded ? "Show this section" : "Fold this section away"}>
+                <span class="fold-mark">{folded ? "▸" : "▾"}</span>
+                {props.title}
+            </button>
             {props.value !== undefined && <span class="section-value">{props.value}</span>}
             {props.note !== undefined && <span class="count">{props.note}</span>}
             {props.children && <span class="section-controls">{props.children}</span>}
         </h2>
+    );
+}
+
+function isFolded(state: GameState, key: string, byDefault = false): boolean {
+    return state.meta.folds[key] ?? byDefault;
+}
+
+function setFolded(state: GameState, key: string, folded: boolean) {
+    state.meta.folds = { ...state.meta.folds, [key]: folded };
+}
+
+/** Fewer sections than this and the tab fits without a jump bar */
+const JUMP_MIN = 4;
+
+/**
+ * Links to each section of the tab below it, staying at the top of the window
+ * while you scroll (TODO #34). It reads the headers from the page after each
+ * render, so it follows sections as they appear. A link opens a folded section.
+ */
+export function JumpBar() {
+    const state = game();
+    const ref = useRef<HTMLElement>(null);
+    const [sections, setSections] = useState<{ title: string; folded: boolean }[]>([]);
+    const heads = () => Array.from(ref.current?.parentElement?.querySelectorAll<HTMLElement>(".panel h2.section-head[data-fold]") ?? []);
+    useLayoutEffect(() => {
+        const found = heads().map((h) => ({ title: h.dataset.fold ?? "", folded: h.classList.contains("folded") }));
+        if (JSON.stringify(found) !== JSON.stringify(sections)) setSections(found);
+    });
+    const jump = (title: string) => {
+        setFolded(state, title, false);
+        heads()
+            .find((h) => h.dataset.fold === title)
+            ?.scrollIntoView({ block: "start", behavior: "smooth" });
+    };
+    const shown = sections.length >= JUMP_MIN;
+    return (
+        <nav ref={ref} class={"jump-bar" + (shown ? "" : " empty")} aria-label="Sections of this tab">
+            {shown &&
+                sections.map((s) => (
+                    <button
+                        key={s.title}
+                        class={"jump" + (s.folded ? " folded" : "")}
+                        title={s.folded ? "Folded: this opens it" : undefined}
+                        onClick={() => jump(s.title)}
+                    >
+                        {s.title}
+                    </button>
+                ))}
+        </nav>
     );
 }
 

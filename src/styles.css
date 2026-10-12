@@ -255,25 +255,50 @@ h3 {
 /* --- tabs & layout --- */
 .tabs {
     display: flex;
-    gap: 4px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 4px 3px;
     border-bottom: 1px solid var(--border);
     margin-bottom: 10px;
 }
 
-.tab {
-    border: 1px solid transparent;
-    border-bottom: none;
-    border-radius: 6px 6px 0 0;
-    background: transparent;
-    padding: 6px 14px;
-    color: var(--muted);
+/* tab groups, one per layer in its colour (TODO #44): each tab is tinted and
+   topped with the colour; a gap sets each group apart, utilities on the right */
+.tab.group-kingdom { --group: var(--fame); }
+.tab.group-wizard { --group: var(--insight); }
+.tab.group-planes { --group: var(--essence); }
+.tab.group-mastery { --group: var(--mastery); }
+.tab.group-utility { --group: var(--muted); }
+.tab.group-start {
+    margin-left: 14px;
+}
+.tab.group-utility.group-start {
+    margin-left: auto;
 }
 
-.tab.active {
+.tab {
+    border: 1px solid var(--border);
+    border-top: 3px solid color-mix(in srgb, var(--group, var(--border)) 45%, var(--border));
+    border-bottom: none;
+    border-radius: 6px 6px 0 0;
+    background: color-mix(in srgb, var(--group, var(--border)) 7%, var(--bg));
+    padding: 5px 13px;
+    color: var(--muted);
+}
+.tab:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--group, var(--border)) 14%, var(--bg));
+    color: var(--text);
+}
+
+/* the open tab: joined to the page below it, full colour on top */
+.tab.active,
+.tab.active:hover:not(:disabled) {
     background: var(--panel);
-    border-color: var(--border);
+    border-top-color: var(--group, var(--accent));
     color: var(--text);
     font-weight: 600;
+    position: relative;
+    padding-bottom: 6px;
     margin-bottom: -1px;
 }
 

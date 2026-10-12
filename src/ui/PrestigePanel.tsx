@@ -414,20 +414,23 @@ export function isRefoundShown(state: GameState): boolean {
     return canRefound(state) || state.prestige.refounds > 0 || state.ascension.ascensions > 0;
 }
 
-/** The Kingdom tab: the kingdom itself, then the Refound that ends it (as Ascension and Planes do for their layers) */
+/** The Kingdom tab: the kingdom itself (its layer, Refound and Fame, has its own tab: FamePanel) */
 export function PrestigePanel() {
-    const state = game();
     return (
         <div class="panel">
             <KingdomSections />
-            {isRefoundShown(state) && (
-                <>
-                    <RefoundSection />
-                    <FameTree />
-                    <Milestones />
-                    <Annals />
-                </>
-            )}
+        </div>
+    );
+}
+
+/** The Fame tab (TODO #44): the Refound and what it earns, as Ascension and Planes are for their layers */
+export function FamePanel() {
+    return (
+        <div class="panel">
+            <RefoundSection />
+            <FameTree />
+            <Milestones />
+            <Annals />
         </div>
     );
 }

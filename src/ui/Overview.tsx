@@ -188,7 +188,7 @@ export function Overview(props: { onOpen: OpenTab }) {
             </ul>
             <ul class="overview">
                 {(canRefound(state) || state.prestige.refounds > 0 || isWizard(state)) && (
-                    <Line icon="✦" label="Refound" tab="prestige" onOpen={onOpen} auto="refound">
+                    <Line icon="✦" label="Refound" tab="fame" onOpen={onOpen} auto="refound">
                         {canRefound(state) ? `+${fmtInt(fameOnRefound(state))} Fame if you Refound now` : "conquer a city of another race first"}
                     </Line>
                 )}

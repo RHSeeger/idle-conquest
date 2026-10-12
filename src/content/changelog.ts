@@ -12,6 +12,7 @@ export const CHANGES: ChangeEntry[] = [
     {
         date: "2026-10-11",
         items: [
+            "New Fame tab: Refound, Fame upgrades, Milestones and Annals moved there from the Kingdom tab, which now holds your citizens, settlers and cities. The tabs are grouped by layer, each group tinted in its colour (your kingdom, the wizard, Planes, Mastery), with Statistics, Options and About on the right.",
             "Busy tabs are quicker to get around: click a section's title to fold it down to its header line (the game remembers it), and tabs with four or more sections get a bar of links to each one that stays at the top while you scroll. A link opens the section if it's folded.",
             "New Essence upgrade, Astral Archivists: auto-buy for Insight upgrades, as Royal Stewards is for Fame. It can replay the order you bought them in during your last Planeshift, or buy the cheapest first (Ascension tab).",
             "The boxes at the top of the page keep their size, so the page no longer jumps up and down as their text changes. Text too long for a box ends in \"…\"; hover the Army box for its full line.",

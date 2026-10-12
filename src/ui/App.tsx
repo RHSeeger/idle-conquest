@@ -15,7 +15,7 @@ import { LorePanel } from "./LorePanel";
 import { OfflineSummary, OfflineReport } from "./OfflineReport";
 import { OptionsPanel } from "./OptionsPanel";
 import { AboutPanel, AboutSection, Footer } from "./AboutPanel";
-import { PrestigePanel } from "./PrestigePanel";
+import { FamePanel, isRefoundShown, PrestigePanel } from "./PrestigePanel";
 import { canRefound, fameOnRefound } from "../engine/prestige";
 import { isExplorationUnlocked } from "../engine/exploration";
 import { ExplorationPanel } from "./ExplorationPanel";
@@ -35,6 +35,7 @@ import { insightOnAscend, planeshiftProgress } from "../engine/ascension";
 import { essenceOnPlaneshift, isMyrrorOpen } from "../engine/planes";
 
 type TabId =
+    | "fame"
     | "buildings"
     | "army"
     | "lore"
@@ -48,29 +49,39 @@ type TabId =
     | "options"
     | "about";
 
+/**
+ * The tab bar's groups, one per layer (in the layer's colour) and the utilities;
+ * each group's tabs share a tint (TODO #44)
+ */
+type TabGroup = "kingdom" | "wizard" | "planes" | "mastery" | "utility";
+
 interface TabDef {
     id: TabId;
     label: string;
+    group: TabGroup;
     visible: () => boolean;
     render: () => ComponentChildren;
 }
 
 const TABS: TabDef[] = [
-    // named for the layer, like Ascension, Planes and Mastery (Refound is the verb); the id is kept for saves
-    { id: "prestige", label: "Kingdom", visible: () => true, render: () => <PrestigePanel /> },
-    { id: "buildings", label: "Buildings", visible: () => true, render: () => <BuildingsPanel /> },
-    { id: "army", label: "Army", visible: () => true, render: () => <ArmyPanel /> },
-    { id: "lore", label: "Lore", visible: () => isLoreUnlocked(game()), render: () => <LorePanel /> },
+    // the id is from when this tab held the Refound too; kept for old ?tab= links
+    { id: "prestige", label: "Kingdom", group: "kingdom", visible: () => true, render: () => <PrestigePanel /> },
+    { id: "fame", label: "Fame", group: "kingdom", visible: () => isRefoundShown(game()), render: () => <FamePanel /> },
+    { id: "buildings", label: "Buildings", group: "kingdom", visible: () => true, render: () => <BuildingsPanel /> },
+    { id: "army", label: "Army", group: "kingdom", visible: () => true, render: () => <ArmyPanel /> },
+    { id: "lore", label: "Lore", group: "kingdom", visible: () => isLoreUnlocked(game()), render: () => <LorePanel /> },
     {
         id: "explore",
         label: "Exploration",
+        group: "kingdom",
         visible: () => isExplorationUnlocked(game()),
         render: () => <ExplorationPanel />,
     },
-    { id: "magic", label: "Magic", visible: () => isWizard(game()), render: () => <MagicPanel /> },
+    { id: "magic", label: "Magic", group: "wizard", visible: () => isWizard(game()), render: () => <MagicPanel /> },
     {
         id: "ascension",
         label: "Ascension",
+        group: "wizard",
         // not in the very first kingdom: it has enough to take in already
         visible: () => {
             const s = game();
@@ -85,6 +96,7 @@ const TABS: TabDef[] = [
     {
         id: "planes",
         label: "Planes",
+        group: "planes",
         visible: () => {
             const s = game();
             const gate = planeshiftProgress(s);
@@ -92,16 +104,17 @@ const TABS: TabDef[] = [
         },
         render: () => <PlanesPanel />,
     },
-    { id: "mastery", label: "Mastery", visible: () => isMasteryTabVisible(game()), render: () => <MasteryPanel /> },
+    { id: "mastery", label: "Mastery", group: "mastery", visible: () => isMasteryTabVisible(game()), render: () => <MasteryPanel /> },
     {
         id: "stats",
         label: "Statistics",
+        group: "utility",
         visible: () => game().records.totalRefounds > 0 || game().ascension.ascensions > 0,
         render: () => <StatsPanel />,
     },
-    { id: "options", label: "Options", visible: () => true, render: () => <OptionsPanel /> },
+    { id: "options", label: "Options", group: "utility", visible: () => true, render: () => <OptionsPanel /> },
     // rendered by App itself, which keeps the About section
-    { id: "about", label: "About", visible: () => true, render: () => null },
+    { id: "about", label: "About", group: "utility", visible: () => true, render: () => null },
 ];
 
 function Resource(props: { icon: string; name: string; amount: Decimal; rate: Decimal; tip?: ComponentChildren; cls: string }) {
@@ -261,12 +274,13 @@ export function App(props: { offline: OfflineSummary | null; initialTab?: string
             <ResourceBar />
             <Overview onOpen={(t) => setTab(t as TabId)} />
             <nav class="tabs">
-                {visible.map((t) => {
+                {visible.map((t, i) => {
                     const attention = tabAttention(state, t.id);
+                    const groupStart = i > 0 && visible[i - 1].group !== t.group;
                     return (
                         <button
                             key={t.id}
-                            class={"tab" + (t.id === active.id ? " active" : "")}
+                            class={"tab group-" + t.group + (groupStart ? " group-start" : "") + (t.id === active.id ? " active" : "")}
                             title={attention ?? undefined}
                             onClick={() => setTab(t.id)}
                         >

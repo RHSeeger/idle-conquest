@@ -298,3 +298,45 @@ If there's other places that could use UI/UX improvements that I didn't point ou
 
 
     
+---
+
+There's clearly some confusion here, because we were talking about different things. We started talking about Planes (#4b), but then transitioned to Ascensions.
+
+> > What I proposed: quests in the Ascension stretch on Arcanus.
+We were talking about #4b from earlier, and how choosing where you put your wizard tower (arcanus or myrror) wasn't helpful. And this was all in relation to making the
+Planes layer feel less "thin"
+
+> 1. #4b, the Fortress-plane choice (DESIGN.md §15.6, deferred so far). At each Planeshift you'd choose which plane your Wizard's Fortress sits on. On Arcanus it works as now. On Myrror, Myrror would get the Fortress's bonus (more planar power or links, for example) while Arcanus loses its Fortress mana. This gives the Planes layer the real choice its row in the layer table promises, and might help #1 ("Planes feels thin").
+
+And then I said
+
+I don't like 4b, I don't think it will really help
+The actions and stopping point ("what you do") for each layer are
+- Layer 1 - you conquer a bunch of cities, up to at least one city of a second race -> Refound
+- Layer 2 - you conquery a bunch of races, up to the first wizard's tower and gather a bunch of spellbooks - which you're blocked from conquering due to wards -> Ascend (as a wizard)
+- Layer 3 - you conquer the first wizard - can research a spell
+  Layer 3, you pretty much "do" the same as Layer 2, plus you defeat the wizard you were stopped at
+  The layer itself has more mechanics (realms of magic, retorts, etc) so it's not uninteresting
+  But the thing you "do" during the layer is minimal, it's only one "action" beyond what layer 2 was. You also reasearch a spell, but thats kind of background noise
+  Making another decision at the start (where you put your tower) doesn't really change the action. The starting choices (realms and retorts) are actually robust enough - it doesn't help to add another starting decision
+
+Here,
+- Layer 1 - before Refound
+- Layer 2 - after Refound, repeating Refounds, before Ascension
+- Layer 3 - after Ascension, repeating Ascensions, before Planewalk
+- Layer 4 - after Planewalk, repeating Planewalk, before Mastery
+- Layer 5 - after Mastery, doing challenges
+
+I was thinking that Layer 3 was Planes, because that's "visually" what it is - but you're right, we're talking about after the first Ascension - but before the first Planewalk.
+
+Changing things up a little
+- Layer A - beginning of game, repeating Refounds, before Ascension
+- Layer B - after Ascension, repeating Ascensions, before Planewalk
+- Layer C - after Planewalk, repeating Planewalk, before Mastery
+- Layer D - after Mastery, doing challenges
+I'm just using letters instead of numbers here so as not to confuse what we're talking about later - since now there's two definitions for what happens in what layers
+
+Given that
+- It makes sense for Automation to be level B as an Ascension milestone and level 2 bought with Essence
+- Where it goes: both Army and Magic are already pretty full. Give it it's own tab, in the same group with Ascensions
+

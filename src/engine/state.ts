@@ -5,6 +5,7 @@
 import { cityName, rivalsFor } from "../content/frontier";
 import { FamiliarChoice } from "../content/familiars";
 import { Realm } from "../content/magic";
+import type { Power } from "../content/artifacts";
 import type { MyrranResource } from "../content/myrror";
 import { MyrranRaceId, RaceId } from "../content/races";
 import { Role, TraitId } from "../content/traits";
@@ -497,6 +498,8 @@ export interface Automation {
     wilds: boolean;
     /** Auto-forge and auto-equip artifacts for heroes' empty slots (Artificers' Guild, Essence) */
     artifacts: boolean;
+    /** Auto-forge's order of artifact powers, best first (content/artifacts.ts Power) */
+    forgeOrder: Power[];
     /** Myrran works auto-buy leaves alone (kept through every reset) */
     worksOff: string[];
     /** Myrror boons: repeat the choice last made for the same race or wizard instead of asking */
@@ -715,6 +718,7 @@ export function newGame(now = Date.now()): GameState {
             quests: true,
             wilds: true,
             artifacts: true,
+            forgeOrder: ["might", "arcane", "haste"],
             worksOff: [],
             repeatBoons: true,
             unitMode: "doctrine",

@@ -15,7 +15,7 @@ import { REALM_DEFS, REALMS, Realm } from "../content/magic";
 import { HERO_CALLINGS, QUESTS, QUEST_ORDER, QUEST_TUNING, QuestDef } from "../content/quests";
 import { realmMatchup, RIVAL_WIZARD_DEFS } from "../content/wizards";
 import { siegePower } from "./army";
-import { hasteMult, loreMult } from "./artifacts";
+import { hasteMult } from "./artifacts";
 import { getStats } from "./collect";
 import { D, Decimal } from "./decimal";
 import { Stats } from "./effects";
@@ -184,7 +184,7 @@ function completeQuest(state: GameState, k: number): void {
     } else {
         a.questSkill += T.skill[i];
     }
-    if (hero) hero.xp += (T.xpBase + T.xpPerQuest * k) * getStats(state).num("hero.xp") * loreMult(state, hero.id);
+    if (hero) hero.xp += (T.xpBase + T.xpPerQuest * k) * getStats(state).num("hero.xp");
     q.done = true;
     q.matched = matched;
     q.brought = text;

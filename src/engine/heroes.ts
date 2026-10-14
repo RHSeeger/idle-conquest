@@ -6,7 +6,7 @@ import { challengeBans } from "../content/challenges";
 import { getStats, registerCollector } from "./collect";
 import { D, Decimal } from "./decimal";
 import { heroesOnQuests } from "./quests";
-import { loreMult, mightBonus } from "./artifacts";
+import { mightBonus } from "./artifacts";
 import { hash } from "./rng";
 import { bump, GameState, log } from "./state";
 
@@ -108,7 +108,7 @@ export function grantHeroXp(state: GameState, xp: number): void {
     const gained = xp * getStats(state).num("hero.xp");
     for (const h of state.run.heroes) {
         const before = heroLevel(h.xp);
-        h.xp += gained * loreMult(state, h.id);
+        h.xp += gained;
         if (heroLevel(h.xp) > before) {
             levelled = true;
         }

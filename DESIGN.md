@@ -1059,7 +1059,7 @@ The kind of slot leans to a power (weapons and bows to Haste, armour to Might, s
 - **Content** (`content/artifacts.ts`): 15 recipes, three per realm (two of tier 1, one of tier 2), named from Master of Magic's item powers. Slots by first calling, as in 18.3.
   - Might +1 / +2 aura levels;
   - Haste ×1.5 / ×2 quest speed;
-  - Lore ×1.5 / ×2 experience.
+  - Lore ×1.5 / ×2 experience (replaced the same day by Arcane, +3% / +6% casting skill: 18.9).
 - **Recipes** (`planes.recipes`, kept through Planeshifts and Masteries): five site kinds now teach them, one per realm: Sunken Shrine (Life), Wraith Keep (Death), Drake Nest (Chaos), Behemoth Wallow (Nature) and Sorcerer's Lair (Sorcery). Before, they gave Essence or resources.
   - A plain take teaches the realm's next tier 1 recipe; a countering creature its tier 2 one (each falls back to the other).
   - Once a realm's three are known, the site gives the plain/countered resources instead.
@@ -1124,3 +1124,9 @@ Options:
 - **C. Replace Haste and Lore with a power per layer:** Might (kingdom), Arcane (casting skill) and Planar (creature power), with quests left alone. The cleanest split, but quests lose their late boost, which 18.1 hoped items would give.
 
 With B or C, auto-forge would need your ranking of the powers (a setting) rather than a fixed one.
+
+**Your answer (2026-10-13): B, built.**
+- **Lore is gone; Arcane replaces it** on the same four recipes: Amulet of Healing, Skull Staff and Guardian Wind Robe (tier 1, +3% casting skill) and Staff of the Magi (tier 2, +6%).
+- Arcane adds to the same multiplier as the quests' casting skill: skill = trained × (1 + quests + Arcane). It counts every serving hero's Arcane items, home or away: an item's magic isn't an aura.
+- **Auto-forge follows your order of powers** (`automation.forgeOrder`, Might, Arcane, Haste to start), set on the Forge tab by moving a power up. Within a power, higher tiers come first. The "no Lore at the top rank" rule went with Lore.
+- 18 Arcane items would be +54–108% casting skill. Only four recipes carry it, three of them in staves and jewels, so a full Arcane set competes with Might for the same slots. Whether +3%/+6% is the right size shows in play.

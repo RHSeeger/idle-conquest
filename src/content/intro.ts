@@ -60,7 +60,7 @@ export const TAB_INTROS: Record<string, { title: string; text: string }> = {
     },
     forge: {
         title: "Forge",
-        text: "Myrror's sites teach artifact recipes, which you keep for good. Forge items from them with Myrran resources and give them to your heroes: each hero has three slots, set by their calling. Might strengthens a hero's aura, Haste speeds them on quests, Lore gives them more experience. Items last the Planeshift.",
+        text: "Myrror's sites teach artifact recipes, which you keep for good. Forge items from them with Myrran resources and give them to your heroes: each hero has three slots, set by their calling. Might strengthens a hero's aura, Arcane adds to your casting skill, Haste speeds the hero on quests. Items last the Planeshift.",
     },
     mastery: {
         title: "Mastery",

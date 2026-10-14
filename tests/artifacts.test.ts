@@ -2,8 +2,11 @@ import { describe, expect, it } from "vitest";
 import { ARTIFACT_TUNING, RECIPES } from "../src/content/artifacts";
 import { WILDS_TUNING } from "../src/content/wilds";
 import {
+    arcaneSkill,
     autoArtifacts,
     equip,
+    forgeOrder,
+    raisePower,
     forge,
     forgeCost,
     hasteMult,
@@ -15,7 +18,9 @@ import {
     tickArtifacts,
 } from "../src/engine/artifacts";
 import { getStats } from "../src/engine/collect";
-import { grantHeroXp } from "../src/engine/heroes";
+import { castingSkill } from "../src/engine/wards";
+// registers the heroes' aura collector
+import "../src/engine/heroes";
 import { bump, GameState, newCampaign, newGame } from "../src/engine/state";
 import { bindCreatures, ensureSites, sendCreature, siteStrength, tickWilds } from "../src/engine/wilds";
 
@@ -86,7 +91,7 @@ describe("Artifacts (DESIGN.md §18)", () => {
         expect(forge(state, "holyAvenger")).toBe(-1);
     });
 
-    it("items fit only their slot; Might raises the aura, Haste quest speed, Lore experience", () => {
+    it("items fit only their slot; Might raises the aura, Haste quest speed, Arcane casting skill", () => {
         const state = forgeReady();
         for (const id of ["holyAvenger", "flamingSword", "staffOfTheMagi"]) learnRecipe(state, id);
         const avenger = forge(state, "holyAvenger");
@@ -101,10 +106,10 @@ describe("Artifacts (DESIGN.md §18)", () => {
         equip(state, sword, "gunther", 0);
         expect(state.planes.myrror!.items[avenger].hero).toBeNull();
         expect(hasteMult(state, "gunther")).toBe(ARTIFACT_TUNING.haste[1]);
+        const skill = castingSkill(state);
         equip(state, staff, "zaldron", 0);
-        grantHeroXp(state, 10);
-        const [g, z] = state.run.heroes;
-        expect(z.xp / g.xp).toBeCloseTo(ARTIFACT_TUNING.lore[2]);
+        expect(arcaneSkill(state)).toBeCloseTo(ARTIFACT_TUNING.arcane[2]);
+        expect(castingSkill(state)).toBeCloseTo(skill * (1 + ARTIFACT_TUNING.arcane[2]));
     });
 
     it("a hero who leaves puts their items back in the vault; off in a challenge", () => {
@@ -121,16 +126,15 @@ describe("Artifacts (DESIGN.md §18)", () => {
         expect(state.planes.myrror!.items[i].hero).toBeNull();
     });
 
-    it("auto-forge: Might first, then Haste, then Lore; never Lore at the top rank; upgrades a slot only for something better", () => {
+    it("auto-forge follows your order of powers, and upgrades a slot only for something better", () => {
         const state = forgeReady();
         for (const id of ["flamingSword", "holyAvenger", "ringOfHaste", "skullStaff"]) learnRecipe(state, id);
-        // the Sage is at the top rank: Lore is worth nothing to him
-        state.run.heroes[1].xp = 1000;
+        expect(forgeOrder(state)).toEqual(["might", "arcane", "haste"]);
         autoArtifacts(state);
         expect(RECIPES[itemInSlot(state, "gunther", 0)!.recipe].id).toBe("holyAvenger"); // Might over Haste, though dearer
         expect(itemInSlot(state, "gunther", 1)).toBeNull(); // no armour recipe known
         expect(itemInSlot(state, "gunther", 2)?.recipe).toBe("ringOfHaste");
-        expect(itemInSlot(state, "zaldron", 0)).toBeNull(); // only a Lore staff is known
+        expect(itemInSlot(state, "zaldron", 0)?.recipe).toBe("skullStaff"); // Arcane
         const count = state.planes.myrror!.items.length;
         autoArtifacts(state);
         expect(state.planes.myrror!.items.length).toBe(count);
@@ -142,5 +146,15 @@ describe("Artifacts (DESIGN.md §18)", () => {
         expect(itemInSlot(state, "zaldron", 1)?.recipe).toBe("giantGauntlets");
         expect(itemInSlot(state, "zaldron", 2)?.recipe).toBe("giantGauntlets");
         expect(state.planes.myrror!.items.filter((i) => i.recipe === "ringOfHaste" && i.hero === null).length).toBe(3);
+    });
+
+    it("raising a power puts it first for auto-forge", () => {
+        const state = forgeReady();
+        for (const id of ["flamingSword", "holyAvenger"]) learnRecipe(state, id);
+        raisePower(state, "haste");
+        raisePower(state, "haste");
+        expect(forgeOrder(state)).toEqual(["haste", "might", "arcane"]);
+        autoArtifacts(state);
+        expect(itemInSlot(state, "gunther", 0)?.recipe).toBe("flamingSword");
     });
 });

@@ -27,6 +27,7 @@ import { fmtTime } from "./format";
 import { effectiveBooks, isWizard, knowsSpell } from "./magic";
 import { bump, GameState, log } from "./state";
 import { creatureSkillShare } from "./wilds";
+import { arcaneSkill } from "./artifacts";
 
 // --- The rivals ---
 
@@ -91,9 +92,9 @@ export function towersUnsealed(state: GameState): number {
 
 // --- Casting skill ---
 
-/** Casting skill: SKILL_TUNING.base, plus a point for every ×growth of the mana poured into it this Ascension, raised by quests */
+/** Casting skill: SKILL_TUNING.base, plus a point for every ×growth of the mana poured into it this Ascension, raised by quests and Arcane artifacts */
 export function castingSkill(state: GameState): number {
-    return trainedSkill(state) * (1 + state.ascension.questSkill);
+    return trainedSkill(state) * (1 + state.ascension.questSkill + arcaneSkill(state));
 }
 
 /** Casting skill from mana alone (manaToNextSkill counts in these points) */

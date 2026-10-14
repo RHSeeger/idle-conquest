@@ -5,17 +5,16 @@
  * the vault until equipped; a hero who leaves puts theirs back (P8).
  *
  * Each hero has three slots, set by their first calling. An item's power:
- *  - Might: the hero's aura counts as more levels
- *  - Haste: the hero goes faster on quests
- *  - Lore:  the hero gains more experience
+ *  - Might:  the hero's aura counts as more levels
+ *  - Arcane: more casting skill (from every hero's items, home or away)
+ *  - Haste:  the hero goes faster on quests
  * Like the rest of Myrror, artifacts are off in a challenge.
  *
- * This file imports neither heroes.ts nor quests.ts, which both use it.
+ * This file imports neither heroes.ts, quests.ts nor wards.ts, which use it.
  */
-import { ARTIFACT_TUNING, CALLING_SLOTS, Power, RECIPE_ORDER, RECIPES, RecipeDef, SLOT_RESOURCE, SlotKind } from "../content/artifacts";
+import { ARTIFACT_TUNING, CALLING_SLOTS, Power, POWERS, RECIPE_ORDER, RECIPES, RecipeDef, SLOT_RESOURCE, SlotKind } from "../content/artifacts";
 import { Realm } from "../content/magic";
 import { HERO_CALLINGS } from "../content/quests";
-import { HERO_RANKS, heroLevel } from "../content/heroes";
 import { bump, GameState, ItemState, log } from "./state";
 import { upperLayersOff } from "./upgradeLevels";
 
@@ -62,9 +61,9 @@ export function hasteMult(state: GameState, heroId: string): number {
     return powersOn(state, heroId, "haste").reduce((m, r) => m * T.haste[r.tier], 1);
 }
 
-/** Lore: × experience */
-export function loreMult(state: GameState, heroId: string): number {
-    return powersOn(state, heroId, "lore").reduce((m, r) => m * T.lore[r.tier], 1);
+/** Arcane: casting skill added by every hero's items, as a share (0.09 = +9%); it works whether the hero is home or on a quest */
+export function arcaneSkill(state: GameState): number {
+    return state.run.heroes.reduce((sum, h) => sum + powersOn(state, h.id, "arcane").reduce((s, r) => s + T.arcane[r.tier], 0), 0);
 }
 
 // --- Recipes ---
@@ -164,20 +163,32 @@ export function tickArtifacts(state: GameState): void {
 
 // --- Automation (Artificers' Guild) ---
 
-/** Auto-forge's order of powers: auras always count, quests end, and experience stops mattering at the top rank */
-const POWER_PRIORITY: Record<Power, number> = { might: 3, haste: 2, lore: 1 };
+/** Auto-forge's order of powers (your setting; Might, Arcane, Haste until you change it), every power once */
+export function forgeOrder(state: GameState): Power[] {
+    const set = state.automation.forgeOrder.filter((p) => POWERS.includes(p));
+    return [...new Set([...set, ...POWERS])];
+}
 
-/** How much an item is worth to a hero: Might, then Haste, then Lore, higher tiers first; Lore is worth nothing at the top rank */
-export function itemValue(state: GameState, r: RecipeDef, heroId: string): number {
-    const h = state.run.heroes.find((x) => x.id === heroId);
-    if (r.power === "lore" && h && heroLevel(h.xp) >= HERO_RANKS.length) return 0;
-    return POWER_PRIORITY[r.power] * 10 + r.tier;
+/** Moves a power one place up auto-forge's order */
+export function raisePower(state: GameState, power: Power): void {
+    const order = forgeOrder(state);
+    const i = order.indexOf(power);
+    if (i <= 0) return;
+    [order[i - 1], order[i]] = [order[i], order[i - 1]];
+    state.automation.forgeOrder = order;
+    bump(state);
+}
+
+/** How much an item is worth to auto-forge: by your order of powers, then higher tiers first */
+export function itemValue(state: GameState, r: RecipeDef): number {
+    const order = forgeOrder(state);
+    return (order.length - order.indexOf(r.power)) * 10 + r.tier;
 }
 
 /** The value of what's in a hero's slot now (0 if empty) */
 function slotValue(state: GameState, heroId: string, slot: number): number {
     const item = itemInSlot(state, heroId, slot);
-    return item ? itemValue(state, RECIPES[item.recipe], heroId) : 0;
+    return item ? itemValue(state, RECIPES[item.recipe]) : 0;
 }
 
 /** Puts the best vault item into each slot it beats (what was there goes back to the vault, for another hero) */
@@ -186,7 +197,7 @@ function autoEquip(state: GameState): void {
         heroSlots(h.id).forEach((kind, slot) => {
             const current = slotValue(state, h.id, slot);
             const best = vaultFor(state, kind)
-                .map((i) => ({ i, value: itemValue(state, RECIPES[items(state)[i].recipe], h.id) }))
+                .map((i) => ({ i, value: itemValue(state, RECIPES[items(state)[i].recipe]) }))
                 .filter((x) => x.value > current)
                 .sort((a, b) => b.value - a.value)[0];
             if (best) equip(state, best.i, h.id, slot);
@@ -196,9 +207,8 @@ function autoEquip(state: GameState): void {
 
 /**
  * Artificers' Guild: first moves vault items into the slots they improve, then
- * forges the best affordable recipe for each slot it would improve: Might first,
- * then Haste, then Lore (never Lore for a hero at the top rank), higher tiers
- * first. A slot is only forged for when the new item beats what it holds, so
+ * forges the best affordable recipe for each slot it would improve: by your
+ * order of powers, higher tiers first. A slot is only forged for when the new item beats what it holds, so
  * each slot takes a few items at most, and Myrran works get the rest.
  */
 export function autoArtifacts(state: GameState): void {
@@ -209,7 +219,7 @@ export function autoArtifacts(state: GameState): void {
             const current = slotValue(state, h.id, slot);
             const pick = state.planes.recipes
                 .filter((id) => RECIPES[id]?.slot === kind && canForge(state, id))
-                .map((id) => ({ id, value: itemValue(state, RECIPES[id], h.id) }))
+                .map((id) => ({ id, value: itemValue(state, RECIPES[id]) }))
                 .filter((x) => x.value > current)
                 .sort((a, b) => b.value - a.value || forgeCost(state, a.id) - forgeCost(state, b.id))[0];
             if (!pick) return;

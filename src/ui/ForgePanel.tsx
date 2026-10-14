@@ -7,7 +7,23 @@ import { POWER_NAMES, powerText, RECIPE_ORDER, RECIPES, SLOT_NAMES, SLOT_RESOURC
 import { HEROES } from "../content/heroes";
 import { REALM_DEFS, REALMS } from "../content/magic";
 import { MYRRAN_RESOURCES, RESOURCE_DEFS } from "../content/myrror";
-import { canForge, copiesOf, equip, forge, forgeCost, heroSlots, itemInSlot, items, itemsOn, knowsRecipe, unequip, vaultFor } from "../engine/artifacts";
+import {
+    canForge,
+    copiesOf,
+    equip,
+    forge,
+    forgeCost,
+    forgeOrder,
+    heroSlots,
+    itemInSlot,
+    items,
+    itemsOn,
+    knowsRecipe,
+    raisePower,
+    unequip,
+    vaultFor,
+} from "../engine/artifacts";
+import { isAutomationUnlocked } from "../engine/automation";
 import { heroesAllowed } from "../engine/heroes";
 import { AutoToggle } from "./AutoToggle";
 import { game } from "./game";
@@ -32,6 +48,31 @@ export function HeroItems(props: { heroId: string }) {
                 );
             })}
         </div>
+    );
+}
+
+/** Auto-forge's order of powers, best first; each but the first can be moved up (shown once auto-forge is unlocked) */
+function ForgeOrder() {
+    const state = game();
+    if (!isAutomationUnlocked(state, "artifacts")) return null;
+    const order = forgeOrder(state);
+    return (
+        <p class="row">
+            <span class="hint">Auto-forge makes the best it can for each slot, in this order:</span>
+            {order.map((p, i) => (
+                <span key={p}>
+                    {i > 0 && (
+                        <button class="link" title={`Put ${POWER_NAMES[p]} before ${POWER_NAMES[order[i - 1]]}`} onClick={() => raisePower(state, p)}>
+                            ⇄
+                        </button>
+                    )}{" "}
+                    <Chip tone="essence">
+                        {i + 1}. {POWER_NAMES[p]}
+                    </Chip>{" "}
+                </span>
+            ))}
+            <span class="hint">It replaces an item only with one of a power higher in the list, or a higher tier.</span>
+        </p>
     );
 }
 
@@ -188,8 +229,9 @@ export function ForgePanel() {
                             jewels; and so on. An item fits only a slot of its kind.
                         </li>
                         <li>
-                            <b>Might</b> makes the hero's aura count as more levels. <b>Haste</b> speeds them on quests. <b>Lore</b> gives
-                            them more experience.
+                            <b>Might</b> makes the hero's aura count as more levels. <b>Arcane</b> adds to your casting skill (whether the
+                            hero is home or on a quest), which leaves more room for enchantments and creatures on Myrror. <b>Haste</b>{" "}
+                            speeds the hero on quests.
                         </li>
                         <li>
                             Items last the Planeshift, like the resources they're made of. A hero who leaves you puts theirs back in the vault,
@@ -197,6 +239,7 @@ export function ForgePanel() {
                         </li>
                     </ul>
                 </HowItWorks>
+                <ForgeOrder />
                 {state.mastery.challenge && <Notice kind="challenge">Artifacts are off during {state.mastery.challenge}'s challenge, as Myrror is.</Notice>}
                 {m && (
                     <p>

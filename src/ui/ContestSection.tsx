@@ -25,6 +25,7 @@ import {
     wardStrength,
 } from "../engine/wards";
 import { BreakdownView, ProgressBar, Tip } from "./components";
+import { arcaneSkill } from "../engine/artifacts";
 import { game } from "./game";
 import { HowItWorks, Part, SectionHead } from "./kit";
 
@@ -161,6 +162,9 @@ export function ContestSection() {
                 , leaving <b>{fmt(free)}</b> for the contest. Each point of
                 casting skill costs more mana than the last; it lasts the whole Ascension.{" "}
                 <span class="hint">Next point: {fmt(manaToNextSkill(state))} more mana.</span>
+                {arcaneSkill(state) > 0 && (
+                    <span class="hint"> Arcane artifacts add {Math.round(arcaneSkill(state) * 100)}% (Forge tab).</span>
+                )}
             </p>
             <div class="slider-row">
                 <span>Spend {Math.round((1 - a.skillShare) * 100)}%</span>

@@ -38,13 +38,16 @@ export const SLOT_RESOURCE: Record<SlotKind, MyrranResource> = {
 };
 
 /**
- *  - might: the hero's aura counts as more levels
- *  - haste: the hero goes faster on quests
- *  - lore:  the hero gains more experience
+ * One power for each layer an item can help (DESIGN.md §18.9):
+ *  - might:  the hero's aura counts as more levels (the kingdom)
+ *  - arcane: more casting skill (the wizard, and room for bound creatures on Myrror)
+ *  - haste:  the hero goes faster on quests
  */
-export type Power = "might" | "haste" | "lore";
+export type Power = "might" | "arcane" | "haste";
 
-export const POWER_NAMES: Record<Power, string> = { might: "Might", haste: "Haste", lore: "Lore" };
+export const POWERS: Power[] = ["might", "arcane", "haste"];
+
+export const POWER_NAMES: Record<Power, string> = { might: "Might", arcane: "Arcane", haste: "Haste" };
 
 export type Tier = 1 | 2;
 
@@ -54,8 +57,8 @@ export const ARTIFACT_TUNING = {
     might: { 1: 1, 2: 2 } as Record<Tier, number>,
     /** Haste: quest speed ×, by tier */
     haste: { 1: 1.5, 2: 2 } as Record<Tier, number>,
-    /** Lore: experience ×, by tier */
-    lore: { 1: 1.5, 2: 2 } as Record<Tier, number>,
+    /** Arcane: casting skill added, as a share (0.03 = +3%), by tier */
+    arcane: { 1: 0.03, 2: 0.06 } as Record<Tier, number>,
     /** Myrran resources for the first item of a recipe, by tier */
     cost: { 1: 4, 2: 8 } as Record<Tier, number>,
     /** Each item already forged from a recipe this Planeshift makes the next ×this */
@@ -74,10 +77,10 @@ export interface RecipeDef {
 /** Names from Master of Magic's item powers. Three per realm: two of tier 1, one of tier 2 */
 const list: RecipeDef[] = [
     { id: "blessedMail", name: "Blessed Mail", realm: "life", slot: "armour", power: "might", tier: 1 },
-    { id: "amuletOfHealing", name: "Amulet of Healing", realm: "life", slot: "jewel", power: "lore", tier: 1 },
+    { id: "amuletOfHealing", name: "Amulet of Healing", realm: "life", slot: "jewel", power: "arcane", tier: 1 },
     { id: "holyAvenger", name: "Holy Avenger", realm: "life", slot: "weapon", power: "might", tier: 2 },
     { id: "vampiricBlade", name: "Vampiric Blade", realm: "death", slot: "weapon", power: "haste", tier: 1 },
-    { id: "skullStaff", name: "Skull Staff", realm: "death", slot: "staff", power: "lore", tier: 1 },
+    { id: "skullStaff", name: "Skull Staff", realm: "death", slot: "staff", power: "arcane", tier: 1 },
     { id: "wraithformCloak", name: "Wraithform Cloak", realm: "death", slot: "jewel", power: "haste", tier: 2 },
     { id: "flamingSword", name: "Flaming Sword", realm: "chaos", slot: "weapon", power: "haste", tier: 1 },
     { id: "chaosOrb", name: "Chaos Orb Staff", realm: "chaos", slot: "staff", power: "might", tier: 1 },
@@ -86,8 +89,8 @@ const list: RecipeDef[] = [
     { id: "giantGauntlets", name: "Gauntlets of Giant Strength", realm: "nature", slot: "jewel", power: "might", tier: 1 },
     { id: "regenerationPlate", name: "Regeneration Plate", realm: "nature", slot: "armour", power: "might", tier: 2 },
     { id: "ringOfHaste", name: "Ring of Haste", realm: "sorcery", slot: "jewel", power: "haste", tier: 1 },
-    { id: "guardianRobe", name: "Guardian Wind Robe", realm: "sorcery", slot: "armour", power: "lore", tier: 1 },
-    { id: "staffOfTheMagi", name: "Staff of the Magi", realm: "sorcery", slot: "staff", power: "lore", tier: 2 },
+    { id: "guardianRobe", name: "Guardian Wind Robe", realm: "sorcery", slot: "armour", power: "arcane", tier: 1 },
+    { id: "staffOfTheMagi", name: "Staff of the Magi", realm: "sorcery", slot: "staff", power: "arcane", tier: 2 },
 ];
 
 export const RECIPES: Record<string, RecipeDef> = Object.fromEntries(list.map((r) => [r.id, r]));
@@ -101,7 +104,7 @@ export function powerText(r: RecipeDef): string {
             return `+${t.might[r.tier]} aura level${t.might[r.tier] === 1 ? "" : "s"}`;
         case "haste":
             return `×${t.haste[r.tier]} quest speed`;
-        case "lore":
-            return `×${t.lore[r.tier]} experience`;
+        case "arcane":
+            return `+${Math.round(t.arcane[r.tier] * 100)}% casting skill`;
     }
 }

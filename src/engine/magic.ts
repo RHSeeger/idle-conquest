@@ -518,10 +518,15 @@ function clearedNodes(state: GameState): string[] {
     return state.run.sites.filter((s) => s.kind === "lair" && s.cleared && LAIRS[s.type]?.magicNode).map((s) => s.type);
 }
 
-/** Melded nodes: this kingdom's (with Magic Spirit), plus those won on quests this Ascension (melded already) */
+/**
+ * Melded nodes: this kingdom's (with Magic Spirit), plus those won on quests this
+ * Ascension and at Myrror's sites this Planeshift (melded already; Myrror's are
+ * off in a challenge, as Myrror is)
+ */
 export function meldedNodes(state: GameState): string[] {
     const fromRun = knowsSpell(state, "magicSpirit") ? clearedNodes(state) : [];
-    return [...fromRun, ...state.ascension.questNodes];
+    const fromMyrror = upperLayersOff(state) ? [] : (state.planes.myrror?.siteNodes ?? []);
+    return [...fromRun, ...state.ascension.questNodes, ...fromMyrror];
 }
 
 /** What one melded node gives now: its share of mana (added to the mana multiplier) and its realm bonus (a multiplier) */

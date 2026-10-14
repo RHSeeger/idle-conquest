@@ -95,6 +95,13 @@ function EssenceSum(props: { b: EssenceBreakdown }) {
                             <td class="hint">1 + {b.wizards}</td>
                             <td class="num">×{fmt(b.wizardsMult)}</td>
                         </tr>
+                        {b.sitesMult > 1 && (
+                            <tr>
+                                <td>Myrror's sites</td>
+                                <td class="hint">1 + {Math.round((b.sitesMult - 1) * 100)}% (Wilds tab)</td>
+                                <td class="num">×{fmt(b.sitesMult)}</td>
+                            </tr>
+                        )}
                     </>
                 )}
                 <tr class="total">
@@ -561,7 +568,7 @@ function EssenceSection() {
                                 <span class="count">
                                     {level}/{u.maxLevel}
                                 </span>
-                                {off && level > 0 && id !== "astralArchivists" && id !== "questingLodge" && <span class="off-tag">off</span>}
+                                {off && level > 0 && id !== "astralArchivists" && id !== "questingLodge" && id !== "planarHuntsmen" && <span class="off-tag">off</span>}
                             </div>
                             <div class="card-text">
                                 {u.text(level)}

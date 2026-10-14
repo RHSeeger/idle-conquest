@@ -38,6 +38,7 @@ import { armyOrders } from "./ArmyPanel";
 import { myrrorPower, myrrorTarget } from "../engine/planes";
 import { myrrorShare } from "../engine/army";
 import { openQuests, questSecondsLeft } from "../engine/quests";
+import { boundRealms, siteSecondsLeft } from "../engine/wilds";
 import { game } from "./game";
 
 /** Seconds until a price is affordable at current income (0 if it already is) */
@@ -95,6 +96,7 @@ const AUTO_NAMES: Partial<Record<AutomationKind, string>> = {
     ascend: "Auto-Ascend",
     works: "Myrran works auto-buy",
     quests: "Auto-quest",
+    wilds: "Auto-send",
 };
 
 /** The marker's tooltip; warns when switching auto-Refound/Ascend on would act at once */
@@ -297,6 +299,7 @@ export function Overview(props: { onOpen: OpenTab }) {
                         </Line>
                     )}
                     {state.planes.myrror && <MyrrorLine state={state} stats={stats} onOpen={onOpen} />}
+                    {state.planes.myrror && <WildsLine state={state} stats={stats} onOpen={onOpen} />}
                     {isMasteryTabVisible(state) && <MasteryLine state={state} stats={stats} onOpen={onOpen} />}
                 </ul>
             </div>
@@ -362,6 +365,30 @@ function QuestsLine(props: { state: GameState; stats: Stats; onOpen: OpenTab }) 
     }
     return (
         <Line icon="⚑" label="Quests" tab="quests" onOpen={props.onOpen} auto="quests" fact={fact}>
+            {text}
+        </Line>
+    );
+}
+
+/** Myrror's sites: the soonest one taken, how many are under way and waiting */
+function WildsLine(props: { state: GameState; stats: Stats; onOpen: OpenTab }) {
+    const { state } = props;
+    const sites = state.planes.myrror!.sites;
+    const running = sites.map((s, k) => ({ s, k })).filter(({ s }) => !s.done && s.creature);
+    const waiting = sites.filter((s) => !s.done && !s.creature).length;
+    let fact: Fact;
+    let text: string;
+    if (state.mastery.challenge) [fact, text] = [{ fact: "paused", status: "stuck" }, `waiting out ${state.mastery.challenge}'s challenge`];
+    else if (running.length > 0) {
+        fact = wait(Math.min(...running.map(({ k }) => siteSecondsLeft(state, props.stats, k))), "Taken");
+        text = `${running.length} creature${running.length === 1 ? "" : "s"} out${waiting > 0 ? ` · ${waiting} site${waiting === 1 ? "" : "s"} waiting` : ""}`;
+    } else if (waiting > 0) {
+        [fact, text] = [{ fact: "—", status: "stuck", tip: "No creature out" }, boundRealms(state).length > 0 ? `${waiting} site${waiting === 1 ? "" : "s"} waiting for a creature` : `${waiting} site${waiting === 1 ? "" : "s"} waiting: research a summoning spell to bind a creature`];
+    } else {
+        [fact, text] = [DONE, "every site found so far is taken · more as Myrran regions fall"];
+    }
+    return (
+        <Line icon="❂" label="Wilds" tab="wilds" onOpen={props.onOpen} auto="wilds" fact={fact}>
             {text}
         </Line>
     );

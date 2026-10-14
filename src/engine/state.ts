@@ -273,6 +273,37 @@ export interface MyrrorCampaign {
     /** Boons chosen this Planeshift (a boon may be chosen more than once) */
     boons: string[];
     pendingBoons: PendingBoon[];
+    /** Myrror's sites (engine/wilds.ts, DESIGN.md §17): some at the start, one more per region taken */
+    sites: WildSiteState[];
+    /** Bound creatures, one per realm, kept for the Planeshift */
+    creatures: Partial<Record<Realm, BoundCreature>>;
+    /** Myrran magic nodes won at sites (node lair types), melded */
+    siteNodes: string[];
+    /** More Planar Essence on the next Planeshift, from sites (a share: 0.1 = +10%) */
+    siteEssence: number;
+}
+
+/** A creature bound to you for the Planeshift: the summoning spell it came from, and how many sites it has taken */
+export interface BoundCreature {
+    spell: string;
+    veteran: number;
+}
+
+/** One of Myrror's sites: which creature is on it and how far along it is */
+export interface WildSiteState {
+    /** Site id (content/wilds.ts) */
+    id: string;
+    /** The Myrror region that revealed it (its race's resource is the reward) */
+    region: number;
+    /** Strength worn down so far (kept when the creature is called back) */
+    progress: Decimal;
+    /** The realm of the bound creature out on it, or null */
+    creature: Realm | null;
+    done: boolean;
+    /** Taken by a countering creature (the bigger reward) */
+    matched: boolean;
+    /** What it brought back, once done */
+    brought?: string;
 }
 
 export function newCampaign(beachhead: MyrranRaceId, links: number): MyrrorCampaign {
@@ -288,6 +319,10 @@ export function newCampaign(beachhead: MyrranRaceId, links: number): MyrrorCampa
         works: {},
         boons: [],
         pendingBoons: [],
+        sites: [],
+        creatures: {},
+        siteNodes: [],
+        siteEssence: 0,
     };
 }
 
@@ -445,6 +480,8 @@ export interface Automation {
     works: boolean;
     /** Auto-quest: send idle heroes on quests (Ascension milestone; the best hero for each with Questing Lodge, Essence) */
     quests: boolean;
+    /** Auto-send: send idle bound creatures to Myrror's sites (Planeshift milestone; the best creature for each with Planar Huntsmen, Essence) */
+    wilds: boolean;
     /** Myrran works auto-buy leaves alone (kept through every reset) */
     worksOff: string[];
     /** Myrror boons: repeat the choice last made for the same race or wizard instead of asking */
@@ -660,6 +697,7 @@ export function newGame(now = Date.now()): GameState {
             insightMode: "chronicle",
             works: true,
             quests: true,
+            wilds: true,
             worksOff: [],
             repeatBoons: true,
             unitMode: "doctrine",

@@ -26,6 +26,7 @@ import { Stats } from "./effects";
 import { fmtTime } from "./format";
 import { effectiveBooks, isWizard, knowsSpell } from "./magic";
 import { bump, GameState, log } from "./state";
+import { creatureSkillShare } from "./wilds";
 
 // --- The rivals ---
 
@@ -113,8 +114,18 @@ export function enchantmentUpkeep(spell: SpellDef): number {
 }
 
 /** Casting skill taken up by this kingdom's running enchantments */
-export function upkeepUsed(state: GameState): number {
+export function enchantmentsUpkeep(state: GameState): number {
     return state.run.enchantments.reduce((sum, id) => sum + (SPELLS[id] ? enchantmentUpkeep(SPELLS[id]) : 0), 0);
+}
+
+/** Casting skill taken up by bound creatures out on Myrror's sites (a share of it, engine/wilds.ts) */
+export function creaturesUpkeep(state: GameState): number {
+    return castingSkill(state) * creatureSkillShare(state);
+}
+
+/** Casting skill taken up: running enchantments, and creatures out on Myrror */
+export function upkeepUsed(state: GameState): number {
+    return enchantmentsUpkeep(state) + creaturesUpkeep(state);
 }
 
 /** Casting skill left for the contest */

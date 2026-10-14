@@ -342,7 +342,7 @@ export function heldMyrranRaces(state: GameState): MyrranRaceId[] {
 /** Essence for the very first Planeshift, which has no Myrror campaign behind it */
 const FIRST_PLANESHIFT_ESSENCE = 5;
 
-/** Planar Essence = (Myrran cities taken ÷ 4)^1.3 × (1 + 0.25 per Myrran race held) × (1 + Myrran wizards banished) */
+/** Planar Essence = (Myrran cities taken ÷ 4)^1.3 × (1 + 0.25 per Myrran race held) × (1 + Myrran wizards banished) × (1 + Myrror's sites' bonus) */
 export function essenceOnPlaneshift(state: GameState): Decimal {
     return essenceBreakdown(state).total;
 }
@@ -361,6 +361,8 @@ export interface EssenceBreakdown {
     wizards: number;
     /** 1 + Myrran wizards banished */
     wizardsMult: number;
+    /** 1 + the bonus won at Myrror's sites (engine/wilds.ts) */
+    sitesMult: number;
     total: Decimal;
 }
 
@@ -368,7 +370,7 @@ export function essenceBreakdown(state: GameState): EssenceBreakdown {
     const m = state.planes.myrror;
     // the first Planeshift opens Myrror: there's no campaign to reward yet
     if (!m) {
-        return { first: true, taken: 0, base: 0, races: 0, racesMult: 1, wizards: 0, wizardsMult: 1, total: D(FIRST_PLANESHIFT_ESSENCE) };
+        return { first: true, taken: 0, base: 0, races: 0, racesMult: 1, wizards: 0, wizardsMult: 1, sitesMult: 1, total: D(FIRST_PLANESHIFT_ESSENCE) };
     }
     const taken = Math.max(0, m.taken);
     const base = Math.pow(taken / 4, 1.3);
@@ -376,7 +378,8 @@ export function essenceBreakdown(state: GameState): EssenceBreakdown {
     const racesMult = 1 + 0.25 * races;
     const wizards = m.wizardsDefeated.length;
     const wizardsMult = 1 + wizards;
-    return { first: false, taken, base, races, racesMult, wizards, wizardsMult, total: D(base * racesMult * wizardsMult).floor() };
+    const sitesMult = 1 + m.siteEssence;
+    return { first: false, taken, base, races, racesMult, wizards, wizardsMult, sitesMult, total: D(base * racesMult * wizardsMult * sitesMult).floor() };
 }
 
 /** Not during a challenge (Layer 4), which is one Ascension of Arcanus */

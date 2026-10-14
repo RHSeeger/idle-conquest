@@ -13,6 +13,7 @@ import {
     banishedCount,
     castingSkill,
     currentRival,
+    enchantmentsUpkeep,
     freeSkill,
     isBanished,
     manaToNextSkill,
@@ -150,7 +151,14 @@ export function ContestSection() {
             <RivalMatchups books={a.books} rivals={rivals} status />
             <Part title={<>Casting skill <span class="section-value">{fmt(skill)}</span></>}>
             <p>
-                Running enchantments take up <b>{fmt(upkeep)}</b>, leaving <b>{fmt(free)}</b> for the contest. Each point of
+                Running enchantments take up <b>{fmt(enchantmentsUpkeep(state))}</b>
+                {upkeep > enchantmentsUpkeep(state) && (
+                    <>
+                        {" "}
+                        and creatures on Myrror's sites <b>{fmt(upkeep - enchantmentsUpkeep(state))}</b>
+                    </>
+                )}
+                , leaving <b>{fmt(free)}</b> for the contest. Each point of
                 casting skill costs more mana than the last; it lasts the whole Ascension.{" "}
                 <span class="hint">Next point: {fmt(manaToNextSkill(state))} more mana.</span>
             </p>

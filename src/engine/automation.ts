@@ -75,6 +75,7 @@ import { GameState } from "./state";
 import { currentRival, wardSecondsLeft } from "./wards";
 import { markAutoReset } from "./report";
 import { autoQuests } from "./quests";
+import { autoWilds } from "./wilds";
 import { hireCost, heroesAllowed, isTavernOpen } from "./heroes";
 import { MAX_HEROES } from "../content/heroes";
 
@@ -96,7 +97,8 @@ export type AutomationKind =
     | "fame"
     | "insight"
     | "works"
-    | "quests";
+    | "quests"
+    | "wilds";
 
 /** Auto-Refound/Ascend also fire when no Arcanus city has fallen for this long (seconds) */
 export const AUTO_PRESTIGE_STALL_SECONDS = 600;
@@ -132,12 +134,19 @@ export function isAutomationUnlocked(state: GameState, kind: AutomationKind): bo
             return essenceUpgradeLevel(state, "astralArchivists") > 0;
         case "quests":
             return hasAscensionMilestone(state, "questers");
+        case "wilds":
+            return hasPlaneshiftMilestone(state, "wildHunt");
     }
 }
 
 /** Auto-quest sends the best hero for each quest (Questing Lodge, Essence; the owned level, as above) */
 export function isBestQuestPick(state: GameState): boolean {
     return essenceUpgradeLevel(state, "questingLodge") > 0;
+}
+
+/** Auto-send sends the best creature for each site (Planar Huntsmen, Essence; the owned level) */
+export function isBestWildsPick(state: GameState): boolean {
+    return essenceUpgradeLevel(state, "planarHuntsmen") > 0;
 }
 
 // --- Fame upgrades (Royal Stewards) ---
@@ -680,6 +689,8 @@ function runAutomationSteps(state: GameState, force: boolean, budgeted: boolean)
     if (isWizard(state) && on("cast")) autoCast(state);
     // the bot (force) plays as a player who picks the best hero
     if (isWizard(state) && on("quests")) autoQuests(state, force || isBestQuestPick(state));
+    // ...and the best creature for each of Myrror's sites
+    if (state.planes.myrror && on("wilds")) autoWilds(state, force || isBestWildsPick(state));
     if (on("units")) {
         // while saving for a building, leave half of what's on hand
         const reserve = {

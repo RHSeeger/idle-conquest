@@ -9,6 +9,7 @@ import { canBuyBuilding } from "../engine/actions";
 import { isAutomationActive } from "../engine/automation";
 import { canHire, heroesAllowed, tavernOffers } from "../engine/heroes";
 import { heroesOnQuests, openQuests } from "../engine/quests";
+import { boundRealms, creaturesOut } from "../engine/wilds";
 import { availableSpells, canCastEnchantment, canResearch, isWizard } from "../engine/magic";
 import { MYRRAN_WORK_ORDER } from "../content/myrror";
 import { canBuyMyrranWork } from "../engine/planes";
@@ -62,8 +63,18 @@ function questsAttention(state: GameState): string | null {
     return idle && waiting ? "A hero is free to go on a quest" : null;
 }
 
+function wildsAttention(state: GameState): string | null {
+    const m = state.planes.myrror;
+    if (!m || state.mastery.challenge || isAutomationActive(state, "wilds")) return null;
+    const out = creaturesOut(state);
+    const idle = boundRealms(state).some((r) => !out.has(r));
+    const waiting = m.sites.some((s) => !s.done && !s.creature);
+    return idle && waiting ? "A bound creature is free to take a site" : null;
+}
+
 const CHECKS: Partial<Record<string, (state: GameState) => string | null>> = {
     quests: questsAttention,
+    wilds: wildsAttention,
     army: armyAttention,
     buildings: buildingsAttention,
     magic: magicAttention,

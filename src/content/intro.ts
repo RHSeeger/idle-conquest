@@ -54,6 +54,10 @@ export const TAB_INTROS: Record<string, { title: string; text: string }> = {
         title: "Planes",
         text: "Through a banished wizard's Tower of Wizardry lies Myrror, a second world. Planeshift to open it, then send part of your army there. Your power reaches Myrror only through the Towers: each one you take on Myrror is another planar link, carrying more across. Myrror's conquests last through Refounds and Ascensions.",
     },
+    wilds: {
+        title: "Wilds",
+        text: "Off Myrror's frontier lie sites guarded by one realm's magic, and more appear as Myrran regions fall. Each summoning spell you research binds a creature of its realm for the Planeshift. Send creatures to take sites: one whose realm counters the guardian is faster and brings back more. A creature out takes some of your casting skill until it's back.",
+    },
     mastery: {
         title: "Mastery",
         text: "The end of the journey: once every rival wizard on both planes has fallen, research and channel the Spell of Mastery to win. Then claim a Mastery, start the worlds anew, and take on the Challenge Wizards: each is one Ascension under their rule, played without your Insight and Essence upgrades.",

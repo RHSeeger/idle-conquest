@@ -31,6 +31,7 @@ import { manaRate } from "../src/engine/magic";
 import { masteryCost } from "../src/engine/mastery";
 import { CHALLENGE_TUNING, MASTERY_TUNING } from "../src/content/challenges";
 import { QUEST_TUNING } from "../src/content/quests";
+import { WILDS_TUNING } from "../src/content/wilds";
 
 const args = Object.fromEntries(
     process.argv.slice(2).map((a) => {
@@ -56,6 +57,10 @@ if (args.cupgrades) CHALLENGE_TUNING.upgradeLevels = Number(args.cupgrades);
 // quests=0 deals none (to compare against the game without them)
 if (args.quests) QUEST_TUNING.count = Number(args.quests);
 if (args.qbase) QUEST_TUNING.base = Number(args.qbase);
+// wilds=0 reveals no sites on Myrror (to compare against the game without them)
+if (args.wilds === "0") [WILDS_TUNING.openAtStart, WILDS_TUNING.perRegion] = [0, 0];
+if (args.wbase) WILDS_TUNING.base = Number(args.wbase);
+if (args.wgrowth) WILDS_TUNING.growth = Number(args.wgrowth);
 
 const DT = 1;
 const BOT_EVERY = 5;
@@ -196,7 +201,11 @@ if (runs <= 1) {
         const rates = `${fmt(manaRate(state, stats)).padEnd(8)} ${fmt(realmEconomy(state, stats).knowledge).padEnd(8)}`;
         // the game's own clock: a run's time restarts when a challenge completes inside it (an Ascension)
         totalTime = state.meta.playtime;
-        const myrror = state.planes.myrror ? `${state.planes.myrror.index}/${state.planes.myrror.links}L` : "-";
+        // Myrror's frontier / links, and its sites taken / revealed with the creatures bound
+        const mc = state.planes.myrror;
+        const myrror = mc
+            ? `${mc.index}/${mc.links}L ${mc.sites.filter((s) => s.done).length}/${mc.sites.length}s ${Object.keys(mc.creatures).length}c`
+            : "-";
         const reg2 = r.regionTimes[2] !== undefined ? fmtTime(r.regionTimes[2]) : "-";
         const wall = r.regionTimes[5] !== undefined ? fmtTime(r.regionTimes[5]) : "-";
         const spells = state.ascension.spellsKnown.length;

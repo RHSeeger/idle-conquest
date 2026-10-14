@@ -33,6 +33,7 @@ import { PlanesPanel } from "./PlanesPanel";
 import { JumpBar } from "./kit";
 import { ResetReportCard } from "./ResetReport";
 import { QuestsPanel } from "./QuestsPanel";
+import { WildsPanel } from "./WildsPanel";
 import { insightOnAscend, planeshiftProgress } from "../engine/ascension";
 import { essenceOnPlaneshift, isMyrrorOpen } from "../engine/planes";
 
@@ -47,6 +48,7 @@ type TabId =
     | "ascension"
     | "quests"
     | "planes"
+    | "wilds"
     | "mastery"
     | "stats"
     | "options"
@@ -108,6 +110,7 @@ const TABS: TabDef[] = [
         },
         render: () => <PlanesPanel />,
     },
+    { id: "wilds", label: "Wilds", group: "planes", visible: () => isMyrrorOpen(game()), render: () => <WildsPanel /> },
     { id: "mastery", label: "Mastery", group: "mastery", visible: () => isMasteryTabVisible(game()), render: () => <MasteryPanel /> },
     {
         id: "stats",

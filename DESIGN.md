@@ -864,3 +864,116 @@ The questions as asked:
 5. **Rewards:** which of the candidates? Recommended to start: spellbooks, spells, casting skill and magic nodes; Insight bonus and freed heroes after that; items later.
 6. **Automation:** level 1 as an Ascension milestone and level 2 with Essence (recommended), or both with Essence?
 7. **Where:** the Army tab under Heroes (recommended), or the Magic tab?
+
+---
+
+## 17. Bound creatures: things to do as a Planeswalker (TODO #46)
+
+Status: **direction chosen 2026-10-13 (option A of the discussion); every recommendation in 17.6 accepted the same day, plus an Essence upgrade that lowers the creatures' casting skill (17.6). Built as a first pass (17.8).** Artifacts for heroes (option D) come after, and their recipes may drop from these sites (17.7).
+
+### 17.1 The problem
+
+What you do in Layer C today:
+
+- **Arcanus** is Layer B on a loop, and it runs itself (auto-Refound, auto-Ascend, auto-quest).
+- **Myrror:** set the army split once; each race's boon is asked once, then remembered; works buy themselves from the 2nd Planeshift.
+- **The Towers**, the layer's accomplishment, fall the Layer A way: army against a line of cities.
+
+Attuning the links (one option) was rejected: like the tax slider, it's easy to ignore, and even if you don't, it isn't clear what you'd pick. What quests get right, and what this has to match:
+
+1. there's something to *do*, again and again;
+2. what makes sense is fairly obvious;
+3. there's still a choice, with a cost (a hero's aura);
+4. it makes you want variety (heroes of every calling);
+5. it waits for you (P8).
+
+### 17.2 The idea
+
+- **Sites:** Myrror is wild. Off the frontier lie Myrran nodes, ruins, drake nests and Sorcerers' lairs, each guarded by one realm's magic. Each waits until you deal with it.
+- **Bound creatures:** you bind one creature per realm you have books in, from the summoning spells you know there (Life: Guardian Spirit, Unicorns, Archangel; Chaos: Hell Hounds… Great Drake). You send it to a site.
+- **The obvious move:** send the creature that counters the guardian, by the matchups the wizards' contest already taught: Life against Death, Chaos against Nature, Sorcery against anything but Sorcery, a realm weak against itself.
+- **The cost:** a bound creature ties up part of your casting skill, so less is left for enchantments and for wearing down the wards on Arcanus.
+- **The variety:** realms. A third realm in your profile, or a Rare summon researched early, now earns its place on Myrror too.
+
+### 17.3 How it would work (recommendations)
+
+**Where sites come from.** Recommend: **each Myrran region you take reveals one site** (16 regions, so up to 16 a Planeshift), plus 2 open when Myrror opens. They last until the next Planeshift, with Myrror's campaign, through Refounds and Ascensions (P8). The guardian's realm is seeded, and its strength grows with the region (like the quests' ×1.6 a step).
+
+**The Towers stay as they are.** Making the Towers sites would put this on the critical path (ignore it and Myrror stalls). Recommend: not for the first pass. Sites are side ventures, as quests are, and their rewards make them worth doing. It can be revisited if sites feel optional in the bad sense.
+
+**Binding.**
+- One creature per realm. Each is the **best summoning spell you know** in that realm; its rarity sets its strength (Common 1, Uncommon 3, Rare 10, Very Rare 30, for a start).
+- **Bound for the Planeshift:** once bound, a creature stays even if an Ascension forgets its spell or drops its realm. Losing it would break P8. It can be re-bound to a better summon when you learn one. So over a long Planeshift, alternating profiles, you can hold a creature of all five realms, Life and Death both (your point, 17.6).
+- Binding is free; what costs is sending it out (below). One creature per site, one site per creature.
+
+**The cost: casting skill.** Recommend: **a creature out on a site takes a share of your casting skill**: 10% Common, 15% Uncommon, 20% Rare, 25% Very Rare. That share isn't free for enchantments or spell power on Arcanus while it's away. A share rather than fixed points, because casting skill restarts every Ascension: fixed points would block your enchantments at the start of each one.
+
+**Speed.** Each site has a strength to wear down.
+- Creature power = its rarity strength × `summon.power` (Summoning Circle, Rakir, Conjurer) × the planar multipliers (`myrror.power`: Essence, works, boons, holdings). So it's Layer C's own channel (§15.3): Arcanus's army doesn't feed it at all, and Layer B only through which spells you know.
+- × the **matchup** of its realm against the guardian's: ×2 opposed, ×1.5 Sorcery against non-Sorcery, ×0.5 the same realm.
+- No creature, no progress: there's no "send nobody", unlike quests (no hero is an escort; no creature is nothing).
+
+**Rewards** (plain / matched). Recommend to start:
+- **Myrran resources**: a lump of the site's region's resource (e.g. 5 / 10), so sites feed the works;
+- **a Myrran node**: mana, as Arcanus's nodes but stronger (1 / 2);
+- **Essence**: a bonus on the next Planeshift (e.g. +5% / +10% each);
+- **creature power**: the creature that took it grows stronger (veterancy).
+
+Later: an **artifact recipe** for D (17.7); a planar link from a Sorcerer's lair (only while under 6).
+
+**Automation.** As quests: level 1 sends idle creatures to open sites in order; level 2 sends the best match. Recommend: level 1 as a **Planeshift milestone** (at 3, alongside Twin Towers), level 2 bought with **Essence**.
+
+**Where it shows.** Recommend: its own tab, **Wilds**, after Planes in the Planes group (Planes is already full, as Magic was for quests). At a glance gets a line; the tab gets a "!" when a creature is idle and a site waits.
+
+### 17.4 What it changes
+
+- Layer C gains a sequence of actions with their own decisions: which sites first (for which rewards), which creature, and how much casting skill to give up.
+- The wizard profile (Layer B's starting choice) matters in Layer C: realms decide which creatures you have, and summoning spells become worth researching.
+- Casting skill becomes contested between the two planes, which is the Planeswalker's story.
+- Saves: new state under the Myrror campaign, filled by `fillDefaults`; a campaign in progress reveals sites for the regions already taken.
+
+### 17.5 Not chosen
+
+- **Attuning the links:** a setting, easy to ignore, unclear what to pick.
+- **War parties of Myrran races:** the doctrine puzzle again.
+- **Contracts from the Myrran races:** deliveries are endured more than played.
+- **Planar projects:** buying with a timer.
+- **Artifacts for heroes:** wanted, but after this (17.7).
+
+### 17.6 Decisions for you
+
+**Your answers (2026-10-13):** every recommendation below, plus one addition. Over a long Planeshift you end up with a creature of every realm, so at the starting shares five Very Rare creatures would take 125% of casting skill. Add a **Planar Essence upgrade that lowers the share**, possibly in several levels. Once strong enough, a Rare creature of every realm should be *possible* without using all your casting skill: aim for about 50% with every level bought (10% per Rare). The starting shares are fine.
+
+The questions as asked:
+
+1. **Sites:** one per Myrran region taken plus 2 at the start, lasting the Planeshift (recommended)? Or a fixed set per Planeshift, like quests per Ascension?
+2. **The Towers:** stay as they are for the first pass (recommended), or become sites that must be taken?
+3. **Which creature:** the best summoning spell you know per realm (recommended), or creatures of their own, one per realm, independent of research?
+4. **Bound for the Planeshift** even if the spell is later forgotten (recommended)?
+5. **Cost:** a share of casting skill by rarity while out (recommended), or something else (mana upkeep, Myrran resources)?
+6. **No creature means no progress** (recommended), or a slow heroless-style fallback?
+7. **Rewards:** resources, Myrran nodes, an Essence bonus and veterancy to start (recommended)? Matched: one size up, as quests?
+8. **Automation:** level 1 a Planeshift milestone (at 3), level 2 with Essence (recommended)? Or both Essence?
+9. **Where:** a Wilds tab after Planes (recommended), or a section on Planes?
+
+### 17.8 As built (first pass, 2026-10-13)
+
+- **Sites** (`content/wilds.ts`, `engine/wilds.ts`, Wilds tab): 12 kinds, each with one guardian realm and a reward. 2 are revealed when Myrror opens and 1 more per Myrran region taken (seeded per campaign), lasting until the next Planeshift.
+- **Strength:** the k-th site has 1e4 × 1.6^k.
+- **Creatures:** each summoning spell you know binds its realm's creature automatically (the rarest you know; a rarer one re-binds it and keeps its veterancy). They stay for the Planeshift.
+- **Speed** = rarity strength (Common 1, Uncommon 3, Rare 10, Very Rare 30) × `summon.power` × `myrror.power` × (1 + 0.25 per site taken) × the matchup against the guardian (`realmMatchup`).
+  - "Countering" means the best matchup any realm has against that guardian: Death against Life, Life against Death, Chaos against Nature, Nature against Chaos, anything but Sorcery against Sorcery (which has no ×2 counter).
+  - No creature, no progress. One creature per site, one site per creature; called off, a site keeps its progress.
+- **Cost:** a creature out takes 10/15/20/25% of casting skill by rarity, × 0.87 per level of **Pact of Binding** (Essence, 5 levels, 8 × 2^level; all five give ×0.50, so a Rare takes 10%). It's counted in `upkeepUsed`, so it comes off enchantments' room and the contest's spell power. None in a challenge, when the sites pause with Myrror.
+- **Rewards**, plain / countered: 5 / 10 of the region's Myrran resource; 1 / 2 Myrran nodes (melded at once, counted with the others, for the Planeshift); +5% / +10% Planar Essence on Planeshifting (a new factor in the sum). Every site taken makes its creature a veteran.
+- **Automation:** The Wild Hunt (Planeshift milestone, 3 Planeshifts) unlocks auto-send: idle creatures go to open sites in order, never taking the creatures' total over 50% of casting skill. **Planar Huntsmen** (Essence, 25) makes it pick the fastest creature for each site. The bot plays as if it owns Planar Huntsmen.
+- **UI:** Wilds tab in the Planes group: the share of casting skill creatures take, a table of bound creatures (power, share, where), a card per open site (guardian, counters, reward, progress, a "Sent" pick with times and shares), and the taken list. The Magic tab's casting skill line names the creatures' part. At a glance has a Wilds line; the tab gets a "!" when a creature is idle and a site waits. The Planeshift sum shows the sites' factor.
+- **Simulator** (`runs=40 hours=16`, against `wilds=0`):
+  - First Planeshift 5h39m and second about 8h40m in both. With sites, the third came at 13h47m; without, the 40 runs ended at 13h49m still in the second.
+  - The bot's Myrror is short (7–24 cities, so 2–5 sites a Planeshift). It takes the first 2 within about 2h of Myrror opening, and 3 of 4–5 in the third Planeshift. Ascension times are unchanged.
+  - The bot keeps one profile (Life and Chaos), so it binds 2 creatures; collecting realms only shows in play.
+  - **Tuning questions:** with few regions taken, sites run out; if they should last, more could be revealed per region, or at the start.
+
+### 17.7 Later: artifacts (option D)
+
+Myrran resources forge items for heroes, with slots fitted to each calling (a sword for a warrior, a staff for a sage). Items speed quests and strengthen auras, which makes heroes of every calling, and a full set of items, worth collecting. Your idea: the **recipes drop from these sites**, which ties D to A. To be written up after A is built and played.

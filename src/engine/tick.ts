@@ -13,6 +13,7 @@ import { tickMyrror } from "./planes";
 import { GameState } from "./state";
 import { tickWards } from "./wards";
 import { tickQuests } from "./quests";
+import { tickWilds } from "./wilds";
 import { trackFameRate } from "./prestige";
 
 export function tick(state: GameState, dt: number): void {
@@ -32,6 +33,8 @@ export function tick(state: GameState, dt: number): void {
     }
     // Layer 3: the share of the army on Myrror fights there at the same time
     tickMyrror(state, getStats(state), dt);
+    // ...and bound creatures at Myrror's sites
+    tickWilds(state, getStats(state), dt);
     // Layer 4: the Spell of Mastery's channel, and a finished challenge
     tickMastery(state, getStats(state), dt);
     tickAutomation(state, dt);

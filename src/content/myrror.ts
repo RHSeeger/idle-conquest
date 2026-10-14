@@ -14,6 +14,7 @@ import { MyrranRaceId, MYRROR_RING, neighborOrder, RACES } from "./races";
 import { TraitId } from "./traits";
 import { Realm, REALM_DEFS } from "./magic";
 import { RIVAL_WIZARD_DEFS } from "./wizards";
+import { BINDING_PER_LEVEL } from "./wilds";
 
 /** Mutable so the balance simulator can try alternatives */
 export const MYRROR_TUNING = {
@@ -542,6 +543,26 @@ const essenceList: EssenceUpgradeDef[] = [
                 ? "Auto-quest sends the first idle hero"
                 : "Auto-quest sends the best idle hero for each quest (a favoured calling, then the highest rank)",
     },
+    {
+        id: "pactOfBinding",
+        name: "Pact of Binding",
+        maxLevel: 5,
+        cost: (l) => Math.round(8 * Math.pow(2, l)),
+        effects: [],
+        text: (l) =>
+            `×${Math.pow(BINDING_PER_LEVEL, l).toFixed(2)} casting skill taken by bound creatures on Myrror's sites (a Rare one takes ${Math.round(20 * Math.pow(BINDING_PER_LEVEL, l))}%)`,
+    },
+    {
+        id: "planarHuntsmen",
+        name: "Planar Huntsmen",
+        maxLevel: 1,
+        cost: () => 25,
+        effects: [],
+        text: (l) =>
+            l === 0
+                ? "Auto-send sends the first idle creature"
+                : "Auto-send sends the best idle creature for each site (one that counters its guardian, then the strongest)",
+    },
 ];
 
 export const ESSENCE_UPGRADES: Record<string, EssenceUpgradeDef> = Object.fromEntries(essenceList.map((u) => [u.id, u]));
@@ -549,7 +570,7 @@ export const ESSENCE_UPGRADE_ORDER: string[] = essenceList.map((u) => u.id);
 
 // --- Planeshift milestones -----------------------------------------------------------
 
-export type PlaneshiftMilestoneId = "planewalker" | "autoAscend" | "twinTowers" | "myrrorRenown";
+export type PlaneshiftMilestoneId = "planewalker" | "autoAscend" | "twinTowers" | "wildHunt" | "myrrorRenown";
 
 export interface PlaneshiftMilestoneDef {
     id: PlaneshiftMilestoneId;
@@ -576,6 +597,12 @@ export const PLANESHIFT_MILESTONES: PlaneshiftMilestoneDef[] = [
         planeshifts: 3,
         name: "Twin Towers",
         text: "Start each Planeshift with 2 planar links.",
+    },
+    {
+        id: "wildHunt",
+        planeshifts: 3,
+        name: "The Wild Hunt",
+        text: "Unlock auto-send: idle bound creatures set out for Myrror's open sites by themselves, keeping at least half your casting skill for Arcanus. Switch it on or off on the Wilds tab, or with its marker in At a glance.",
     },
     {
         id: "myrrorRenown",

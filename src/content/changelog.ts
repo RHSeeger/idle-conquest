@@ -10,6 +10,13 @@ export interface ChangeEntry {
 
 export const CHANGES: ChangeEntry[] = [
     {
+        date: "2026-10-13",
+        items: [
+            "New for Planeswalkers: the Wilds of Myrror (their own tab, after Planes). Sites lie off Myrror's frontier, each guarded by one realm's magic: 2 when Myrror opens, and one more for each Myrran region you take. Each summoning spell you research binds a creature of its realm for the rest of the Planeshift, even if an Ascension forgets the spell. Send creatures to take sites: one whose realm counters the guardian (as in the wizards' contest) is faster and brings back more: Myrran resources, Myrran magic nodes, or more Planar Essence when you Planeshift. A creature out takes some of your casting skill until it's back. Sites wait for you until the next Planeshift.",
+            "Auto-send: the Planeshift milestone The Wild Hunt (3 Planeshifts) sends idle creatures to the open sites, keeping at least half your casting skill for Arcanus; the Essence upgrade Planar Huntsmen makes it pick the best creature for each. Another Essence upgrade, Pact of Binding, lowers the casting skill creatures take.",
+        ],
+    },
+    {
         date: "2026-10-12",
         items: [
             "New for wizards: Quests (their own tab, beside Magic and Ascension). Each Ascension brings 7 places of power; 3 are open at first and one more opens with each rival you banish. Send a hero with an escort to take one, alongside the frontier: it brings back casting skill, magic nodes or spellbooks for the rest of the Ascension, and more if the hero's calling (Warrior, Scout, Sage, Priest, Merchant, Beastmaster) suits the quest. A hero away gives no aura until they're back. Quests wait for you: progress is kept until you Ascend.",

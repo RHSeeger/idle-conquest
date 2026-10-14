@@ -976,4 +976,80 @@ The questions as asked:
 
 ### 17.7 Later: artifacts (option D)
 
-Myrran resources forge items for heroes, with slots fitted to each calling (a sword for a warrior, a staff for a sage). Items speed quests and strengthen auras, which makes heroes of every calling, and a full set of items, worth collecting. Your idea: the **recipes drop from these sites**, which ties D to A. To be written up after A is built and played.
+Myrran resources forge items for heroes, with slots fitted to each calling (a sword for a warrior, a staff for a sage). Items speed quests and strengthen auras, which makes heroes of every calling, and a full set of items, worth collecting. Your idea: the **recipes drop from these sites**, which ties D to A. Written up as §18.
+
+---
+
+## 18. Artifacts for heroes (TODO #46, option D)
+
+Status: **proposal 2026-10-13, with decisions for you (18.6). Not built.** It follows §17: the recipes come from Myrror's sites.
+
+### 18.1 What it's for
+
+- **Myrran resources get a second use.** Today they only buy works, which auto-buy handles. Arms or an artifact becomes a real choice.
+- **Heroes keep mattering after Layer B.** Quests fade once Ascensions take minutes (§16.7: 0–2 quests an Ascension late on). Items that speed quests answer that tuning question from the layer above, as §15's rule 3 allows.
+- **Collecting:** recipes from the sites, and items for each calling's slots, so a hero of every calling, and the sites of every realm, are worth having.
+- The tests from §17.1 apply: something to do, an obvious good move, a cost (resources not spent on works), variety, nothing lost while away.
+
+### 18.2 The idea
+
+You learn **recipes** at Myrror's sites, **forge** items from them with Myrran resources, and **equip** them on your heroes. Each hero has three slots, set by their calling, and an item fits only a slot of its kind.
+
+### 18.3 How it would work (recommendations)
+
+**Slots by calling** (a hero with two callings uses the first; as Master of Magic's hero slots):
+
+| Calling | Slots |
+|---|---|
+| Warrior | Weapon, Armour, Jewel |
+| Scout | Bow, Armour, Jewel |
+| Sage | Staff, Jewel, Jewel |
+| Priest | Staff, Armour, Jewel |
+| Merchant | Weapon, Jewel, Jewel |
+| Beastmaster | Bow, Armour, Jewel |
+
+**What items do.** Three kinds of power, so the choice of item and hero matters:
+- **Might**: the hero's aura counts as +1 or +2 levels (Brax's production, Zaldron's knowledge…). Aura levels are 1–9, so +2 is large early and still useful late.
+- **Haste**: ×1.5 or ×2 quest speed for that hero.
+- **Lore**: ×1.5 or ×2 experience for that hero.
+
+The kind of slot leans to a power (weapons and bows to Haste, armour to Might, staves to Lore, jewels to any), so a Sage's staff and two jewels make a different hero from a Warrior's sword and armour.
+
+**Recipes.** Recommend: **recipes are kept forever**, like the Annals: learning is the lasting progress, forging is per Planeshift. About 15 recipes, each with a realm, a slot kind, a power and a tier, named from Master of Magic's item powers (Flaming, Holy Avenger, Giant Strength, Haste, Wraithform, Regeneration…).
+- They come from **a new site reward, "a recipe"**: a site of that kind teaches the next recipe of its guardian's realm. A countering creature teaches a higher-tier one.
+- Some existing site kinds swap their reward to recipes (e.g. Sorcerer's Lair, Silver Sanctum, Wraith Keep), so no site kind is added.
+- Once a realm's recipes are all known, the site gives its plain reward instead.
+
+**Forging.** An item costs Myrran resources: its slot kind decides which one (weapons and bows Adamantium, staves Quork, jewels Crysx, armour Adamantium), so items compete with the works of the same resource. Each item forged makes the next of the same recipe dearer (×2), so you spread across recipes. Forging is instant.
+
+**How long items last.** Recommend: **for the Planeshift**, like the resources they're made of and the works. They're in your **vault**, not lost with a hero: a hero who leaves (a Refound without Hall of Heroes, an Ascension without Eternal Companions) puts their items back in the vault, ready for the next hero (P8).
+
+**Equipping.** On each hero's card: three slots, with a pick of the fitting vault items. Moving an item is free. Items on a hero away on a quest still work (Haste is for quests).
+
+**Automation.** Recommend: one Essence upgrade, **Artificers' Guild**, that equips the best fitting item on each hero (Might on heroes at home, Haste on heroes on quests), and forges by a priority you set. Forging isn't automatic before it. It could be split into two levels (equip first, then forge) if that feels too big.
+
+**Where it shows.** Recommend: a **Forge** tab in the Planes group (recipes known, forging, the vault), and the slots on the hero cards (Army tab) and the Quests tab's hero pick. At a glance gets no new line; the Forge tab gets a "!" when an item can be forged and a slot is empty.
+
+### 18.4 What it changes
+
+- Myrran resources: works or items.
+- Heroes: callings decide slots, so the six places and their callings matter in Layers B and C.
+- Quests get faster through Haste, from the layer above, which keeps them alive late.
+- Saves: recipes are a new lifetime field; the vault and slots belong to the Myrror campaign.
+
+### 18.5 Not chosen
+
+- **Random drops and item rolls** (as in Master of Magic's treasure): a random item asks for rerolling and inventory sorting, which works against an idle game.
+- **Items kept forever:** Myrran resources would become a lasting currency, and forging would be a one-time job.
+- **Items for creatures:** creatures already have veterancy, and the choice would blur heroes and creatures.
+
+### 18.6 Decisions for you
+
+1. **Slots by calling**, three each, as in the table (recommended)? Or the same slots for every hero?
+2. **Powers:** Might (aura levels), Haste (quest speed) and Lore (experience) (recommended)? Others wanted?
+3. **Recipes kept forever**, items for the Planeshift (recommended)? Or both per Planeshift, or both forever?
+4. **Recipes from some existing site kinds** (recommended), or a new kind of site, or from every site as a second reward?
+5. **Forging cost:** Myrran resources by slot kind, ×2 for each copy of a recipe (recommended)? Or mana as well (Master of Magic's Enchant Item)?
+6. **The vault:** items go back to it when a hero leaves (recommended).
+7. **Automation:** one Essence upgrade for equipping and forging (recommended), or two levels (a milestone for equipping, Essence for forging)?
+8. **Where:** a Forge tab in the Planes group plus slots on the hero cards (recommended), or a section on the Wilds tab?

@@ -72,37 +72,39 @@ function QuestCard(props: { k: number }) {
                 Brings back <b>{rewardText(state, k, false)}</b>
                 <span class="hint">; with a favoured hero {rewardText(state, k, true)}</span>
             </div>
-            <ProgressBar
-                class="quest-progress"
-                fraction={q.progress.div(strength).toNumber()}
-                label={
-                    q.active
-                        ? `${left === Infinity ? "—" : fmtTime(left)} left${favouredHero ? " · favoured ×" + QUEST_TUNING.matchMult : ""}`
-                        : q.progress.gt(0)
-                          ? `${Math.floor(q.progress.div(strength).toNumber() * 100)}%, waiting`
-                          : "not started"
-                }
-            />
-            <label class="quest-pick">
-                <span class="hint">Led by </span>
-                <select value={value} onChange={(e) => onPick((e.target as HTMLSelectElement).value)}>
-                    <option value="">nobody (waiting)</option>
-                    <option value="none">no hero (×{QUEST_TUNING.heroless}, one quest at a time)</option>
-                    {heroes.map((h) => {
-                        const level = heroLevel(h.xp);
-                        const fav = isFavoured(h.id, def);
-                        const elsewhere = away.has(h.id) && q.hero !== h.id;
-                        const speed = questSpeed(state, stats, k, h.id);
-                        return (
-                            <option key={h.id} value={h.id}>
-                                {HEROES[h.id].name}, {HERO_RANKS[level - 1]}
-                                {fav ? " ★ favoured" : ""} · {fmtTime(strength.minus(q.progress).max(0).toNumber() / speed)}
-                                {elsewhere ? " (leaves another quest)" : ""}
-                            </option>
-                        );
-                    })}
-                </select>
-            </label>
+            <div class="card-foot stack">
+                <ProgressBar
+                    class="quest-progress"
+                    fraction={q.progress.div(strength).toNumber()}
+                    label={
+                        q.active
+                            ? `${left === Infinity ? "—" : fmtTime(left)} left${favouredHero ? " · favoured ×" + QUEST_TUNING.matchMult : ""}`
+                            : q.progress.gt(0)
+                              ? `${Math.floor(q.progress.div(strength).toNumber() * 100)}%, waiting`
+                              : "not started"
+                    }
+                />
+                <label class="quest-pick">
+                    <span class="hint">Led by </span>
+                    <select value={value} onChange={(e) => onPick((e.target as HTMLSelectElement).value)}>
+                        <option value="">nobody (waiting)</option>
+                        <option value="none">no hero (×{QUEST_TUNING.heroless}, one quest at a time)</option>
+                        {heroes.map((h) => {
+                            const level = heroLevel(h.xp);
+                            const fav = isFavoured(h.id, def);
+                            const elsewhere = away.has(h.id) && q.hero !== h.id;
+                            const speed = questSpeed(state, stats, k, h.id);
+                            return (
+                                <option key={h.id} value={h.id}>
+                                    {HEROES[h.id].name}, {HERO_RANKS[level - 1]}
+                                    {fav ? " ★ favoured" : ""} · {fmtTime(strength.minus(q.progress).max(0).toNumber() / speed)}
+                                    {elsewhere ? " (leaves another quest)" : ""}
+                                </option>
+                            );
+                        })}
+                    </select>
+                </label>
+            </div>
         </div>
     );
 }

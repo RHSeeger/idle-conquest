@@ -126,34 +126,36 @@ function SiteCard(props: { k: number }) {
                 Brings back <b>{siteRewardText(state, k, false)}</b>
                 <span class="hint">; with a countering creature {siteRewardText(state, k, true)}</span>
             </div>
-            <ProgressBar
-                class="quest-progress"
-                fraction={s.progress.div(strength).toNumber()}
-                label={
-                    s.creature
-                        ? `${left === Infinity ? "—" : fmtTime(left)} left${isCountering(s.creature, def.guardian) ? " · countered" : ""}`
-                        : s.progress.gt(0)
-                          ? `${Math.floor(s.progress.div(strength).toNumber() * 100)}%, waiting`
-                          : "not started"
-                }
-            />
-            <label class="quest-pick">
-                <span class="hint">Sent: </span>
-                <select value={s.creature ?? ""} onChange={(e) => onPick((e.target as HTMLSelectElement).value)}>
-                    <option value="">nobody (waiting)</option>
-                    {boundRealms(state).map((r) => {
-                        const spell = creatureSpell(state, r)!;
-                        const elsewhere = out.has(r) && s.creature !== r;
-                        return (
-                            <option key={r} value={r}>
-                                {spell.name} ({REALM_DEFS[r].name}){isCountering(r, def.guardian) ? " ★ counters" : ""} ·{" "}
-                                {fmtTime(siteSecondsLeft(state, stats, k, r))} · {pct(creatureShare(state, r))} skill
-                                {elsewhere ? " (leaves another site)" : ""}
-                            </option>
-                        );
-                    })}
-                </select>
-            </label>
+            <div class="card-foot stack">
+                <ProgressBar
+                    class="quest-progress"
+                    fraction={s.progress.div(strength).toNumber()}
+                    label={
+                        s.creature
+                            ? `${left === Infinity ? "—" : fmtTime(left)} left${isCountering(s.creature, def.guardian) ? " · countered" : ""}`
+                            : s.progress.gt(0)
+                              ? `${Math.floor(s.progress.div(strength).toNumber() * 100)}%, waiting`
+                              : "not started"
+                    }
+                />
+                <label class="quest-pick">
+                    <span class="hint">Sent: </span>
+                    <select value={s.creature ?? ""} onChange={(e) => onPick((e.target as HTMLSelectElement).value)}>
+                        <option value="">nobody (waiting)</option>
+                        {boundRealms(state).map((r) => {
+                            const spell = creatureSpell(state, r)!;
+                            const elsewhere = out.has(r) && s.creature !== r;
+                            return (
+                                <option key={r} value={r}>
+                                    {spell.name} ({REALM_DEFS[r].name}){isCountering(r, def.guardian) ? " ★ counters" : ""} ·{" "}
+                                    {fmtTime(siteSecondsLeft(state, stats, k, r))} · {pct(creatureShare(state, r))} skill
+                                    {elsewhere ? " (leaves another site)" : ""}
+                                </option>
+                            );
+                        })}
+                    </select>
+                </label>
+            </div>
         </div>
     );
 }

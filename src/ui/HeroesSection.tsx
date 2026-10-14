@@ -154,19 +154,21 @@ export function HeroesSection() {
                                         {questOf(state, h.id) && <span class="hint">away on a quest: {questOf(state, h.id)} (no aura meanwhile)</span>}
                                     </div>
                                 )}
-                                {next !== undefined ? (
-                                    <ProgressBar
-                                        class="xp"
-                                        fraction={(h.xp - prev) / (next - prev)}
-                                        label={`${Math.floor(h.xp)} / ${next} xp`}
-                                    />
-                                ) : (
-                                    <span class="hint">{Math.floor(h.xp)} xp · highest rank</span>
-                                )}
-                                <div class="hero-dismiss">
-                                    <button class="link" title="Send this hero away to make room for another" onClick={() => onDismiss(h)}>
-                                        Dismiss
-                                    </button>
+                                <div class="card-foot stack">
+                                    {next !== undefined ? (
+                                        <ProgressBar
+                                            class="xp"
+                                            fraction={(h.xp - prev) / (next - prev)}
+                                            label={`${Math.floor(h.xp)} / ${next} xp`}
+                                        />
+                                    ) : (
+                                        <span class="hint">{Math.floor(h.xp)} xp · highest rank</span>
+                                    )}
+                                    <div class="hero-dismiss">
+                                        <button class="link" title="Send this hero away to make room for another" onClick={() => onDismiss(h)}>
+                                            Dismiss
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         );
@@ -204,7 +206,7 @@ export function HeroesSection() {
                                             ))}
                                         </div>
                                     )}
-                                    <div class="card-cost">
+                                    <div class="card-cost card-foot">
                                         <button disabled={!canHire(state, id)} onClick={() => hireHero(state, id)}>
                                             Hire
                                         </button>

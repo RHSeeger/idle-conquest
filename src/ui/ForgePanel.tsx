@@ -24,6 +24,7 @@ import {
     vaultFor,
 } from "../engine/artifacts";
 import { isAutomationUnlocked } from "../engine/automation";
+import { ResourceExchange } from "./PlanesPanel";
 import { heroesAllowed } from "../engine/heroes";
 import { AutoToggle } from "./AutoToggle";
 import { game } from "./game";
@@ -252,6 +253,7 @@ export function ForgePanel() {
                         <span class="hint">(shared with the Myrran works, Planes tab)</span>
                     </p>
                 )}
+                <ResourceExchange />
                 <Recipes />
                 {m && <Slots />}
                 {m && <Vault />}

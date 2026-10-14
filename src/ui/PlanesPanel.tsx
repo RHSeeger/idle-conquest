@@ -11,6 +11,8 @@ import {
     CITY_YIELD,
     ESSENCE_UPGRADES,
     ESSENCE_UPGRADE_ORDER,
+    EXCHANGE_RATE,
+    TRIBUTE_PER_HOUR,
     HOLDING_PER_CITY,
     HOLDING_STAT,
     MAX_LINKS,
@@ -58,6 +60,9 @@ import {
     myrrorTarget,
     planeshift,
     setArmyShare,
+    canExchange,
+    exchangeResources,
+    tributePerHour,
 } from "../engine/planes";
 import { ProfileChips, profileText } from "./AscensionPanel";
 import { Checklist, Chip, ChoiceBox, HowItWorks, Notice, Part, SectionHead } from "./kit";
@@ -390,12 +395,50 @@ function Resources() {
     const m = state.planes.myrror!;
     return (
         <span class="myrran-resources">
-            {MYRRAN_RESOURCES.map((r) => (
-                <span key={r} class={"myrran " + r}>
-                    {RESOURCE_DEFS[r].icon} {RESOURCE_DEFS[r].name} <b>{Math.floor(m.resources[r])}</b>
-                </span>
-            ))}
+            {MYRRAN_RESOURCES.map((r) => {
+                const tribute = tributePerHour(state, r);
+                return (
+                    <span key={r} class={"myrran " + r} title={tribute > 0 ? `Tribute from the cities you hold: +${fmt(tribute)} an hour` : undefined}>
+                        {RESOURCE_DEFS[r].icon} {RESOURCE_DEFS[r].name} <b>{Math.floor(m.resources[r])}</b>
+                        {tribute > 0 && <span class="hint"> +{fmt(tribute)}/h</span>}
+                    </span>
+                );
+            })}
         </span>
+    );
+}
+
+/** The planar exchange: EXCHANGE_RATE of one Myrran resource for 1 of another (Planes and Forge tabs) */
+export function ResourceExchange() {
+    const state = game();
+    const [from, setFrom] = useState<MyrranResource>("adamantium");
+    const [to, setTo] = useState<MyrranResource>("crysx");
+    const m = state.planes.myrror;
+    if (!m) return null;
+    const pick = (value: MyrranResource, set: (r: MyrranResource) => void) => (
+        <select value={value} onChange={(e) => set((e.target as HTMLSelectElement).value as MyrranResource)}>
+            {MYRRAN_RESOURCES.map((r) => (
+                <option key={r} value={r}>
+                    {RESOURCE_DEFS[r].icon} {RESOURCE_DEFS[r].name}
+                </option>
+            ))}
+        </select>
+    );
+    const most = Math.floor(m.resources[from] / EXCHANGE_RATE);
+    return (
+        <div class="row exchange">
+            <span class="hint">Planar exchange: {EXCHANGE_RATE}</span>
+            {pick(from, setFrom)}
+            <span class="hint">for 1</span>
+            {pick(to, setTo)}
+            <button disabled={!canExchange(state, from, to, 1)} onClick={() => exchangeResources(state, from, to, 1)}>
+                Trade {EXCHANGE_RATE} → 1
+            </button>
+            <button disabled={!canExchange(state, from, to, 10)} onClick={() => exchangeResources(state, from, to, 10)}>
+                {EXCHANGE_RATE * 10} → 10
+            </button>
+            {from === to ? <span class="hint">pick two different resources</span> : most > 0 && <span class="hint">up to {most}</span>}
+        </div>
     );
 }
 
@@ -429,6 +472,14 @@ function MyrranRiches() {
                             ))}
                         </ul>
                     </li>
+                    <li>
+                        Every Myrran city you hold also pays <b>tribute</b>: {TRIBUTE_PER_HOUR} of its race's resource an hour, while the
+                        frontier stalls and after all of Myrror is yours.
+                    </li>
+                    <li>
+                        The <b>planar exchange</b> trades {EXCHANGE_RATE} of one resource for 1 of another, for when your Myrror is short
+                        of one. Works and artifacts share the same resources.
+                    </li>
                     <li>Planeshifting clears your works, along with the rest of the Myrror campaign.</li>
                     <li>
                         Each resource buys two works. A level of either makes both ×{SHARED_WORK_GROWTH} dearer (Planar
@@ -448,6 +499,7 @@ function MyrranRiches() {
                     ends. You can still buy works.
                 </Notice>
             )}
+            <ResourceExchange />
             <div class={"cards" + (off ? " off" : "")}>
                 {MYRRAN_WORK_ORDER.map((id) => {
                     const w = MYRRAN_WORKS[id];

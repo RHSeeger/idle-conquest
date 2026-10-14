@@ -1112,6 +1112,10 @@ So **all income is tied to the frontier moving**. When Myrror stalls, or is full
 
 Recommend **A and B**. The tuning can be checked with the sim's new per-Planeshift resource lines.
 
+**Your answer (2026-10-13): A and B, built.** Tribute is 0.25 an hour per city held (× resource boons), paid in `tickMyrror` whether or not the frontier moves, and not in a challenge. The exchange is 3 for 1, by hand only, on the Planes and Forge tabs.
+
+Sim with tribute (`runs=150 hours=16`, same bot): gathered per Planeshift rises a little. Planeshift 1: Quork 10 → 12. Planeshift 3: Adamantium 15 → 17, Crysx 35 → 40. Planeshift 8: Quork 165 → 208. The first two Planeshifts still have no Adamantium, because the bot holds none of its races and doesn't use the exchange (which is by hand). Tribute stays small next to conquest: in the bot's longest stall (about 3h holding 11 cities) it adds about 8. For a player who leaves the game in a stall for a day it's about 6 an hour at 25 cities. If it should matter more, the lever is `TRIBUTE_PER_HOUR`.
+
 ### 18.9 Open: is Might the only power worth having? (2026-10-13)
 
 Your note: by the time you're forging, heroes are capped. Then Lore is useless, Haste helps only while a quest runs, and auras always help, so you'd always want Might.

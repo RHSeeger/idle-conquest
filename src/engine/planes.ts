@@ -17,6 +17,9 @@ import {
     CAPITAL_YIELD,
     CITY_YIELD,
     ESSENCE_UPGRADES,
+    EXCHANGE_RATE,
+    MYRRAN_RESOURCES,
+    TRIBUTE_PER_HOUR,
     HOLDING_PER_CITY,
     HOLDING_STAT,
     KNOWN_ON_TWO_WORLDS,
@@ -109,9 +112,37 @@ export function myrrorPower(state: GameState, stats: Stats, traits: MyrrorCity["
     return sent.min(planarCapacity(state, index)).times(stats.get("myrror.power"));
 }
 
+/** Tribute: each resource's yield an hour from the Myrran cities you hold (none in a challenge, when Myrror pauses) */
+export function tributePerHour(state: GameState, resource: MyrranResource): number {
+    const h = state.planes.myrror?.holdings;
+    if (!h || upperLayersOff(state)) return 0;
+    let cities = 0;
+    for (const race of Object.keys(h) as MyrranRaceId[]) {
+        if (RESOURCE_OF_RACE[race] === resource) cities += h[race] ?? 0;
+    }
+    return cities * TRIBUTE_PER_HOUR * getStats(state).num("myrror.resources");
+}
+
+/** The planar exchange: spends EXCHANGE_RATE × n of one resource for n of another */
+export function canExchange(state: GameState, from: MyrranResource, to: MyrranResource, n = 1): boolean {
+    const m = state.planes.myrror;
+    return !!m && from !== to && n > 0 && m.resources[from] >= EXCHANGE_RATE * n;
+}
+
+export function exchangeResources(state: GameState, from: MyrranResource, to: MyrranResource, n = 1): boolean {
+    if (!canExchange(state, from, to, n)) return false;
+    const m = state.planes.myrror!;
+    m.resources[from] -= EXCHANGE_RATE * n;
+    m.resources[to] += n;
+    bump(state);
+    return true;
+}
+
 export function tickMyrror(state: GameState, stats: Stats, dt: number): void {
     const m = state.planes.myrror;
     if (!m) return;
+    // tribute comes in whether or not the frontier moves, even once all of Myrror is yours
+    for (const r of MYRRAN_RESOURCES) m.resources[r] += (tributePerHour(state, r) * dt) / 3600;
     let target = myrrorTarget(state);
     if (!target) {
         m.siege = ZERO;

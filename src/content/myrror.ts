@@ -229,6 +229,16 @@ export const RESOURCE_OF_RACE: Record<MyrranRaceId, MyrranResource> = {
 export const CITY_YIELD = 1;
 export const CAPITAL_YIELD = 3;
 
+/**
+ * Tribute (DESIGN.md §18.8 A): every Myrran city you hold yields this much of its
+ * race's resource an hour, so resources still come in while the frontier stalls
+ * or once Myrror is taken
+ */
+export const TRIBUTE_PER_HOUR = 0.25;
+
+/** The planar exchange (§18.8 B): this many of one Myrran resource buy 1 of another */
+export const EXCHANGE_RATE = 3;
+
 export interface MyrranWorkDef {
     id: string;
     name: string;

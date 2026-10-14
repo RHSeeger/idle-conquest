@@ -58,6 +58,10 @@ export const TAB_INTROS: Record<string, { title: string; text: string }> = {
         title: "Wilds",
         text: "Off Myrror's frontier lie sites guarded by one realm's magic, and more appear as Myrran regions fall. Each summoning spell you research binds a creature of its realm for the Planeshift. Send creatures to take sites: one whose realm counters the guardian is faster and brings back more. A creature out takes some of your casting skill until it's back.",
     },
+    forge: {
+        title: "Forge",
+        text: "Myrror's sites teach artifact recipes, which you keep for good. Forge items from them with Myrran resources and give them to your heroes: each hero has three slots, set by their calling. Might strengthens a hero's aura, Haste speeds them on quests, Lore gives them more experience. Items last the Planeshift.",
+    },
     mastery: {
         title: "Mastery",
         text: "The end of the journey: once every rival wizard on both planes has fallen, research and channel the Spell of Mastery to win. Then claim a Mastery, start the worlds anew, and take on the Challenge Wizards: each is one Ascension under their rule, played without your Insight and Essence upgrades.",

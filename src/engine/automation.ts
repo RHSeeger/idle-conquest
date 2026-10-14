@@ -76,6 +76,7 @@ import { currentRival, wardSecondsLeft } from "./wards";
 import { markAutoReset } from "./report";
 import { autoQuests } from "./quests";
 import { autoWilds } from "./wilds";
+import { autoArtifacts } from "./artifacts";
 import { hireCost, heroesAllowed, isTavernOpen } from "./heroes";
 import { MAX_HEROES } from "../content/heroes";
 
@@ -98,7 +99,8 @@ export type AutomationKind =
     | "insight"
     | "works"
     | "quests"
-    | "wilds";
+    | "wilds"
+    | "artifacts";
 
 /** Auto-Refound/Ascend also fire when no Arcanus city has fallen for this long (seconds) */
 export const AUTO_PRESTIGE_STALL_SECONDS = 600;
@@ -136,6 +138,9 @@ export function isAutomationUnlocked(state: GameState, kind: AutomationKind): bo
             return hasAscensionMilestone(state, "questers");
         case "wilds":
             return hasPlaneshiftMilestone(state, "wildHunt");
+        case "artifacts":
+            // the owned level, as for the other automation upgrades
+            return essenceUpgradeLevel(state, "artificersGuild") > 0;
     }
 }
 
@@ -691,6 +696,8 @@ function runAutomationSteps(state: GameState, force: boolean, budgeted: boolean)
     if (isWizard(state) && on("quests")) autoQuests(state, force || isBestQuestPick(state));
     // ...and the best creature for each of Myrror's sites
     if (state.planes.myrror && on("wilds")) autoWilds(state, force || isBestWildsPick(state));
+    // ...and artifacts for heroes' empty slots
+    if (state.planes.myrror && on("artifacts")) autoArtifacts(state);
     if (on("units")) {
         // while saving for a building, leave half of what's on hand
         const reserve = {

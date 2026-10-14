@@ -982,7 +982,7 @@ Myrran resources forge items for heroes, with slots fitted to each calling (a sw
 
 ## 18. Artifacts for heroes (TODO #46, option D)
 
-Status: **proposal 2026-10-13, with decisions for you (18.6). Not built.** It follows §17: the recipes come from Myrror's sites.
+Status: **proposal 2026-10-13; every recommendation in 18.6 accepted the same day, and built as a first pass (18.7). The resource analysis you asked for is 18.8.** It follows §17: the recipes come from Myrror's sites.
 
 ### 18.1 What it's for
 
@@ -1053,3 +1053,59 @@ The kind of slot leans to a power (weapons and bows to Haste, armour to Might, s
 6. **The vault:** items go back to it when a hero leaves (recommended).
 7. **Automation:** one Essence upgrade for equipping and forging (recommended), or two levels (a milestone for equipping, Essence for forging)?
 8. **Where:** a Forge tab in the Planes group plus slots on the hero cards (recommended), or a section on the Wilds tab?
+
+### 18.7 As built (first pass, 2026-10-13)
+
+- **Content** (`content/artifacts.ts`): 15 recipes, three per realm (two of tier 1, one of tier 2), named from Master of Magic's item powers. Slots by first calling, as in 18.3.
+  - Might +1 / +2 aura levels;
+  - Haste ×1.5 / ×2 quest speed;
+  - Lore ×1.5 / ×2 experience.
+- **Recipes** (`planes.recipes`, kept through Planeshifts and Masteries): five site kinds now teach them, one per realm: Sunken Shrine (Life), Wraith Keep (Death), Drake Nest (Chaos), Behemoth Wallow (Nature) and Sorcerer's Lair (Sorcery). Before, they gave Essence or resources.
+  - A plain take teaches the realm's next tier 1 recipe; a countering creature its tier 2 one (each falls back to the other).
+  - Once a realm's three are known, the site gives the plain/countered resources instead.
+- **Forging** (`engine/artifacts.ts`): tier 1 costs 4, tier 2 costs 8, of the slot's resource (weapons, bows and armour Adamantium; staves Quork; jewels Crysx), ×2 for each copy of that recipe already forged this Planeshift. Items live in `myrror.items`, so a Planeshift clears them.
+- **Equipping:** any vault item into a fitting slot; a slot's old item goes back to the vault. Items on a hero who has left go back to the vault every tick. In a challenge, items do nothing (Myrror is off).
+- **Where the powers act:** the heroes' aura collector (Might adds levels), `grantHeroXp` and quest experience (Lore), `questSpeed` (Haste, so auto-quest's best-hero pick sees it).
+- **Artificers' Guild** (Essence, 30): auto-forge. It fills empty slots from the vault (Might first for heroes at home, Haste first for heroes on quests), then forges the cheapest fitting known recipe for each slot still empty. It never forges for a filled slot, so it buys at most one item per slot. The bot plays as if it owns it.
+- **UI:** Forge tab after Wilds (resources on hand, recipes with Forge buttons, each hero's three slots as picks, the vault); hero cards show their artifacts and the Might levels in their aura text; a "!" on the tab when a vault item or a forgeable one fits an empty slot.
+
+### 18.8 Analysis: are there enough Myrran resources? (2026-10-13)
+
+Your two questions: (1) is there enough for artifacts *and* some works, so items don't starve the works; (2) once you have recipes but haven't taken all of Myrror, is there still a way to get more resources?
+
+**Supply.** Resources come only from:
+- **cities taken**, by force or surrendered: 1 each, 3 for a region capital or Fortress. A full Myrror of 16 regions is 160 in all, but it splits unevenly by beachhead, between 30 and 80 of each resource (e.g. Draconians 80 Adamantium, 30 Crysx). The first 3 regions (24 cities) give about 30, and some beachheads give **none** of one resource there (Dark Elves: no Adamantium; Klackons and Trolls: no Crysx).
+- **Skyborne Couriers** (Draconian boon): ×1.5 each time it's chosen;
+- **the Vaults** of a banished Myrran wizard (10 of each), if chosen over the Spellbooks;
+- **sites** whose reward is resources (5/10), finite: one per region.
+
+So **all income is tied to the frontier moving**. When Myrror stalls, or is fully taken, it stops until the next Planeshift.
+
+**Demand.**
+- **Works:** a pair's next level costs 2 × 1.5^(levels of both). 42 buys 6 levels of a pair, 65 buys 7, 150 buys 9. Because it's exponential, giving up a third of a resource costs only about one level.
+- **Artifacts:** at most one per slot with auto-forge, so 18 for six heroes. Filling every slot with first copies costs roughly 40–60 Adamantium (weapons, bows, armour), 30–45 Crysx (jewels) and 5–15 Quork (staves).
+
+**Simulator** (`runs=150 hours=16`, the bot forging for empty slots as Artificers' Guild does, buying works with the rest):
+
+| Planeshift | Myrror reached | Gathered (Adamantium / Quork / Crysx) | Works levels (by pair) | Items (spent) |
+|---|---|---|---|---|
+| 1 (to 8h40m) | 11 cities | 0 / 10 / 3 | 0 / 3 / 1 | none (no recipes yet) |
+| 2 (to 13h23m) | 16 | 0 / 0 / 20 | 0 / 0 / 4 | none |
+| 3 (to 16h56m) | 25 | 15 / 2 / 35 | 3 / 0 / 5 | 2 (12) |
+| 4 (to 19h43m) | 47 | 26 / 21 / 25 | 4 / 4 / 4 | 3 (16) |
+| 5 (to 21h5m) | 58 | 33 / 26 / 40 | 5 / 4 / 5 | 4 (24) |
+| 6 (to 21h30m) | 80 | 31 / 80 / 50 | 4 / 6 / 5 | 9 (48) |
+| 7 (to 21h49m) | 113 | 111 / 78 / 105 | 7 / 6 / 7 | 14 (92) |
+| 8 (to 22h23m) | 128 (all) | 199 / 165 / 130 | 9 / 8 / 7 | 18 (132), every slot |
+
+**Answer to (1): items don't starve the works once Myrror gets going.** From Planeshift 4 on, items take 25–50% of a resource, which costs the works about one level per pair: in Planeshift 8, Adamantium's works reach 9 levels with items and would reach 9 without; Crysx 7 against 8. By then every slot is filled. **Early on (Planeshifts 1–3) there's too little of everything for either:** 0–35 of a resource for a whole Planeshift, some at 0, so a single 4–8 item is a large share, and works barely move.
+
+**Answer to (2): no.** The bot learned its first recipes in Planeshift 3, holding 25 cities with Myrror moving slowly, and from then on only new cities bring resources. Once Myrror is fully taken, nothing does. Between the frontier stalling, an uneven beachhead and the first recipes coming early, a way to gain resources over time is needed.
+
+**Options** (for you to choose; none built):
+- **A. Tribute (recommended).** Each Myrran city you hold yields its race's resource slowly, e.g. 0.25 an hour (× resource boons). 25 cities held give about 6 an hour (an item or a work level every hour or so in a stall); all 128 give 32 an hour. It accrues while you're away (P8), keeps going after Myrror is taken, and favours holding many races. Works' exponential prices and their level caps (20) keep it from running away.
+- **B. A planar exchange.** Trade 3 of one resource for 1 of another, so a beachhead without Adamantium can still forge weapons. Small, and it helps with the unevenness, which A doesn't fix (you need cities of the right races).
+- **C. Sites that renew.** A taken site comes back stronger after a while. This keeps creatures busy too, but it overlaps with A and makes the Wilds endless.
+- **D. Cheaper items early** (e.g. tier 1 at 2, like a work's first level). It helps Planeshifts 1–3 but doesn't help in a stall.
+
+Recommend **A and B**. The tuning can be checked with the sim's new per-Planeshift resource lines.

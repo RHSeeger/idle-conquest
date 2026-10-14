@@ -84,7 +84,7 @@ describe("The Wilds of Myrror (DESIGN.md §17)", () => {
     it("keeps progress when called off; a taken site rewards and makes a veteran", () => {
         const state = planeswalker();
         const m = state.planes.myrror!;
-        m.sites[0].id = "sunkenShrine"; // Life guardian, Essence reward; Chaos doesn't counter it
+        m.sites[0].id = "shadowMere"; // Death guardian, Essence reward; Chaos doesn't counter it
         sendCreature(state, 0, "chaos");
         tickWilds(state, getStats(state), 10);
         const progress = m.sites[0].progress;

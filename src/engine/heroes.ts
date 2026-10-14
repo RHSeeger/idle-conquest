@@ -6,6 +6,7 @@ import { challengeBans } from "../content/challenges";
 import { getStats, registerCollector } from "./collect";
 import { D, Decimal } from "./decimal";
 import { heroesOnQuests } from "./quests";
+import { loreMult, mightBonus } from "./artifacts";
 import { hash } from "./rng";
 import { bump, GameState, log } from "./state";
 
@@ -107,7 +108,7 @@ export function grantHeroXp(state: GameState, xp: number): void {
     const gained = xp * getStats(state).num("hero.xp");
     for (const h of state.run.heroes) {
         const before = heroLevel(h.xp);
-        h.xp += gained;
+        h.xp += gained * loreMult(state, h.id);
         if (heroLevel(h.xp) > before) {
             levelled = true;
         }
@@ -123,12 +124,14 @@ registerCollector((state, stats) => {
         const def = HEROES[h.id];
         if (!def) continue;
         const name = `${def.name} ${def.title}`;
+        // Might artifacts make the aura count as more levels
+        const level = heroLevel(h.xp) + mightBonus(state, h.id);
         if (!away.has(h.id)) {
-            stats.applyEffects(name, def.effects, heroLevel(h.xp));
+            stats.applyEffects(name, def.effects, level);
             continue;
         }
         // away on a quest: no aura, except that the max population they add is held (cities don't grow into it)
         const held = def.effects.filter((e) => e.stat === "pop.max").map((e) => ({ ...e, stat: "pop.maxHeld" }));
-        if (held.length > 0) stats.applyEffects(`${name} (away on a quest)`, held, heroLevel(h.xp));
+        if (held.length > 0) stats.applyEffects(`${name} (away on a quest)`, held, level);
     }
 });

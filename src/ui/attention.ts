@@ -10,6 +10,8 @@ import { isAutomationActive } from "../engine/automation";
 import { canHire, heroesAllowed, tavernOffers } from "../engine/heroes";
 import { heroesOnQuests, openQuests } from "../engine/quests";
 import { boundRealms, creaturesOut } from "../engine/wilds";
+import { canForge, heroSlots, itemInSlot, vaultFor } from "../engine/artifacts";
+import { RECIPES } from "../content/artifacts";
 import { availableSpells, canCastEnchantment, canResearch, isWizard } from "../engine/magic";
 import { MYRRAN_WORK_ORDER } from "../content/myrror";
 import { canBuyMyrranWork } from "../engine/planes";
@@ -72,7 +74,21 @@ function wildsAttention(state: GameState): string | null {
     return idle && waiting ? "A bound creature is free to take a site" : null;
 }
 
+function forgeAttention(state: GameState): string | null {
+    if (!state.planes.myrror || state.mastery.challenge || isAutomationActive(state, "artifacts") || !heroesAllowed(state)) return null;
+    // an empty slot that a vault item, or an item you can forge, would fill
+    for (const h of state.run.heroes) {
+        const empty = heroSlots(h.id).filter((_, slot) => !itemInSlot(state, h.id, slot));
+        for (const kind of empty) {
+            if (vaultFor(state, kind).length > 0) return "An artifact in the vault fits an empty slot";
+            if (state.planes.recipes.some((id) => RECIPES[id]?.slot === kind && canForge(state, id))) return "You can forge an artifact for an empty slot";
+        }
+    }
+    return null;
+}
+
 const CHECKS: Partial<Record<string, (state: GameState) => string | null>> = {
+    forge: forgeAttention,
     quests: questsAttention,
     wilds: wildsAttention,
     army: armyAttention,

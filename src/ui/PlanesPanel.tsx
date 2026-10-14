@@ -568,7 +568,7 @@ function EssenceSection() {
                                 <span class="count">
                                     {level}/{u.maxLevel}
                                 </span>
-                                {off && level > 0 && id !== "astralArchivists" && id !== "questingLodge" && id !== "planarHuntsmen" && <span class="off-tag">off</span>}
+                                {off && level > 0 && id !== "astralArchivists" && id !== "questingLodge" && id !== "planarHuntsmen" && id !== "artificersGuild" && <span class="off-tag">off</span>}
                             </div>
                             <div class="card-text">
                                 {u.text(level)}

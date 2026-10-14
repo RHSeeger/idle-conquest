@@ -32,6 +32,8 @@ import { masteryCost } from "../src/engine/mastery";
 import { CHALLENGE_TUNING, MASTERY_TUNING } from "../src/content/challenges";
 import { QUEST_TUNING } from "../src/content/quests";
 import { WILDS_TUNING } from "../src/content/wilds";
+import { ARTIFACT_TUNING, RECIPE_ORDER, RECIPES, SLOT_RESOURCE } from "../src/content/artifacts";
+import { MYRRAN_RESOURCES, MYRRAN_WORK_ORDER, MYRRAN_WORKS, RESOURCE_DEFS } from "../src/content/myrror";
 
 const args = Object.fromEntries(
     process.argv.slice(2).map((a) => {
@@ -61,6 +63,38 @@ if (args.qbase) QUEST_TUNING.base = Number(args.qbase);
 if (args.wilds === "0") [WILDS_TUNING.openAtStart, WILDS_TUNING.perRegion] = [0, 0];
 if (args.wbase) WILDS_TUNING.base = Number(args.wbase);
 if (args.wgrowth) WILDS_TUNING.growth = Number(args.wgrowth);
+
+/**
+ * A Myrror campaign's resources: gathered (on hand + spent), spent on works and
+ * on artifacts, by resource. A work's price is 2 × 1.5^(levels of both works of
+ * its resource), so a pair's spend depends only on its total levels; Planar
+ * Gate's own ×2.5 makes Crysx's an estimate.
+ */
+function myrrorEconomy(state: GameState): string | null {
+    const m = state.planes.myrror;
+    if (!m) return null;
+    const parts: string[] = [];
+    for (const res of MYRRAN_RESOURCES) {
+        const works = MYRRAN_WORK_ORDER.filter((id) => MYRRAN_WORKS[id].resource === res);
+        const levels = works.reduce((s, id) => s + (m.works[id] ?? 0), 0);
+        let worksSpent = 0;
+        for (let n = 0; n < levels; n++) worksSpent += Math.round(2 * Math.pow(1.5, n));
+        let itemsSpent = 0;
+        let itemCount = 0;
+        for (const id of RECIPE_ORDER) {
+            const r = RECIPES[id];
+            if (SLOT_RESOURCE[r.slot] !== res) continue;
+            const copies = m.items.filter((i) => i.recipe === id).length;
+            itemCount += copies;
+            itemsSpent += ARTIFACT_TUNING.cost[r.tier] * (Math.pow(ARTIFACT_TUNING.copyGrowth, copies) - 1);
+        }
+        const gathered = m.resources[res] + worksSpent + itemsSpent;
+        parts.push(`${RESOURCE_DEFS[res].name} ${Math.round(gathered)} (works ${levels} lv/${worksSpent}, items ${itemCount}/${itemsSpent}, left ${Math.round(m.resources[res])})`);
+    }
+    return `${m.index} cities, ${m.sites.filter((s) => s.done).length} sites · ` + parts.join(" · ");
+}
+
+const economyLines: string[] = [];
 
 const DT = 1;
 const BOT_EVERY = 5;
@@ -214,13 +248,18 @@ if (runs <= 1) {
         const quests = `${state.ascension.quests.filter((q) => q.done).length}/${state.ascension.quests.length}`;
         const insight = insightOnAscend(state).toString();
         const essence = essenceOnPlaneshift(state).toString();
+        const economy = myrrorEconomy(state);
         const ended = i < runs ? botEndRun(state) : "";
+        if (economy && (ended === "planeshift" || i === runs)) economyLines.push(`PS ${ps} (to ${fmtTime(state.meta.playtime)}): ${economy}`);
         console.log(
             `${String(i).padStart(3)} | ${String(ps).padStart(2)} | ${String(asc).padStart(3)} | ${RACES[r.race].plural.padEnd(11)} | ${fmtTime(r.time).padEnd(8)} | ${fmtTime(totalTime).padEnd(8)} | ${String(r.frontier).padStart(8)} | ${r.fame.padStart(4)} | ${reg2.padEnd(8)} ${wall.padEnd(8)} | ${fmtTime(r.longestGap).padEnd(8)} | ${String(r.sites).padStart(5)} ${r.books.padEnd(6)} | ${String(spells).padStart(6)} | ${String(wiz).padStart(3)} | ${quests.padStart(6)} | ${myrror.padEnd(6)} | ${(r.ascensionReady === null ? "-" : fmtTime(r.ascensionReady)).padEnd(9)} | ${(r.planeshiftReady === null ? "-" : fmtTime(r.planeshiftReady)).padEnd(9)} | ${mastery.padEnd(17)} | ${rates} | ${ended}${ended === "ascend" ? ` (+${insight} Insight)` : ended === "planeshift" ? ` (+${essence} Essence)` : ""}`,
         );
     }
     const p = state.prestige;
     const a = state.ascension;
+    console.log(`\nMyrran resources per Planeshift (gathered = on hand + spent; Crysx works costs approximate):`);
+    for (const line of economyLines) console.log("  " + line);
+    console.log(`Recipes known: ${state.planes.recipes.join(", ") || "none"}`);
     console.log(`\nTotal time ${fmtTime(totalTime)}`);
     console.log(`Fame unspent ${p.fame.toString()}, total ${p.fameTotal.toString()}; refounds ${p.refounds}`);
     console.log(`Annals: ${p.annals.join(", ")}; realms seen: ${p.realmsSeen.join(", ")}`);

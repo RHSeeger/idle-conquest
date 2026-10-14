@@ -244,6 +244,8 @@ export interface PlanesState {
     myrror: MyrrorCampaign | null;
     /** The boon last chosen for each source ("race:dwarf", "wizard:Merlin"), repeated by automation */
     boonMemory: Record<string, string>;
+    /** Artifact recipes learned at Myrror's sites (content/artifacts.ts): kept for good, even through a Mastery */
+    recipes: string[];
 }
 
 /** A boon choice waiting for the player: two boon ids, from a capital or Fortress */
@@ -281,6 +283,16 @@ export interface MyrrorCampaign {
     siteNodes: string[];
     /** More Planar Essence on the next Planeshift, from sites (a share: 0.1 = +10%) */
     siteEssence: number;
+    /** Artifacts forged this Planeshift (engine/artifacts.ts, DESIGN.md §18): in the vault, or on a hero */
+    items: ItemState[];
+}
+
+/** A forged artifact: its recipe, and the hero and slot it's on (null: in the vault) */
+export interface ItemState {
+    recipe: string;
+    hero: string | null;
+    /** Index into the hero's slots (content/artifacts.ts CALLING_SLOTS) */
+    slot: number;
 }
 
 /** A creature bound to you for the Planeshift: the summoning spell it came from, and how many sites it has taken */
@@ -323,6 +335,7 @@ export function newCampaign(beachhead: MyrranRaceId, links: number): MyrrorCampa
         creatures: {},
         siteNodes: [],
         siteEssence: 0,
+        items: [],
     };
 }
 
@@ -482,6 +495,8 @@ export interface Automation {
     quests: boolean;
     /** Auto-send: send idle bound creatures to Myrror's sites (Planeshift milestone; the best creature for each with Planar Huntsmen, Essence) */
     wilds: boolean;
+    /** Auto-forge and auto-equip artifacts for heroes' empty slots (Artificers' Guild, Essence) */
+    artifacts: boolean;
     /** Myrran works auto-buy leaves alone (kept through every reset) */
     worksOff: string[];
     /** Myrror boons: repeat the choice last made for the same race or wizard instead of asking */
@@ -663,6 +678,7 @@ export function newGame(now = Date.now()): GameState {
             bestMyrror: 0,
             myrror: null,
             boonMemory: {},
+            recipes: [],
         },
         mastery: {
             masteries: 0,
@@ -698,6 +714,7 @@ export function newGame(now = Date.now()): GameState {
             works: true,
             quests: true,
             wilds: true,
+            artifacts: true,
             worksOff: [],
             repeatBoons: true,
             unitMode: "doctrine",

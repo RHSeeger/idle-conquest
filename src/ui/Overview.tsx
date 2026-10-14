@@ -97,6 +97,7 @@ const AUTO_NAMES: Partial<Record<AutomationKind, string>> = {
     works: "Myrran works auto-buy",
     quests: "Auto-quest",
     wilds: "Auto-send",
+    artifacts: "Auto-forge",
 };
 
 /** The marker's tooltip; warns when switching auto-Refound/Ascend on would act at once */

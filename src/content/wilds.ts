@@ -12,8 +12,14 @@ import { Rarity } from "./spells";
  *  - resources: Myrran resources of the region's race (lasting the Planeshift, as all resources do)
  *  - node: a Myrran magic node of that type, melded at once, for the Planeshift
  *  - essence: more Planar Essence on the next Planeshift (a share: 0.05 = +5%)
+ *  - recipe: the next artifact recipe of the guardian's realm (a tier 2 one when countered), kept for
+ *    good (content/artifacts.ts); once the realm's recipes are all known, resources instead
  */
-export type WildReward = { kind: "resources" } | { kind: "node"; node: "sorceryNode" | "natureNode" | "chaosNode" } | { kind: "essence" };
+export type WildReward =
+    | { kind: "resources" }
+    | { kind: "node"; node: "sorceryNode" | "natureNode" | "chaosNode" }
+    | { kind: "essence" }
+    | { kind: "recipe" };
 
 export interface WildSiteDef {
     id: string;
@@ -25,16 +31,16 @@ export interface WildSiteDef {
 
 const list: WildSiteDef[] = [
     { id: "crystalSpire", name: "Crystal Spire", guardian: "sorcery", reward: { kind: "node", node: "sorceryNode" }, text: "A Myrran sorcery node, ringed in crystal and kept by djinn." },
-    { id: "sorcerersLair", name: "Sorcerer's Lair", guardian: "sorcery", reward: { kind: "essence" }, text: "A planar hermit's hall, where the walls between worlds are thin." },
+    { id: "sorcerersLair", name: "Sorcerer's Lair", guardian: "sorcery", reward: { kind: "recipe" }, text: "A planar hermit's hall, and the notes of a lifetime's enchanting." },
     { id: "starfallCrater", name: "Starfall Crater", guardian: "sorcery", reward: { kind: "resources" }, text: "Where a falling star split the ground, and its dust still sings." },
     { id: "fireRift", name: "Fire Rift", guardian: "chaos", reward: { kind: "node", node: "chaosNode" }, text: "Fire pours from a chaos node, and things of flame tend it." },
-    { id: "drakeNest", name: "Drake Nest", guardian: "chaos", reward: { kind: "resources" }, text: "Great drakes hoard what they take from the Myrran mines." },
+    { id: "drakeNest", name: "Drake Nest", guardian: "chaos", reward: { kind: "recipe" }, text: "Great drakes hoard the work of the smiths they ate." },
     { id: "elderGrove", name: "Elder Grove", guardian: "nature", reward: { kind: "node", node: "natureNode" }, text: "A nature node under trees older than Arcanus's oldest kingdom." },
-    { id: "behemothWallow", name: "Behemoth Wallow", guardian: "nature", reward: { kind: "resources" }, text: "Behemoths churn the mud over a seam of raw ore." },
+    { id: "behemothWallow", name: "Behemoth Wallow", guardian: "nature", reward: { kind: "recipe" }, text: "Behemoths churn the mud over a sunken druids' forge." },
     { id: "boneField", name: "Bone Field", guardian: "death", reward: { kind: "resources" }, text: "An old battlefield, where the dead still guard the plunder." },
-    { id: "wraithKeep", name: "Wraith Keep", guardian: "death", reward: { kind: "essence" }, text: "A keep whose wraiths remember the plane before the Towers." },
+    { id: "wraithKeep", name: "Wraith Keep", guardian: "death", reward: { kind: "recipe" }, text: "A keep whose wraiths still guard their masters' armoury." },
     { id: "shadowMere", name: "Shadow Mere", guardian: "death", reward: { kind: "essence" }, text: "A black lake that reflects the other plane." },
-    { id: "sunkenShrine", name: "Sunken Shrine", guardian: "life", reward: { kind: "essence" }, text: "A Myrran god's shrine, and the angels who never left it." },
+    { id: "sunkenShrine", name: "Sunken Shrine", guardian: "life", reward: { kind: "recipe" }, text: "A Myrran god's shrine, its relics kept by the angels who never left it." },
     { id: "silverSanctum", name: "Silver Sanctum", guardian: "life", reward: { kind: "resources" }, text: "A paladin order's vault, sealed with holy light." },
 ];
 

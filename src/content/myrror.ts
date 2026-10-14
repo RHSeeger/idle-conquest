@@ -563,6 +563,17 @@ const essenceList: EssenceUpgradeDef[] = [
                 ? "Auto-send sends the first idle creature"
                 : "Auto-send sends the best idle creature for each site (one that counters its guardian, then the strongest)",
     },
+    {
+        id: "artificersGuild",
+        name: "Artificers' Guild",
+        maxLevel: 1,
+        cost: () => 30,
+        effects: [],
+        text: (l) =>
+            l === 0
+                ? "You forge and equip artifacts yourself"
+                : "Unlocks auto-forge: heroes' empty slots are filled from the vault, then with the cheapest fitting artifact you can forge (Might for heroes at home, Haste for heroes on quests)",
+    },
 ];
 
 export const ESSENCE_UPGRADES: Record<string, EssenceUpgradeDef> = Object.fromEntries(essenceList.map((u) => [u.id, u]));

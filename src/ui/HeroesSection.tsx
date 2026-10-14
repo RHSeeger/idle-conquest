@@ -10,6 +10,8 @@ import { game } from "./game";
 import { Chip, Part, SectionHead } from "./kit";
 import { CALLING_NAMES, HERO_CALLINGS, QUESTS } from "../content/quests";
 import { isWizard } from "../engine/magic";
+import { mightBonus } from "../engine/artifacts";
+import { HeroItems } from "./ForgePanel";
 
 /** The quest a hero is away on, by name, or null */
 function questOf(state: GameState, heroId: string): string | null {
@@ -74,7 +76,7 @@ export function HeroesSection() {
             danger: true,
             confirm: "Dismiss",
             body: [
-                `${HERO_RANKS[heroLevel(h.xp) - 1]}, ${h.xp} xp.`,
+                `${HERO_RANKS[heroLevel(h.xp) - 1]}, ${Math.floor(h.xp)} xp.`,
                 `They leave your service and their experience is lost. Their place, and their place among the heroes ` +
                     `kept when you Refound or Ascend, opens up for another. The hire price doesn't go back down. ` +
                     `They may come to the Adventurers' Guild again, starting over.`,
@@ -137,7 +139,11 @@ export function HeroesSection() {
                                         <span class="hero-stars-empty">{"☆".repeat(HERO_RANKS.length - level)}</span>
                                     </span>
                                 </div>
-                                <div class="card-text">{def.text(level)}</div>
+                                <div class="card-text">
+                                    {def.text(level + mightBonus(state, h.id))}
+                                    {mightBonus(state, h.id) > 0 && <span class="hint"> (+{mightBonus(state, h.id)} levels from Might)</span>}
+                                </div>
+                                <HeroItems heroId={h.id} />
                                 {isWizard(state) && (
                                     <div class="chips">
                                         {(HERO_CALLINGS[h.id] ?? []).map((c) => (
@@ -152,10 +158,10 @@ export function HeroesSection() {
                                     <ProgressBar
                                         class="xp"
                                         fraction={(h.xp - prev) / (next - prev)}
-                                        label={`${h.xp} / ${next} xp`}
+                                        label={`${Math.floor(h.xp)} / ${next} xp`}
                                     />
                                 ) : (
-                                    <span class="hint">{h.xp} xp · highest rank</span>
+                                    <span class="hint">{Math.floor(h.xp)} xp · highest rank</span>
                                 )}
                                 <div class="hero-dismiss">
                                     <button class="link" title="Send this hero away to make room for another" onClick={() => onDismiss(h)}>

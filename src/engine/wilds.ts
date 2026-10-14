@@ -19,7 +19,9 @@ import { REALM_DEFS, REALMS, Realm } from "../content/magic";
 import { myrrorPlan, RESOURCE_DEFS, RESOURCE_OF_RACE } from "../content/myrror";
 import { REGION_SIZE } from "../content/frontier";
 import { Rarity, RARITY_NAMES, SPELL_ORDER, SPELLS, SpellDef } from "../content/spells";
-import { BINDING_PER_LEVEL, WILD_SITE_ORDER, WILD_SITES, WILDS_TUNING, WildSiteDef } from "../content/wilds";
+import { BINDING_PER_LEVEL, WILD_SITE_ORDER, WILD_SITES, WILDS_TUNING, WildReward, WildSiteDef } from "../content/wilds";
+import { powerText, RecipeDef, SLOT_NAMES } from "../content/artifacts";
+import { learnRecipe, nextRecipe } from "./artifacts";
 import { realmMatchup } from "../content/wizards";
 import { getStats } from "./collect";
 import { D, Decimal } from "./decimal";
@@ -209,18 +211,35 @@ function siteResource(state: GameState, k: number) {
     return RESOURCE_OF_RACE[region.race];
 }
 
+/** The artifact recipe site k would teach (null if it isn't a recipe site, or its realm's recipes are all known) */
+export function siteRecipe(state: GameState, k: number, matched: boolean): RecipeDef | null {
+    const def = siteDef(state, k);
+    return def.reward.kind === "recipe" ? nextRecipe(state, def.guardian, matched) : null;
+}
+
+/** A recipe site whose realm's recipes are all known gives resources instead */
+function rewardKind(state: GameState, k: number, matched: boolean): WildReward["kind"] {
+    const kind = siteDef(state, k).reward.kind;
+    return kind === "recipe" && !siteRecipe(state, k, matched) ? "resources" : kind;
+}
+
 /** What site k brings back, plain or with a countering creature ("10 Adamantium", "+5% Planar Essence") */
 export function siteRewardText(state: GameState, k: number, matched: boolean): string {
     const r = siteDef(state, k).reward;
     const i = matched ? 1 : 0;
-    switch (r.kind) {
+    switch (r.kind === "recipe" ? rewardKind(state, k, matched) : r.kind) {
+        case "recipe": {
+            const recipe = siteRecipe(state, k, matched)!;
+            return `the ${recipe.name} recipe (${SLOT_NAMES[recipe.slot]}, ${powerText(recipe)})`;
+        }
         case "resources": {
             const n = T.resources[i] * getStats(state).num("myrror.resources");
             return `${Number(n.toFixed(1))} ${RESOURCE_DEFS[siteResource(state, k)].name}`;
         }
         case "node": {
             const n = T.nodes[i];
-            const name = r.node === "sorceryNode" ? "Sorcery" : r.node === "natureNode" ? "Nature" : "Chaos";
+            const node = r.kind === "node" ? r.node : "sorceryNode";
+            const name = node === "sorceryNode" ? "Sorcery" : node === "natureNode" ? "Nature" : "Chaos";
             return `${n} Myrran ${name} Node${n === 1 ? "" : "s"}, melded`;
         }
         case "essence":
@@ -237,7 +256,9 @@ function completeSite(state: GameState, k: number): void {
     const text = siteRewardText(state, k, matched);
     const i = matched ? 1 : 0;
     const r = def.reward;
-    if (r.kind === "resources") m.resources[siteResource(state, k)] += T.resources[i] * getStats(state).num("myrror.resources");
+    const kind = rewardKind(state, k, matched);
+    if (kind === "recipe") learnRecipe(state, siteRecipe(state, k, matched)!.id);
+    else if (kind === "resources") m.resources[siteResource(state, k)] += T.resources[i] * getStats(state).num("myrror.resources");
     else if (r.kind === "node") for (let n = 0; n < T.nodes[i]; n++) m.siteNodes.push(r.node);
     else m.siteEssence += T.essence[i];
     const bound = m.creatures[realm];

@@ -572,7 +572,7 @@ const essenceList: EssenceUpgradeDef[] = [
         text: (l) =>
             l === 0
                 ? "You forge and equip artifacts yourself"
-                : "Unlocks auto-forge: heroes' empty slots are filled from the vault, then with the cheapest fitting artifact you can forge (Might for heroes at home, Haste for heroes on quests)",
+                : "Unlocks auto-forge: each hero slot gets the best artifact from the vault, or the best you can afford to forge, when it beats what's there: Might first, then Haste, then Lore (never Lore for a hero at the top rank)",
     },
 ];
 

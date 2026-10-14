@@ -121,15 +121,26 @@ describe("Artifacts (DESIGN.md §18)", () => {
         expect(state.planes.myrror!.items[i].hero).toBeNull();
     });
 
-    it("auto-forge fills empty slots only, cheapest first", () => {
+    it("auto-forge: Might first, then Haste, then Lore; never Lore at the top rank; upgrades a slot only for something better", () => {
         const state = forgeReady();
         for (const id of ["flamingSword", "holyAvenger", "ringOfHaste", "skullStaff"]) learnRecipe(state, id);
+        // the Sage is at the top rank: Lore is worth nothing to him
+        state.run.heroes[1].xp = 1000;
         autoArtifacts(state);
-        expect(RECIPES[itemInSlot(state, "gunther", 0)!.recipe].id).toBe("flamingSword");
+        expect(RECIPES[itemInSlot(state, "gunther", 0)!.recipe].id).toBe("holyAvenger"); // Might over Haste, though dearer
         expect(itemInSlot(state, "gunther", 1)).toBeNull(); // no armour recipe known
-        expect(itemInSlot(state, "zaldron", 0)?.recipe).toBe("skullStaff");
+        expect(itemInSlot(state, "gunther", 2)?.recipe).toBe("ringOfHaste");
+        expect(itemInSlot(state, "zaldron", 0)).toBeNull(); // only a Lore staff is known
         const count = state.planes.myrror!.items.length;
         autoArtifacts(state);
         expect(state.planes.myrror!.items.length).toBe(count);
+        // a better recipe learned later replaces a weaker item; the old one goes back to the vault
+        learnRecipe(state, "giantGauntlets"); // jewel, Might
+        autoArtifacts(state);
+        expect(itemInSlot(state, "gunther", 2)?.recipe).toBe("giantGauntlets");
+        // every jewel slot moves up to Might; the rings wait in the vault
+        expect(itemInSlot(state, "zaldron", 1)?.recipe).toBe("giantGauntlets");
+        expect(itemInSlot(state, "zaldron", 2)?.recipe).toBe("giantGauntlets");
+        expect(state.planes.myrror!.items.filter((i) => i.recipe === "ringOfHaste" && i.hero === null).length).toBe(3);
     });
 });

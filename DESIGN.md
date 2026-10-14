@@ -1066,7 +1066,9 @@ The kind of slot leans to a power (weapons and bows to Haste, armour to Might, s
 - **Forging** (`engine/artifacts.ts`): tier 1 costs 4, tier 2 costs 8, of the slot's resource (weapons, bows and armour Adamantium; staves Quork; jewels Crysx), ×2 for each copy of that recipe already forged this Planeshift. Items live in `myrror.items`, so a Planeshift clears them.
 - **Equipping:** any vault item into a fitting slot; a slot's old item goes back to the vault. Items on a hero who has left go back to the vault every tick. In a challenge, items do nothing (Myrror is off).
 - **Where the powers act:** the heroes' aura collector (Might adds levels), `grantHeroXp` and quest experience (Lore), `questSpeed` (Haste, so auto-quest's best-hero pick sees it).
-- **Artificers' Guild** (Essence, 30): auto-forge. It fills empty slots from the vault (Might first for heroes at home, Haste first for heroes on quests), then forges the cheapest fitting known recipe for each slot still empty. It never forges for a filled slot, so it buys at most one item per slot. The bot plays as if it owns it.
+- **Artificers' Guild** (Essence, 30): auto-forge. For each hero slot, it moves in the best vault item, or forges the best affordable known recipe, when that beats what the slot holds. "Best" means Might, then Haste, then Lore, higher tiers first; Lore is worth nothing for a hero at the top rank. The bot plays as if it owns it.
+  - *Changed 2026-10-13, after your note:* the first version forged the cheapest recipe for empty slots only. That buys whatever is cheapest, Lore included, and never improves a slot afterwards, so you'd keep auto-forge off. Now a slot is re-forged only for something better, so each slot takes a few items at most. The displaced items wait in the vault for another hero.
+  - Heroes don't survive a Planeshift (a new run keeps none), so they climb from rank 1 every Planeshift. Lore is for that climb only.
 - **UI:** Forge tab after Wilds (resources on hand, recipes with Forge buttons, each hero's three slots as picks, the vault); hero cards show their artifacts and the Might levels in their aura text; a "!" on the tab when a vault item or a forgeable one fits an empty slot.
 
 ### 18.8 Analysis: are there enough Myrran resources? (2026-10-13)
@@ -1109,3 +1111,16 @@ So **all income is tied to the frontier moving**. When Myrror stalls, or is full
 - **D. Cheaper items early** (e.g. tier 1 at 2, like a work's first level). It helps Planeshifts 1–3 but doesn't help in a stall.
 
 Recommend **A and B**. The tuning can be checked with the sim's new per-Planeshift resource lines.
+
+### 18.9 Open: is Might the only power worth having? (2026-10-13)
+
+Your note: by the time you're forging, heroes are capped. Then Lore is useless, Haste helps only while a quest runs, and auras always help, so you'd always want Might.
+
+That's mostly right. One correction: heroes don't survive a Planeshift, so each Planeshift starts them at rank 1 again, and Lore helps for that climb. In Layer C, though, a run takes hundreds of cities and quests give plenty of experience, so the climb is short, and Lore's window with it. Auto-forge now follows your ranking (18.7). The design question remains: if Might always wins, an item's power isn't a choice, only which hero gets which Might item, and items against works.
+
+Options:
+- **A. Keep it.** Might is the main power; Haste and Lore are early-Planeshift extras. Choice stays in which recipes you've collected, which hero gets the tier 2 Might (Brax's production or Taki's army), and items against works.
+- **B. Replace Lore with a power for the wizard (recommended):** **Arcane**, +casting skill (e.g. +3% / +6% per item, a starting guess). It answers the Wilds' cost directly (creatures take casting skill), so the choice becomes a stronger kingdom (Might), a stronger wizard and more creatures out (Arcane), or faster quests (Haste). Each works at a different layer, and none is useless once heroes are capped.
+- **C. Replace Haste and Lore with a power per layer:** Might (kingdom), Arcane (casting skill) and Planar (creature power), with quests left alone. The cleanest split, but quests lose their late boost, which 18.1 hoped items would give.
+
+With B or C, auto-forge would need your ranking of the powers (a setting) rather than a fixed one.

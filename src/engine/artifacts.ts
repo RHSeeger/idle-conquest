@@ -15,6 +15,7 @@
 import { ARTIFACT_TUNING, CALLING_SLOTS, Power, RECIPE_ORDER, RECIPES, RecipeDef, SLOT_RESOURCE, SlotKind } from "../content/artifacts";
 import { Realm } from "../content/magic";
 import { HERO_CALLINGS } from "../content/quests";
+import { HERO_RANKS, heroLevel } from "../content/heroes";
 import { bump, GameState, ItemState, log } from "./state";
 import { upperLayersOff } from "./upgradeLevels";
 
@@ -163,47 +164,59 @@ export function tickArtifacts(state: GameState): void {
 
 // --- Automation (Artificers' Guild) ---
 
-/** Heroes away on quests (read here directly: quests.ts imports this file) */
-function heroesAway(state: GameState): Set<string> {
-    return new Set(state.ascension.quests.filter((q) => q.active && !q.done && q.hero).map((q) => q.hero!));
+/** Auto-forge's order of powers: auras always count, quests end, and experience stops mattering at the top rank */
+const POWER_PRIORITY: Record<Power, number> = { might: 3, haste: 2, lore: 1 };
+
+/** How much an item is worth to a hero: Might, then Haste, then Lore, higher tiers first; Lore is worth nothing at the top rank */
+export function itemValue(state: GameState, r: RecipeDef, heroId: string): number {
+    const h = state.run.heroes.find((x) => x.id === heroId);
+    if (r.power === "lore" && h && heroLevel(h.xp) >= HERO_RANKS.length) return 0;
+    return POWER_PRIORITY[r.power] * 10 + r.tier;
 }
 
-/** How much an item suits a hero: a hero at home wants Might first, one on a quest Haste; Lore after; higher tiers first */
-function suit(r: RecipeDef, away: boolean): number {
-    const order: Power[] = away ? ["haste", "lore", "might"] : ["might", "lore", "haste"];
-    return (3 - order.indexOf(r.power)) * 10 + r.tier;
+/** The value of what's in a hero's slot now (0 if empty) */
+function slotValue(state: GameState, heroId: string, slot: number): number {
+    const item = itemInSlot(state, heroId, slot);
+    return item ? itemValue(state, RECIPES[item.recipe], heroId) : 0;
 }
 
-/** Fills empty slots with the best fitting vault items */
+/** Puts the best vault item into each slot it beats (what was there goes back to the vault, for another hero) */
 function autoEquip(state: GameState): void {
-    const away = heroesAway(state);
     for (const h of state.run.heroes) {
         heroSlots(h.id).forEach((kind, slot) => {
-            if (itemInSlot(state, h.id, slot)) return;
-            const best = vaultFor(state, kind).sort((a, b) => suit(RECIPES[items(state)[b].recipe], away.has(h.id)) - suit(RECIPES[items(state)[a].recipe], away.has(h.id)))[0];
-            if (best !== undefined) equip(state, best, h.id, slot);
+            const current = slotValue(state, h.id, slot);
+            const best = vaultFor(state, kind)
+                .map((i) => ({ i, value: itemValue(state, RECIPES[items(state)[i].recipe], h.id) }))
+                .filter((x) => x.value > current)
+                .sort((a, b) => b.value - a.value)[0];
+            if (best) equip(state, best.i, h.id, slot);
         });
     }
 }
 
 /**
- * Artificers' Guild: fills heroes' empty slots from the vault, then forges for
- * the slots still empty (the cheapest fitting recipe first) and equips that.
- * It only forges for an empty slot, so at most one item per slot: Myrran works
- * get the rest of the resources.
+ * Artificers' Guild: first moves vault items into the slots they improve, then
+ * forges the best affordable recipe for each slot it would improve: Might first,
+ * then Haste, then Lore (never Lore for a hero at the top rank), higher tiers
+ * first. A slot is only forged for when the new item beats what it holds, so
+ * each slot takes a few items at most, and Myrran works get the rest.
  */
 export function autoArtifacts(state: GameState): void {
     if (!state.planes.myrror || upperLayersOff(state)) return;
     autoEquip(state);
     for (const h of state.run.heroes) {
         heroSlots(h.id).forEach((kind, slot) => {
-            if (itemInSlot(state, h.id, slot)) return;
+            const current = slotValue(state, h.id, slot);
             const pick = state.planes.recipes
                 .filter((id) => RECIPES[id]?.slot === kind && canForge(state, id))
-                .sort((a, b) => forgeCost(state, a) - forgeCost(state, b))[0];
+                .map((id) => ({ id, value: itemValue(state, RECIPES[id], h.id) }))
+                .filter((x) => x.value > current)
+                .sort((a, b) => b.value - a.value || forgeCost(state, a.id) - forgeCost(state, b.id))[0];
             if (!pick) return;
-            const i = forge(state, pick);
+            const i = forge(state, pick.id);
             if (i >= 0) equip(state, i, h.id, slot);
         });
     }
+    // what the forging displaced may suit another hero
+    autoEquip(state);
 }
